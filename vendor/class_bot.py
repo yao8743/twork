@@ -80,7 +80,13 @@ class LYClass:
 
         if message.from_id:
             sender = await client.get_entity(message.from_id)
-            sender_title = f"{sender.first_name} {sender.last_name}"
+
+            sender_title = f"{sender.first_name}"
+
+            # if sender.last_name is not None then sender_title = f"{sender.first_name} {sender.last_name}"
+            if sender.last_name is not None:
+                sender_title = f"{sender.first_name} {sender.last_name}"
+
             if sender.username:
                 caption_parts.append(f"Original: <a href='https://t.me/{sender.username}'>{sender_title}</a>")
             else:
