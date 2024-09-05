@@ -53,12 +53,10 @@ max_break_time = 150  # 休息时间
 
 async def main():
     await client.start(phone_number)
-
     start_time = time.time()
     media_count = 0
     
     try:
-         
         await tgbot.client.send_message(tgbot.config['work_bot_id'], "/start")
     except Exception as e:
         print(f"Error sending message to work_bot_id: {e}")
@@ -109,7 +107,7 @@ async def main():
             
 
             if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
-                count_per_chat=0;
+                count_per_chat=0
                 
 
                 time.sleep(0.5)  # 每次请求之间等待0.5秒

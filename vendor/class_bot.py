@@ -84,7 +84,7 @@ class LYClass:
             sender_title = f"{sender.first_name}"
 
             # if sender.last_name is not None then sender_title = f"{sender.first_name} {sender.last_name}"
-            if sender.last_name is not None:
+            if sender.last_name:
                 sender_title = f"{sender.first_name} {sender.last_name}"
 
             if sender.username:
