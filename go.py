@@ -53,12 +53,10 @@ max_break_time = 150  # 休息时间
 
 async def main():
     await client.start(phone_number)
-
     start_time = time.time()
     media_count = 0
     
     try:
-         
         await tgbot.client.send_message(tgbot.config['work_bot_id'], "/start")
     except Exception as e:
         print(f"Error sending message to work_bot_id: {e}")
