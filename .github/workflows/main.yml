@@ -12,7 +12,12 @@ jobs:
   run-telethon-bot:
     runs-on: ubuntu-latest
 
+    concurrency:
+      group: my-workflow-${{ github.ref }}  # 设定并发组
+      cancel-in-progress: false             # 保留旧的工作流，取消新的
+
     steps:
+    
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -46,7 +51,7 @@ jobs:
           }
       continue-on-error: true
 
-    - name: Download artifacts
+    - name: Download artifacts - Session
       uses: actions/download-artifact@v4
       with:
         name: session_name
@@ -55,7 +60,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
-    - name: Download artifacts
+    - name: Download artifacts - Last_Read_Message
       uses: actions/download-artifact@v4
       with:
         name: last_read_message
