@@ -26,12 +26,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Decrypt Telethon session file
-      env:
-        API_ID: ${{ secrets.API_ID }}
-        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
-      run: |
-        openssl aes-256-cbc -d -pbkdf2 -in "${{ secrets.API_ID }}session_name.session.enc" -out "${{ secrets.API_ID }}session_name.session" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
 
     - name: Get previous workflow run ID
       uses: actions/github-script@v6
@@ -55,11 +49,28 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
+        name: session_name
+        path: .
+        run-id: ${{ steps.get-previous-run-id.outputs.run_id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
         name: last_read_message
         path: .
         run-id: ${{ steps.get-previous-run-id.outputs.run_id }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
+
+    - name: Decrypt Telethon session file
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
+      run: |
+        openssl aes-256-cbc -d -pbkdf2 -in "${{ secrets.API_ID }}session_name.session.enc" -out "${{ secrets.API_ID }}session_name.session" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
+
 
     - name: Run Telethon script
       env:
@@ -73,6 +84,20 @@ jobs:
         LINK_CHAT_ID: ${{ secrets.LINK_CHAT_ID }}
       run: |
         python go.py
+
+    - name: Encrypt Telethon session file
+      env:
+        API_ID: ${{ secrets.API_ID }}
+        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
+      run: |
+        openssl aes-256-cbc -pbkdf2 -salt -in "${{ secrets.API_ID }}session_name.session" -out "${{ secrets.API_ID }}session_name.session.enc" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
+
+    - name: Upload session_name.enc artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: session_name
+        path: ${{ secrets.API_ID }}session_name.session.enc
+
 
     - name: Check if last_read_message_id.json was created
       run: |
