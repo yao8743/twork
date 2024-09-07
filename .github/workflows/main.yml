@@ -21,17 +21,16 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 步骤 2: 使用 GitHub Script 查找当前正在运行的工作流
     - name: Check for running workflows
       uses: actions/github-script@v6
       id: check-running
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const { data } = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: context.workflow, // 当前工作流的ID
+            workflow_id: 'main.yml',  // 使用 main.yml 作为 workflow_id
+            per_page: 1,
             status: 'in_progress', // 只查找正在进行中的工作流
           });
           if (data.total_count > 1) {
@@ -39,6 +38,10 @@ jobs:
           } else {
             console.log("No other running workflows.");
           }
+      continue-on-error: true
+
+
+    
 
     - name: Set up Python
       uses: actions/setup-python@v4
