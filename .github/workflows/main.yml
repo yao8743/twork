@@ -14,7 +14,7 @@ jobs:
 
     concurrency:
       group: my-workflow-${{ github.ref }}  # 设定并发组
-      cancel-in-progress: false             # 保留旧的工作流，取消新的
+      cancel-in-progress: true  # 旧的工作流未完成时，不执行新的
 
     steps:
     
