@@ -43,11 +43,11 @@ except ValueError:
     print("Environment variable WORK_CHAT_ID or WAREHOUSE_CHAT_ID is not a valid integer.")
     exit(1)
     
-#max_process_time 設為 1200 秒，即 20 分鐘
-max_process_time = 1200  # 20分钟
-max_media_count = 50  # 10个媒体文件
-max_count_per_chat = 10  # 每个对话的最大消息数
-max_break_time = 150  # 休息时间
+#max_process_time 設為 600 秒，即 10 分鐘
+max_process_time = 600  # 20分钟
+max_media_count = 55  # 10个媒体文件
+max_count_per_chat = 11  # 每个对话的最大消息数
+max_break_time = 120  # 休息时间
 
 
 

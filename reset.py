@@ -1,3 +1,4 @@
+import asyncio
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, AuthKeyDuplicatedError, RPCError
 import os
@@ -12,6 +13,7 @@ api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 phone_number = os.getenv('PHONE_NUMBER')
 pw2fa = os.getenv('PW2FA')
+session_password = os.getenv('SESSION_PASSWORD')
 session_name = api_id + 'session_name'  # Ensure it matches the uploaded session file name
 
 session_file = session_name + '.session'
@@ -40,6 +42,34 @@ async def login():
         # Capture RPC error and display detailed error message
         print(f"Failed to send verification request, error: {e}", flush=True)        
 
+
+async def encrypt_session_file(input_file, output_file, password):
+    try:
+        # 构建 OpenSSL 加密命令
+        openssl_command = [
+            'openssl', 'aes-256-cbc', '-pbkdf2', '-salt',
+            '-in', input_file, '-out', output_file,
+            '-pass', f'pass:{password}'
+        ]
+
+        # 使用 asyncio.create_subprocess_exec 异步执行命令
+        process = await asyncio.create_subprocess_exec(
+            *openssl_command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        # 等待进程完成并获取输出
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            print(f"Encryption successful. Encrypted file saved as {output_file}")
+        else:
+            print(f"Encryption failed: {stderr.decode()}")
+
+    except Exception as e:
+        print(f"Encryption failed with exception: {str(e)}")
+
 async def main():
     try:
         # Attempt to start the client
@@ -50,12 +80,24 @@ async def main():
         print("Detected duplicate authorization key, deleting old session file and retrying login...", flush=True)
         await client.disconnect()  # Disconnect the client
         client.session.close()  # Ensure the session is closed
-        if os.path.exists(session_file):
-            os.remove(session_file)
-            print("Session file deleted, restarting the client...", flush=True)
+        try:
+            if os.path.exists(session_file):
+                os.remove(session_file)
+                print(f"已删除会话文件: {session_file}", flush=True)
+            if os.path.exists(session_file + ".enc"):
+                os.remove(session_file + ".enc")
+                print(f"已删除加密的会话文件: {session_file}.enc", flush=True)
+        except FileNotFoundError:
+            print("删除会话文件时未找到文件。", flush=True)
+        await asyncio.sleep(1)  # 间隔1秒
 
-        # Reconnect after deleting the old session
         await client.connect()
+        # Reconnect after deleting the old session
+        #
+        # 检查客户端是否已连接
+        if not client.is_connected():
+            print("客户端连接失败，请检查网络连接或 API 密钥配置。", flush=True)
+            return
 
     # Check if the user is already authorized
     if not await client.is_user_authorized():
@@ -63,6 +105,10 @@ async def main():
         await login()
     else:
         print("User is already authorized, no need to log in again", flush=True)
+
+    print(f"\n\nopenssl aes-256-cbc -pbkdf2 -salt -in {session_file} -out {session_file}.enc -pass pass:{session_password}\n\n")
+    await encrypt_session_file(session_file, session_file+".enc", session_password)
+
 
 # Explicitly control client startup process instead of using `with client:`
 if __name__ == '__main__':
