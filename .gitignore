@@ -169,3 +169,4 @@ last_read_message_id.json
 *.code-workspace
 *.session.enc
 
+.github/workflows/main.yml
