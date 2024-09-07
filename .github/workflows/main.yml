@@ -17,6 +17,12 @@ jobs:
     #   cancel-in-progress: true             # 保留旧的工作流，取消新的
 
     steps:
+
+    # 步骤 7: 删除锁文件（可选步骤，表示任务完成）
+    - name: Remove lock file
+      run: |
+        rm job.lock
+    
     # 步骤 1: Checkout 代码仓库
     - name: Checkout repository
       uses: actions/checkout@v4
