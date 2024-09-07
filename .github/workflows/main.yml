@@ -2,7 +2,7 @@ name: Deploy Telethon
 
 on: 
   schedule:
-    - cron: '*/15 * * * *'  # 每30分钟触发一次
+    - cron: '*/15 * * * *'  # 每15分钟触发一次
   push: 
     branches: 
       - master  # 当推送到 master 分支时触发
@@ -12,14 +12,42 @@ jobs:
   run-telethon-bot:
     runs-on: ubuntu-latest
 
-    concurrency:
-      group: my-workflow-${{ github.ref }}  # 设定并发组
-      cancel-in-progress: true             # 保留旧的工作流，取消新的
+    # concurrency:
+    #   group: my-workflow-${{ github.ref }}  # 设定并发组
+    #   cancel-in-progress: true             # 保留旧的工作流，取消新的
 
     steps:
     
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Restore lock file from cache
+      uses: actions/cache@v4
+      id: cache-lock
+      with:
+        path: job.lock
+        key: job-lock
+
+    - name: Check for lock file
+      run: |
+        if [ -f job.lock ]; then
+          echo "Lock file exists. Another job is running."
+          exit 1
+        else
+          echo "No lock file found. Proceeding with the job."
+        fi
+
+    - name: Create lock file
+      if: steps.cache-lock.outputs.cache-hit != 'true'
+      run: |
+        touch job.lock
+
+    - name: Save lock file to cache
+      uses: actions/cache@v4
+      with:
+        path: job.lock
+        key: job-lock
+
 
     - name: Set up Python
       uses: actions/setup-python@v4
