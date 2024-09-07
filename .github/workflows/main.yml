@@ -37,7 +37,7 @@ jobs:
 
           console.log("Workflow runs data:", JSON.stringify(runs.data, null, 2));
 
-          const otherRuns = data.workflow_runs.filter(run => run.id !== currentRunId);
+          const otherRuns = runs.workflow_runs.filter(run => run.id !== currentRunId);
 
 
           if (otherRuns.length > 0) {
