@@ -2,7 +2,7 @@ name: Deploy Telethon
 
 on: 
   schedule:
-    - cron: '*/15 * * * *'  # 每30分钟触发一次
+    - cron: '*/15 * * * *'  # 每15分钟触发一次
   push: 
     branches: 
       - master  # 当推送到 master 分支时触发
@@ -12,37 +12,34 @@ jobs:
   run-telethon-bot:
     runs-on: ubuntu-latest
 
-    # concurrency:
-    #   group: my-workflow-${{ github.ref }}  # 设定并发组
-    #   cancel-in-progress: true             # 保留旧的工作流，取消新的
-
     steps:
     # 步骤 1: Checkout 代码仓库
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # 步骤 2: 使用 GitHub Script 查找当前正在运行的工作流
     - name: Check for running workflows
       uses: actions/github-script@v6
       id: check-running
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const { data } = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'main.yml',  // 使用 main.yml 作为 workflow_id
-            per_page: 1,
-            status: 'in_progress', // 只查找正在进行中的工作流
+            workflow_id: context.workflow,  // 当前工作流的ID
+            status: 'in_progress',          // 只查找正在进行中的工作流
+            per_page: 10                    // 检查最近10个工作流运行状态
           });
-          if (data.total_count > 1) {
+
+          if (data.workflow_runs.length > 0) {
             core.setFailed(`Another workflow is already running.`);
           } else {
             console.log("No other running workflows.");
           }
-      continue-on-error: true
+      continue-on-error: false
 
-
-    
-
+    # 步骤 3: 如果没有其他工作流在运行，则继续执行任务
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -52,7 +49,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
 
     - name: Get previous workflow run ID
       uses: actions/github-script@v6
@@ -98,7 +94,6 @@ jobs:
       run: |
         openssl aes-256-cbc -d -pbkdf2 -in "${{ secrets.API_ID }}session_name.session.enc" -out "${{ secrets.API_ID }}session_name.session" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
 
-
     - name: Run Telethon script
       env:
         API_ID: ${{ secrets.API_ID }}
@@ -125,7 +120,6 @@ jobs:
         name: session_name
         path: ${{ secrets.API_ID }}session_name.session.enc
 
-
     - name: Check if last_read_message_id.json was created
       run: |
         if [ -f last_read_message_id.json ]; then
@@ -143,16 +137,14 @@ jobs:
     - name: Delete old workflow runs
       uses: actions/github-script@v6
       with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # 使用个人访问令牌
+        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         script: |
           const runs = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'main.yml',  // 使用 main.yml 作为 workflow_id
-            per_page: 100,  // 获取最多100个运行
+            workflow_id: 'main.yml',
+            per_page: 100,
           });
-
-          console.log('Found workflow runs:', runs.data.workflow_runs.length);
 
           const runIdsToDelete = runs.data.workflow_runs.slice(4).map(run => run.id);
 
