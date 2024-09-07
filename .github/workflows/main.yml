@@ -17,54 +17,28 @@ jobs:
     #   cancel-in-progress: true             # 保留旧的工作流，取消新的
 
     steps:
-
-    # 步骤 7: 删除锁文件（可选步骤，表示任务完成）
-    - name: Remove lock file
-      run: |
-        rm job.lock
-    
     # 步骤 1: Checkout 代码仓库
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 步骤 2: 尝试恢复缓存（即检查锁文件）
-    - name: Restore lock file from cache
-      uses: actions/cache@v4
-      id: cache-lock
+    # 步骤 2: 使用 GitHub Script 查找当前正在运行的工作流
+    - name: Check for running workflows
+      uses: actions/github-script@v6
+      id: check-running
       with:
-        path: job.lock           # 指定要缓存的文件路径
-        key: job-lock            # 锁文件的缓存键名
-        restore-keys: job-lock   # 如果找不到缓存时使用的备用键（这里没有设置备用键）
-
-    # 步骤 3: 检查锁文件是否存在以及其时间
-    - name: Check for lock file and delete if older than 1 hour
-      run: |
-        if [ -f job.lock ]; then
-          # 如果锁文件存在，检查其修改时间是否超过1小时
-          if [ $(find job.lock -mmin +60) ]; then
-            echo "Lock file exists but is older than 1 hour. Deleting it."
-            rm job.lock  # 删除超过一小时的锁文件
-          else
-            echo "Lock file exists and is less than 1 hour old. Another job is running."
-            exit 1  # 锁文件存在且在一小时内，终止任务
-          fi
-        else
-          echo "No lock file found. Proceeding with the job."
-        fi
-
-    # 步骤 4: 创建锁文件（如果缓存没有命中）
-    - name: Create lock file
-      if: steps.cache-lock.outputs.cache-hit != 'true'  # 如果缓存不存在才创建锁文件
-      run: |
-        touch job.lock
-
-    # 步骤 5: 保存锁文件到缓存
-    - name: Save lock file to cache
-      if: steps.cache-lock.outputs.cache-hit != 'true'  # 只有当缓存未命中时，才保存锁文件到缓存
-      uses: actions/cache@v4
-      with:
-        path: job.lock
-        key: job-lock
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { data } = await github.rest.actions.listWorkflowRuns({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: context.workflow, // 当前工作流的ID
+            status: 'in_progress', // 只查找正在进行中的工作流
+          });
+          if (data.total_count > 1) {
+            core.setFailed(`Another workflow is already running.`);
+          } else {
+            console.log("No other running workflows.");
+          }
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -187,7 +161,3 @@ jobs:
             });
             console.log(`Deleted workflow run with ID: ${runId}`);
           }
-    # 步骤 7: 删除锁文件（可选步骤，表示任务完成）
-    - name: Remove lock file
-      run: |
-        rm job.lock
