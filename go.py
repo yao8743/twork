@@ -44,10 +44,10 @@ except ValueError:
     exit(1)
     
 #max_process_time 設為 600 秒，即 10 分鐘
-max_process_time = 600  # 20分钟
+max_process_time = 1500  # 10分钟
 max_media_count = 55  # 10个媒体文件
 max_count_per_chat = 11  # 每个对话的最大消息数
-max_break_time = 120  # 休息时间
+max_break_time = 90  # 休息时间
 
 
 
@@ -106,7 +106,7 @@ async def main():
                 
             
 
-            if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
+            if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
                 count_per_chat=0
                 
 
@@ -144,7 +144,10 @@ async def main():
                             if count_per_chat >= max_count_per_chat:
                                 NEXT_DIALOGS = True
                                 break
+
                             last_message_id = await tgbot.forward_media_to_warehouse(client,message)
+                            
+                            
                             # print(f"last_message_id: {last_message_id}")
                             media_count = media_count + 1
                             count_per_chat = count_per_chat +1
@@ -265,7 +268,7 @@ async def main():
 
         if NEXT_CYCLE:
             print(f"\nExecution time exceeded {max_process_time} seconds. Stopping.\n", flush=True)
-            tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
+            #await tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
             break
         
 
