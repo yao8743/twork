@@ -265,7 +265,7 @@ async def main():
 
         if NEXT_CYCLE:
             print(f"\nExecution time exceeded {max_process_time} seconds. Stopping.\n", flush=True)
-            tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
+            await tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
             break
         
 
