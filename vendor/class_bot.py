@@ -175,6 +175,34 @@ class LYClass:
                 await publicbot_conv.send_file(filetobot_response.media, caption=caption_text)
                 print(">>>>Forwarded filetobot response to publish bot with caption.")
 
+    async def send_video_to_filetobot_and_send_to_qing_bot(self, client, video):
+        print(">>>>Sending video to filetobot and forwarding to qing bot.")
+        # original_message_id = original_message.id
+
+        # 将视频发送到 filetobot 并等待响应
+        async with client.conversation('filetobot') as filetobot_conv:
+            filetobot_message = await filetobot_conv.send_file(video)
+            try:
+                # 持续监听，直到接收到媒体文件
+                while True:
+                    filetobot_response = await asyncio.wait_for(filetobot_conv.get_response(filetobot_message.id), timeout=30)
+                    if filetobot_response.media:
+                        break
+                    else:
+                        print(">>>Received text response, waiting for media...")
+
+            except asyncio.TimeoutError:
+                # await client.send_message(self.config['work_chat_id'], "filetobot timeout", reply_to=original_message_id)
+                print("filetobot response timeout.")
+                return
+
+            # 将 filetobot 的响应内容传送给 public_bot_id，并设置 caption 为原始消息的文本
+            async with client.conversation(self.config['work_bot_id']) as publicbot_conv:
+                # caption_text = "|_SendToBeach_|\n"+original_message.text+"\n"+filetobot_response.message
+                await publicbot_conv.send_file(filetobot_response.media, caption=filetobot_response.message)
+                print(">>>>Forwarded filetobot response to qing bot with caption.")
+
+
     async def wpbot(self, client, message, bot_username):
         try:
             chat_id = self.config['work_chat_id']
