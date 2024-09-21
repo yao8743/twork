@@ -108,7 +108,7 @@ async def main():
                 
             
 
-            if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
+            if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
                 count_per_chat=0
 
                
