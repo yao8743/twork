@@ -145,6 +145,8 @@ async def main():
                                     botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
                                     print(f"Forward:{botname}")
                                     await tgbot.client.send_message(botname, message)
+                                else:
+                                    await tgbot.send_video_to_filetobot_and_send_to_qing_bot(client,message)
                             except Exception as e:
                                 print(f"Error kicking bot: {e}", flush=True)
                                 
@@ -152,7 +154,7 @@ async def main():
                                 NEXT_MESSAGE = True
 
 
-                            await tgbot.send_video_to_filetobot_and_send_to_qing_bot(client,message)
+                            
                             
 
                         if tgbot.config['warehouse_chat_id']!=0 and entity.id != tgbot.config['work_chat_id'] and entity.id != tgbot.config['warehouse_chat_id']:
@@ -196,17 +198,10 @@ async def main():
                                 botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
                                 print(f"Kick:{botname}")
                                 await tgbot.client.send_message(botname, "/start")
+                                NEXT_MESSAGE = True
                         except Exception as e:
                             print(f"Error kicking bot: {e}", flush=True)
                             
-                        finally:
-                            NEXT_MESSAGE = True
-
-
-
-                                
-                               
-
 
                         # print(f">>>Reading TEXT from entity {entity.id}/{entity_title} - {message}\n")
                         regex1 = r"https?://t\.me/(?:joinchat/)?\+?[a-zA-Z0-9_\-]{15,50}"
@@ -296,8 +291,8 @@ async def main():
 
 
         if NEXT_CYCLE:
-            print(f"\nExecution time exceeded {max_process_time} seconds. Stopping.\n", flush=True)
-            print(f"\n")
+            print(f"\nExecution time exceeded {max_process_time} seconds. Stopping. T:{elapsed_time} of {max_process_time} ,C:{media_count} of {max_media_count}\n", flush=True)
+            print(f"-\n", flush=True)
             #await tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
             break
         
@@ -305,8 +300,8 @@ async def main():
 
 
         print("\nExecution time is " + str(elapsed_time) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
-        print(f"\n")
-        print(f"\n")
+        print(f"\n", flush=True)
+        print(f"-\n", flush=True)
         await asyncio.sleep(max_break_time)  # 间隔180秒
         media_count = 0
 
