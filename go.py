@@ -297,6 +297,7 @@ async def main():
 
         if NEXT_CYCLE:
             print(f"\nExecution time exceeded {max_process_time} seconds. Stopping.\n", flush=True)
+            print(f"\n")
             #await tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
             break
         
@@ -304,6 +305,8 @@ async def main():
 
 
         print("\nExecution time is " + str(elapsed_time) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
+        print(f"\n")
+        print(f"\n")
         await asyncio.sleep(max_break_time)  # 间隔180秒
         media_count = 0
 
