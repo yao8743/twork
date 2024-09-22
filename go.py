@@ -5,6 +5,7 @@ from vendor.wpbot import wp_bot  # 导入 wp_bot
 import asyncio
 import time
 import re
+
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
 
 # 检查是否在本地开发环境中运行
@@ -124,7 +125,7 @@ async def main():
 
 
                 
-                print(f"\r\n>Reading messages from entity {entity.id}/{entity_title} - {last_read_message_id}\n", flush=True)
+                print(f"\r\n>Reading messages from entity {entity.id}/{entity_title} - {last_read_message_id} - U:{dialog.unread_count} \n", flush=True)
                 async for message in client.iter_messages(entity, min_id=last_read_message_id, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
                     NEXT_MESSAGE = False
                    
@@ -137,8 +138,22 @@ async def main():
                        
 
                         if dialog.is_user:
+                                                    # 使用正则表达式进行匹配，忽略大小写
+                            try:
+                                match = re.search(r'\|_forward_\|\s*(.*?)\s*(bot)', message.message, re.IGNORECASE)
+                                if match:
+                                    botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
+                                    print(f"Forward:{botname}")
+                                    await tgbot.client.send_message(botname, message)
+                            except Exception as e:
+                                print(f"Error kicking bot: {e}", flush=True)
+                                
+                            finally:
+                                NEXT_MESSAGE = True
+
+
                             await tgbot.send_video_to_filetobot_and_send_to_qing_bot(client,message)
-                            print(f"\r\n@>Reading messages from entity {entity.id}/{entity_title} - {dialog.unread_count}\n", flush=True) 
+                            
 
                         if tgbot.config['warehouse_chat_id']!=0 and entity.id != tgbot.config['work_chat_id'] and entity.id != tgbot.config['warehouse_chat_id']:
                             
@@ -152,7 +167,7 @@ async def main():
 
                             last_message_id = await tgbot.forward_media_to_warehouse(client,message)
                             
-                            print(f"\r\n@>{dialog}", flush=True)
+                            # print(f"\r\n@>{dialog}", flush=True)
 
                             
                             
@@ -174,16 +189,21 @@ async def main():
 
                     elif message.text:
                        
-                        if message.text.startswith("|_kick_|"):
-                            try:
-                                botname = message.text[len("|_kick_|"):]
-                               
+                        # 使用正则表达式进行匹配，忽略大小写
+                        try:
+                            match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
+                            if match:
+                                botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
+                                print(f"Kick:{botname}")
                                 await tgbot.client.send_message(botname, "/start")
-                            except Exception as e:
-                                print(f"Error kicking bot: {e}", flush=True)
+                        except Exception as e:
+                            print(f"Error kicking bot: {e}", flush=True)
                             
-                            finally:
-                                NEXT_MESSAGE = True
+                        finally:
+                            NEXT_MESSAGE = True
+
+
+
                                 
                                
 
@@ -283,7 +303,7 @@ async def main():
 
 
 
-        print("\nExecution time is " + str(elapsed_time) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n", flush=True)
+        print("\nExecution time is " + str(elapsed_time) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
         await asyncio.sleep(max_break_time)  # 间隔180秒
         media_count = 0
 
