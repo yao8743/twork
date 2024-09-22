@@ -117,10 +117,10 @@ async def main():
 
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
 
-                if entity.id == tgbot.config['work_chat_id']:
-                    last_read_message_id = 14244
-                else:
-                    last_read_message_id = tgbot.load_last_read_message_id(entity.id)
+                # if entity.id == tgbot.config['work_chat_id']:
+                #     last_read_message_id = 14244
+                # else:
+                last_read_message_id = tgbot.load_last_read_message_id(entity.id)
                 
 
 
