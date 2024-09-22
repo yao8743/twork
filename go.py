@@ -240,9 +240,15 @@ async def main():
                             if media_count >= max_media_count:
                                 NEXT_CYCLE = True
                                 break
+                            
+                            if count_per_chat >= max_count_per_chat:
+                                NEXT_DIALOGS = True
+                                break
+
 
                             await tgbot.process_by_check_text(message,'tobot')
                             media_count = media_count + 1
+                            count_per_chat = count_per_chat +1
                         elif dialog.is_group or dialog.is_channel:
                         
                             if entity.id in enclist:
@@ -251,7 +257,18 @@ async def main():
                                 ckresult = tgbot.check_strings(message.text)
                                 if ckresult:
                                     # print(f"===============\n{message}\n===============\n")
+                                    if media_count >= max_media_count:
+                                        NEXT_CYCLE = True
+                                        break
+                                    
+                                    if count_per_chat >= max_count_per_chat:
+                                        NEXT_DIALOGS = True
+                                        break
+
+
                                     await tgbot.process_by_check_text(message,'encstr')
+                                    media_count = media_count + 1
+                                    count_per_chat = count_per_chat +1
                             else:    
                                 if '海水浴场' in message.text:
 
@@ -300,8 +317,8 @@ async def main():
 
 
         print("\nExecution time is " + str(elapsed_time) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
-        print(f"\n", flush=True)
         print(f"-\n", flush=True)
+        print(f"-------------------------------------\n", flush=True)
         await asyncio.sleep(max_break_time)  # 间隔180秒
         media_count = 0
 
