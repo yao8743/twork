@@ -30,12 +30,12 @@ class LYClass:
                     for match in matches:
                         enc_exist=True
                         if mode == 'encstr':
-                            print(f">>send to QQ: {message.id}\n")
+                            print(f">>send to QQ: {message.id}\n", flush=True)
                             async with self.client.conversation(self.config['work_bot_id']) as conv:
                                 await conv.send_message(match)
                                 # print(match)
                         elif mode == 'tobot':
-                            print(f">>send to Enctext BOT: {message.id}\n")
+                            print(f">>send to Enctext BOT: {message.id}\n", flush=True)
                             await self.wpbot(self.client, message, bot['bot_name'])
             else:
                 print(f"No matching pattern for message: {message.text} {message} \n")
