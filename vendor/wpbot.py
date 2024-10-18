@@ -53,7 +53,7 @@ wp_bot = [
         'bot_name': 'jyypbot',
         'id': '6873643118',
         'mode': 'link',
-        'pattern': r'/^https:\/\/t\.me\/jyypbot\?start=([0-9a-fA-F-]+)/',
+        'pattern': r'https:\/\/t\.me\/filetobot\?start=([0-9a-fA-F\-]+)',
         'message_thread_id': '29'
     },
     {
