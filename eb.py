@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from peewee import PostgresqlDatabase, Model, CharField
 from playhouse.pool import PooledPostgresqlDatabase
@@ -66,64 +67,88 @@ async def handle_message(update: Update, context) -> None:
         # 文本消息
         message_type = "文本"
         
+        rows = message.text.split('\n')
+
+
         query = await tgbot.process_by_check_text(message,'query')
         if query:
-            if query['mode'] == 'enctext':
-                response = f"<code>{query['match']}</code> via @{query['bot_name']}"
-            elif query['mode'] == 'link':
-                response = f"https://t.me/{query['bot_name']}?start={query['match']}"
-           
-            check_connection()
-            # 使用 peewee 查询数据库 where enc_str = query['match']
-            result = datapan.get_or_none(datapan.enc_str == query['match'])
-            if result:
-                # 指定要回复的 message_id
-                reply_to_message_id = message.message_id
+            # 根据 bot 进行排序和分组
+            bot_dict = defaultdict(list)
+            for bot_result in query['results']:
+                bot_dict[result['bot']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
 
-                if result.file_type == 'photo':
-                    # 回复消息中的照片
-                    await context.bot.send_photo(
-                        chat_id=message.chat_id,
-                        photo=result.file_id,
-                        caption=f"#{result.file_unique_id} #ZTD",
-                        reply_to_message_id=reply_to_message_id,
-                        parse_mode=ParseMode.HTML
-                    )
-                    response = f"文件 ID: {result.file_id}"
-                    return True
-                elif result.file_type == 'video':   
-                    # 回复消息中的视频
-                    await context.bot.send_video(
-                        chat_id=message.chat_id,
-                        video=result.file_id,
-                        caption=f"#{result.file_unique_id} #ZTD",
-                        reply_to_message_id=reply_to_message_id,
-                        parse_mode=ParseMode.HTML
-                    )
-                    response = f"文件 ID: {result.file_id}"
-                    return True
-                elif result.file_type == 'document':
-                    # 回复消息中的文件
-                    await context.bot.send_document(
-                        chat_id=message.chat_id,
-                        document=result.file_id,
-                        caption=f"#{result.file_unique_id} #ZTD",
-                        reply_to_message_id=reply_to_message_id,
-                        parse_mode=ParseMode.HTML
-                    )
-                    response = f"文件 ID: {result.file_id}"
-                    return True
-            else:
-                #传递给work_bot_id work_bot_id
-                # 通过 bot 对象发送消息
-                try:
-                    await context.bot.send_message(chat_id=man_bot_id, text=f"|_request_|{query['match']}")
-                except telegram.error.BadRequest as e:
-                    print(f"Error: {e}")
+             # 展示结果
+            for bot, entries in sorted(bot_dict.items()):
+                print(f"Bot: {bot}")
+                match_results = ""
+                bot_mode = ""
+                for match, bot_name,mode in entries:
+                    bot_mode =mode 
+                    match_results += match + "\n"
+
+                    if bot_mode == 'enctext':
+                        match_results += match + "\n"
+                        # response += f"<code>{match_results}</code> via @{bot}"
+                    elif bot_mode == 'link':
+                        match_results += f"https://t.me/{bot_name}?start={match}" + "\n"
+                        
+                    
+                
+                    check_connection()
+                    # 使用 peewee 查询数据库 where enc_str = query['match']
+                    result = datapan.get_or_none(datapan.enc_str == match)
+                    if result:
+                        # 指定要回复的 message_id
+                        reply_to_message_id = message.message_id
+
+                        if result.file_type == 'photo':
+                            # 回复消息中的照片
+                            await context.bot.send_photo(
+                                chat_id=message.chat_id,
+                                photo=result.file_id,
+                                caption=f"#{result.file_unique_id} #ZTD",
+                                reply_to_message_id=reply_to_message_id,
+                                parse_mode=ParseMode.HTML
+                            )
+                            response = f"文件 ID: {result.file_id}"
+                            return True
+                        elif result.file_type == 'video':   
+                            # 回复消息中的视频
+                            await context.bot.send_video(
+                                chat_id=message.chat_id,
+                                video=result.file_id,
+                                caption=f"#{result.file_unique_id} #ZTD",
+                                reply_to_message_id=reply_to_message_id,
+                                parse_mode=ParseMode.HTML
+                            )
+                            response = f"文件 ID: {result.file_id}"
+                            return True
+                        elif result.file_type == 'document':
+                            # 回复消息中的文件
+                            await context.bot.send_document(
+                                chat_id=message.chat_id,
+                                document=result.file_id,
+                                caption=f"#{result.file_unique_id} #ZTD",
+                                reply_to_message_id=reply_to_message_id,
+                                parse_mode=ParseMode.HTML
+                            )
+                            response = f"文件 ID: {result.file_id}"
+                            return True
+                    else:
+                        #传递给work_bot_id work_bot_id
+                        # 通过 bot 对象发送消息
+                        try:
+                            await context.bot.send_message(chat_id=man_bot_id, text=f"|_request_|{query['match']}")
+                        except telegram.error.BadRequest as e:
+                            print(f"Error: {e}")
+
+
+                if bot_mode == 'enctext':
+                    response += f"<code>{match_results}</code> via @{bot}\n"
+                elif bot_mode == 'link':
+                    response += f"{match_results}\n"
                 
                 
-
-            
         else:
             print(f"query: {query}")
             response = f"你发送的是{message_type}消息。"

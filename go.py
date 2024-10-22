@@ -256,9 +256,6 @@ async def main():
                                         print(f"Failed to join channel from link: {match_str}", flush=True)
                                         NEXT_DIALOGS = True
                                         break
-
-                                  
-
                                 else:
                                     # print(f"'{message.text}' ->matches: {match_str}  {entity.id} {tgbot.config['link_chat_id']}. =>forward\n")
                                    
@@ -319,8 +316,9 @@ async def main():
                                     await tgbot.process_by_check_text(message,'encstr')
                         elif dialog.is_user:
                             if '|_request_|' in message.text:
-
                                 await tgbot.process_by_check_text(message,'request')
+                            elif '|_askWBotFromUser_|' in message.text:
+                                await tgbot.process_by_check_text(message,'askWBotFromUser')
                             else:
                                 await tgbot.process_by_check_text(message,'encstr')
                             
