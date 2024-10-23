@@ -136,6 +136,7 @@ async def main():
                    
                     last_message_id = message.id  # 初始化 last_message_id
                    
+                    ##### 当前消息是媒体文件，且不是网页 #####
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
                         if dialog.is_user:
                             # 使用正则表达式进行匹配，忽略大小写
@@ -148,12 +149,13 @@ async def main():
                                     print(f"Captured string: {captured_str}")
                                     
                                     # 判断是否为数字
-                                    if captured_str.isdigit():
+                                    if tgbot.is_number(captured_str):
                                         print(f"Forward to number: {captured_str}")
                                         #如何captured_str是-100开头，则拿掉-100，再转成整数发送
                                         if captured_str.startswith('-100'):
                                             captured_str = captured_str.replace('-100','')
                                         
+                                        message.text = ''
                                         await tgbot.client.send_message(int(captured_str), message)  # 如果是数字，转成整数发送
                                     else:
                                         print(f"Forward to bot: {captured_str}")

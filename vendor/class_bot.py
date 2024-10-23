@@ -18,7 +18,10 @@ class LYClass:
     def __init__(self, client, config):
         self.config = config 
         self.client = client
-        
+    
+
+    def is_number(self,s):
+        return bool(re.match(r'^-?\d+(\.\d+)?$', s))
 
     # 查找文字，若存在匹配的字串，則根據傳入的參數mode來處理，若mode=tobot,則用 fetch_media_from_enctext 函數處理。若 mode=encstr，則用 forward_encstr_to_encbot 函數處理; 
     async def process_by_check_text(self,message,mode):
@@ -26,6 +29,7 @@ class LYClass:
             enc_exist = False
             if message and message.text:
                 results = []
+                
                 for bot in wp_bot:
                    
                     pattern = re.compile(bot['pattern'])
@@ -53,7 +57,7 @@ class LYClass:
                             bot['match'] = match
                             results.append(bot)
                             enc_exist=False
-                return {bot:bot,results:results}            
+                return results           
             else:
                 print(f"No matching pattern for message: {message.text} {message} \n")
         except Exception as e:
