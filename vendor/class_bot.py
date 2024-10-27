@@ -281,7 +281,7 @@ class LYClass:
                             video = response.media.document
                             await client.send_file(chat_id, video, reply_to=message.id)
                            
-                            print(">>>Reply witg video .")
+                            print(">>>Reply with video .")
 
                             #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
                             if chat_id != self.config['work_chat_id']:
@@ -294,7 +294,7 @@ class LYClass:
                             document = response.media.document
                             await client.send_file(chat_id, document, reply_to=message.id)
                           
-                            print(">>>Reply witg document .")
+                            print(">>>Reply with document .")
 
                             #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
                             if chat_id != self.config['work_chat_id']:
@@ -307,7 +307,7 @@ class LYClass:
                         # 处理图片
                         photo = response.media.photo
                         await client.send_file(chat_id, photo, reply_to=message.id)
-                        print(">>>Reply witg photo .")
+                        print(">>>Reply with photo .")
 
                         #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
                         if chat_id != self.config['work_chat_id']:
@@ -349,7 +349,7 @@ class LYClass:
             else:
                 bot_username = 'Qing002BOT'
 
-            # print(f">>>341\n")
+            print(f">>>update_wpbot_data\n")
             # print(f"message: {message}\n")
             ck_message = SimpleNamespace()
             ck_message.id = message.id
@@ -369,55 +369,57 @@ class LYClass:
                 query = await self.process_by_check_text(ck_message,'query')
                 # print(f"query: {query}")
                 if query:
+                    
+                    if message.video:
+                        file_id = message.video.file_id
+                        file_unique_id = message.video.file_unique_id
+                        file_type = 'video'
+                    elif message.document:
+                        file_id = message.document.file_id
+                        file_unique_id = message.document.file_unique_id
+                        file_type = 'document'    
+                    elif message.photo:
+                        file_id = message.photo[-1].file_id
+                        file_unique_id = message.photo[-1].file_unique_id
+                        file_type = 'photo'
 
-                    # 根据 bot 进行排序和分组
-                    bot_dict = defaultdict(list)
-                    for bot_result in query['results']:
-                        if isinstance(bot_result, dict):
-                            bot_dict[bot_result['bot_name']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
-                        else:
-                            print(f"Unexpected bot_result type: {type(bot_result)} - {bot_result}")
+                    # 准备插入的数据
+                    data = {
+                        'enc_str': query['results'][0]['match'],
+                        'file_unique_id': file_unique_id,
+                        'file_id': file_id,
+                        'file_type': file_type,
+                        'bot_name': bot_username,
+                        'wp_bot': query['results'][0]['bot_name']
+                    }
+
+                    # 使用 insert 或者更新功能
+                    query_sql = (datapan
+                            .insert(**data)
+                            .on_conflict(
+                                conflict_target=[datapan.enc_str],  # 冲突字段
+                                update={datapan.file_unique_id: data['file_unique_id'],
+                                        datapan.file_id: data['file_id'],
+                                        datapan.bot_name: data['bot_name'],
+                                        datapan.wp_bot: data['wp_bot']}
+                            ))
+
+                    query_sql.execute()
+
+                    # # 根据 bot 进行排序和分组
+                    # bot_dict = defaultdict(list)
+                    # for bot_result in query['results']:
+                    #     if isinstance(bot_result, dict):
+                    #         bot_dict[bot_result['bot_name']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
+                    #     else:
+                    #         print(f"Unexpected bot_result type: {type(bot_result)} - {bot_result}")
 
 
-                    # 展示结果
-                    for bot, entries in sorted(bot_dict.items()):
-                        # print(f"Bot: {bot}")
-                        for match, bot_name, mode in entries:
-                            if message.video:
-                                file_id = message.video.file_id
-                                file_unique_id = message.video.file_unique_id
-                                file_type = 'video'
-                            elif message.document:
-                                file_id = message.document.file_id
-                                file_unique_id = message.document.file_unique_id
-                                file_type = 'document'    
-                            elif message.photo:
-                                file_id = message.photo[-1].file_id
-                                file_unique_id = message.photo[-1].file_unique_id
-                                file_type = 'photo'
-
-                            # 准备插入的数据
-                            data = {
-                                'enc_str': match,
-                                'file_unique_id': file_unique_id,
-                                'file_id': file_id,
-                                'file_type': file_type,
-                                'bot_name': bot_username,
-                                'wp_bot': bot_name
-                            }
-
-                            # 使用 insert 或者更新功能
-                            query_sql = (datapan
-                                    .insert(**data)
-                                    .on_conflict(
-                                        conflict_target=[datapan.enc_str],  # 冲突字段
-                                        update={datapan.file_unique_id: data['file_unique_id'],
-                                                datapan.file_id: data['file_id'],
-                                                datapan.bot_name: data['bot_name'],
-                                                datapan.wp_bot: data['wp_bot']}
-                                    ))
-
-                            query_sql.execute()
+                    # # 展示结果
+                    # for bot, entries in sorted(bot_dict.items()):
+                    #     # print(f"Bot: {bot}")
+                    #     for match, bot_name, mode in entries:
+                            
             
         except Exception as e:
             print(f"发生错误: {e}")
