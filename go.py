@@ -319,8 +319,8 @@ async def main():
                         elif dialog.is_user:
                             if '|_request_|' in message.text:
                                 await tgbot.process_by_check_text(message,'request')
-                            elif '|_askWBotFromUser_|' in message.text:
-                                await tgbot.process_by_check_text(message,'askWBotFromUser')
+                            elif '|_sendToWZ_|' in message.text:
+                                await tgbot.process_by_check_text(message,'sendToWZ')
                             else:
                                 await tgbot.process_by_check_text(message,'encstr')
                             

@@ -89,6 +89,14 @@ wp_bot = [
         'mode': 'link',
         'pattern': r'https:\/\/t\.me\/WangPanBOT\?start=(file\w{14,20})',
         'message_thread_id': '32'
+    },
+    {
+        'title': 'salai',
+        'bot_name': 'salaiZTDBOT',
+        'id': '8116549849',
+        'mode': 'enctext',
+        'pattern': r'^(正(?:[\u4e00-\u9fff]{5,10})太(?:[\u4e00-\u9fff]{34,100})密(?:[\u4e00-\u9fff]{5,10})[文图影])$',
+        'message_thread_id': '32'
     }
 ]
 
