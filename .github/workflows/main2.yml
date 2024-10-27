@@ -30,7 +30,7 @@ jobs:
           const { data } = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'main.yml',  // 使用 main.yml 作为 workflow_id
+            workflow_id: 'main2.yml',  // 使用 main.yml 作为 workflow_id
             status: 'in_progress',
             per_page: 10              // 检查最近10个工作流运行状态
           });
@@ -164,7 +164,7 @@ jobs:
           const runs = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'main.yml',  // 使用 main.yml 作为 workflow_id
+            workflow_id: 'main2.yml',  // 使用 main.yml 作为 workflow_id
             per_page: 100,  // 获取最多100个运行
           });
 
