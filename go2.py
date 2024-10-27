@@ -118,47 +118,41 @@ check_connection()
 async def handle_bot_message(update: Update, context) -> None:
     message = update.message
     reply_to_message_id = message.message_id
-    #print(f"message: {update}")
-    response=''
+    response = ''
+
+    # 检查是否为私信，限制机器人只能私信接收消息
+    if message.chat.type not in ['private']:
+        return
+
+    # 处理文本消息
     if message.text:
-
-        chat_type = update.message.chat.type
-        if chat_type not in ['private']:
-            return
-
-        # 文本消息
-        
         message_type = "文本"
-        
-        query = await tgbot.process_by_check_text(message,'query')
+
+        # 调用 tgbot 进行文本检查处理
+        query = await tgbot.process_by_check_text(message, 'query')
         if query:
             bot_dict = defaultdict(list)
             for bot_result in query['results']:
                 if isinstance(bot_result, dict):
                     bot_dict[bot_result['title']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
-                else:
-                    print(f"Unexpected bot_result type: {type(bot_result)} - {bot_result}")
 
-
-            # 展示结果
+            # 遍历查询结果，生成回复
             for title, entries in sorted(bot_dict.items()):
-                # print(f"Bot: {title}")
                 unparse_enc = False
                 match_results = ""
                 bot_mode = ""
                 bot_username = ""
+
                 for match, bot_name, mode in entries:
                     bot_mode = mode 
                     bot_username = bot_name
-                    #show the attributes of match
-                    
-                    
-                    
-                    try:
 
+                    try:
+                        # 特定 bot 的特殊处理
                         if title == 'salai':
-                            decode_row =encoder.decode(match)
+                            decode_row = encoder.decode(match)
                             if decode_row['bot'] == config['bot_username']:
+                                # 根据文件类型发送响应
                                 if decode_row['file_type'] == 'photo':
                                     await context.bot.send_photo(
                                         chat_id=message.chat_id,
@@ -185,132 +179,100 @@ async def handle_bot_message(update: Update, context) -> None:
                                     )
                             continue
 
-                        check_connection()
-                        # 使用 peewee 查询数据库 where enc_str = query['match']
-                        result = datapan.get_or_none(datapan.enc_str == match)
-                        if result:
-                            # print(f"Found result: {result.file_id} {result.file_type}", flush=True)
-                            # 指定要回复的 message_id
-                            
-
-                            reply_caption = "<code>"+encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)+"</code>"
-                            # reply_caption = f"{result.file_type}"
-                            if result.file_type == 'photo':
-                                # 回复消息中的照片
-                                await context.bot.send_photo(
-                                    chat_id=message.chat_id,
-                                    photo=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                                # response = f"文件 ID: {result.file_id}"
+                        # 使用 db.atomic() 上下文管理器查询数据库，确保自动管理连接
+                        with db.atomic():
+                            result = datapan.get_or_none(datapan.enc_str == match)
+                            if result:
+                                # 构造回复内容
+                                reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
                                 
-                            elif result.file_type == 'video':   
-                                # 回复消息中的视频
-                                await context.bot.send_video(
-                                    chat_id=message.chat_id,
-                                    video=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                                # response = f"文件 ID: {result.file_id}"
-                                
-                            elif result.file_type == 'document':
-                                # 回复消息中的文件
-                                await context.bot.send_document(
-                                    chat_id=message.chat_id,
-                                    document=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                                # response = f"文件 ID: {result.file_id}"
-                            
-                        else:
-                            #传递给work_bot_id work_bot_id
-                            # 通过 bot 对象发送消息
-                            try:
+                                # 根据文件类型发送相应的消息
+                                if result.file_type == 'photo':
+                                    await context.bot.send_photo(
+                                        chat_id=message.chat_id,
+                                        photo=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                elif result.file_type == 'video':   
+                                    await context.bot.send_video(
+                                        chat_id=message.chat_id,
+                                        video=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                elif result.file_type == 'document':
+                                    await context.bot.send_document(
+                                        chat_id=message.chat_id,
+                                        document=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                            else:
                                 unparse_enc = True
                                 if bot_mode == 'enctext':
                                     match_results += match + "\n"
-                                    #response += f"<code>{match_results}</code> via @{bot}"
                                 elif bot_mode == 'link':
-                                    match_results += f"https://t.me/{bot_name}?start={match}" + "\n"
+                                    match_results += f"https://t.me/{bot_name}?start={match}\n"
 
-                                await context.bot.send_message(f"-100{config['work_chat_id']}", text=f"{match}")
-                            except telegram.error.BadRequest as e:
-                                print(f"Error: {e} {config['work_chat_id']}", flush=True)
+                                await context.bot.send_message(
+                                    chat_id=f"-100{config['work_chat_id']}",
+                                    text=match
+                                )
                     except peewee.InterfaceError as e:
                         print(f"Database connection error: {e}. Attempting to reconnect...", flush=True)
-                        db.connect()
-                        result = datapan.get_or_none(datapan.enc_str == match)
+                        # 在出现连接问题时，重新连接数据库
+                        check_connection()
+                        with db.atomic():
+                            result = datapan.get_or_none(datapan.enc_str == match)
                     except Exception as e:
                         print(f"An error occurred while querying the database: {e}", flush=True)
 
+                # 生成未匹配结果的响应
                 if unparse_enc:
                     if bot_mode == 'enctext':
                         response += f"<pre>{match_results}</pre> via @{bot_username}\n\n"
                     elif bot_mode == 'link':
                         response += f"{match_results}\n\n"
-                
-                
-        # else:
-            # print(f"query: {query}")
-            # response = f"你发送的是{message_type}消息。{message.text}"
-        
+
     elif message.photo:
-        # 照片消息
+        # 照片消息处理
         await tgbot.update_wpbot_data('', message, datapan)
         message_type = "照片"
-        file_id = message.photo[-1].file_id  # 获取最大的分辨率
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
     
     elif message.video:
-        # 视频消息
-        message_type = "视频"
+        # 视频消息处理
         await tgbot.update_wpbot_data('', message, datapan)
-        file_id = message.video.file_id
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
+        message_type = "视频"
     
     elif message.document:
-        # 文档/文件消息
+        # 文档/文件消息处理
         await tgbot.update_wpbot_data('', message, datapan)
         message_type = "文件"
-        file_id = message.document.file_id
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
     
     elif message.voice:
-        # 语音消息
+        # 语音消息处理
         message_type = "语音"
-        file_id = message.voice.file_id
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
     
     elif message.audio:
-        # 音频消息
+        # 音频消息处理
         message_type = "音频"
-        file_id = message.audio.file_id
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
     
     elif message.video_note:
-        # 视频笔记消息
+        # 视频笔记消息处理
         message_type = "视频笔记"
-        file_id = message.video_note.file_id
-        # response = f"你发送的是{message_type}消息。File ID: {file_id}"
 
     else:
-        # 其他类型消息
+        # 其他类型消息处理
         message_type = "未知类型"
-        # response = f"你发送的是{message_type}消息。"
 
-    # 打印消息类型和内容到控制台
-    sender_name = message.from_user.username or message.from_user.id
-    # print(f"收到来自 {sender_name} 的 {message_type} 消息 {message.text}")
-    # 使用bot回覆用户
-
+    # 发送文本消息响应
     if response:
         await update.message.reply_text(response, parse_mode=ParseMode.HTML)
+
 
 
 # 创建客户端
