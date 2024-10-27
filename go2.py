@@ -137,8 +137,11 @@ async def handle_bot_message(update: Update, context) -> None:
     message = update.message
     reply_to_message_id = message.message_id
     response = ''
+    bot_chat_id = f"-100{config['work_chat_id']}"
 
+    # print(f"Received message: {message}", flush=True)
 
+    # 
 
     # 处理文本消息
     if message.text:
@@ -252,7 +255,32 @@ async def handle_bot_message(update: Update, context) -> None:
         await tgbot.update_wpbot_data('', message, datapan)
     elif message.document:
         print("Document message received", flush=True)
+        
+        print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
+        if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
+            print(f"2-{message['chat']['id']} {bot_chat_id}", flush=True)
+
         await tgbot.update_wpbot_data('', message, datapan)
+
+    print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
+
+    if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
+        chat_id = message['chat']['id']
+        message_id = message['message_id']
+        reply_to_message_id = message['reply_to_message']['message_id']  
+        
+        # print(f"chat_id: {chat_id}, message_id: {message_id}, reply_to_message_id: {reply_to_message_id}", flush=True)
+
+        # 删除消息
+        try:
+            await context.bot.delete_message(chat_id=chat_id, message_id=reply_to_message_id)
+            await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+            
+        except Exception as e:
+            await update.message.reply_text(f"删除失败: {e}")   
+
+       
+
 
     if response:
         await update.message.reply_text(response, parse_mode=ParseMode.HTML)
