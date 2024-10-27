@@ -56,11 +56,11 @@ try:
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
-    max_process_time = 1500  # 10分钟
+    max_process_time = 1700  # 10分钟
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 20  # 休息时间
+    max_break_time = 30  # 休息时间
 
     # 创建 LYClass 实例
 
@@ -142,7 +142,7 @@ async def handle_bot_message(update: Update, context) -> None:
 
             # 展示结果
             for title, entries in sorted(bot_dict.items()):
-                print(f"Bot: {title}")
+                # print(f"Bot: {title}")
                 unparse_enc = False
                 match_results = ""
                 bot_mode = ""
@@ -151,8 +151,7 @@ async def handle_bot_message(update: Update, context) -> None:
                     bot_mode = mode 
                     bot_username = bot_name
                     #show the attributes of match
-                    print(f"{entries} {match}")
-
+                    
                     
                     
                     try:
@@ -190,7 +189,7 @@ async def handle_bot_message(update: Update, context) -> None:
                         # 使用 peewee 查询数据库 where enc_str = query['match']
                         result = datapan.get_or_none(datapan.enc_str == match)
                         if result:
-                            print(f"Found result: {result.file_id} {result.file_type}", flush=True)
+                            # print(f"Found result: {result.file_id} {result.file_type}", flush=True)
                             # 指定要回复的 message_id
                             
 
@@ -244,11 +243,11 @@ async def handle_bot_message(update: Update, context) -> None:
                             except telegram.error.BadRequest as e:
                                 print(f"Error: {e} {config['work_chat_id']}", flush=True)
                     except peewee.InterfaceError as e:
-                        print(f"Database connection error: {e}. Attempting to reconnect...")
+                        print(f"Database connection error: {e}. Attempting to reconnect...", flush=True)
                         db.connect()
                         result = datapan.get_or_none(datapan.enc_str == match)
                     except Exception as e:
-                        print(f"An error occurred while querying the database: {e}")
+                        print(f"An error occurred while querying the database: {e}", flush=True)
 
                 if unparse_enc:
                     if bot_mode == 'enctext':
@@ -257,8 +256,8 @@ async def handle_bot_message(update: Update, context) -> None:
                         response += f"{match_results}\n\n"
                 
                 
-        else:
-            print(f"query: {query}")
+        # else:
+            # print(f"query: {query}")
             # response = f"你发送的是{message_type}消息。{message.text}"
         
     elif message.photo:

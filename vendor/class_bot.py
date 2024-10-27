@@ -67,7 +67,7 @@ class LYClass:
                             # 使用一个新的字典来存储 bot 信息，避免直接修改原始 bot
                             # 先判断 results_dictp['results'] 中是否有相同的 match，如果有，则不再添加
                             
-                            print(f"\nmatch: {match}\n\n")
+                            # print(f"\nmatch: {match}\n\n")
                             bot_copy = bot.copy()
                             bot_copy['match'] = match
                             
@@ -349,8 +349,8 @@ class LYClass:
             else:
                 bot_username = 'Qing002BOT'
 
-            print(f">>>341\n")
-            print(f"message: {message}\n")
+            # print(f">>>341\n")
+            # print(f"message: {message}\n")
             ck_message = SimpleNamespace()
             ck_message.id = message.id
             if message.reply_to_message and message.reply_to_message.text:
@@ -363,11 +363,11 @@ class LYClass:
                 ck_message.text = message.caption
                
 
-            print(f"\nck_message: {ck_message}\n")
+            # print(f"\nck_message: {ck_message}\n")
 
             if ck_message.text:            
                 query = await self.process_by_check_text(ck_message,'query')
-                print(f"query: {query}")
+                # print(f"query: {query}")
                 if query:
 
                     # 根据 bot 进行排序和分组
@@ -381,7 +381,7 @@ class LYClass:
 
                     # 展示结果
                     for bot, entries in sorted(bot_dict.items()):
-                        print(f"Bot: {bot}")
+                        # print(f"Bot: {bot}")
                         for match, bot_name, mode in entries:
                             if message.video:
                                 file_id = message.video.file_id
