@@ -97,18 +97,20 @@ class datapan(Model):
     class Meta:
         database = db
 
-# 连接到数据库
-db.connect()
-
-# 如果需要，创建表
-db.create_tables([datapan], safe=True)
-
-
-
-
 def check_connection():
     if db.is_closed():
         db.connect()
+
+# 连接到数据库
+check_connection()
+
+# 如果需要，创建表
+# db.create_tables([datapan], safe=True)
+
+
+
+
+
 
 
 # 定义一个处理不同类型消息的函数
