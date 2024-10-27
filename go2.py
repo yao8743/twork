@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from telethon import TelegramClient, sync
 import os
 import peewee
-from peewee import PostgresqlDatabase, Model, CharField
+from peewee import PostgresqlDatabase, Model, CharField, OperationalError
 from playhouse.pool import PooledPostgresqlDatabase
 
 from telegram import Update 
@@ -60,7 +60,7 @@ try:
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 30  # 休息时间
+    max_break_time = 20  # 休息时间
 
     # 创建 LYClass 实例
 
@@ -97,6 +97,25 @@ class datapan(Model):
     class Meta:
         database = db
 
+# 封装重试逻辑
+def retry_atomic(retries=3, delay=1):
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            for attempt in range(retries):
+                try:
+                    # 在 db.atomic() 中进行数据库操作
+                    with db.atomic():
+                        return await func(*args, **kwargs)
+                except (peewee.InterfaceError, OperationalError) as e:
+                    print(f"Database error: {e}. Retrying {attempt + 1}/{retries}...", flush=True)
+                    if db.is_closed():
+                        db.connect(reuse_if_open=True)
+                    time.sleep(delay)
+            print("Max retries reached. Operation failed.")
+            return None
+        return wrapper
+    return decorator
+
 def check_connection():
     if db.is_closed():
         db.connect()
@@ -108,27 +127,27 @@ check_connection()
 # db.create_tables([datapan], safe=True)
 
 
+@retry_atomic(retries=3, delay=1)
+async def handle_database_operations(match):
+    # 执行数据库查询
+    print(f"Querying database for {match}...", flush=True)
+    return datapan.get_or_none(datapan.enc_str == match)
 
-
-
-
-
-# 定义一个处理不同类型消息的函数
-# 机器人限制只能私信收代码
 async def handle_bot_message(update: Update, context) -> None:
     message = update.message
     reply_to_message_id = message.message_id
     response = ''
 
-    # 检查是否为私信，限制机器人只能私信接收消息
-    if message.chat.type not in ['private']:
-        return
+
 
     # 处理文本消息
     if message.text:
-        message_type = "文本"
 
-        # 调用 tgbot 进行文本检查处理
+        # 检查是否为私信
+        if message.chat.type not in ['private']:
+            return
+
+        message_type = "文本"
         query = await tgbot.process_by_check_text(message, 'query')
         if query:
             bot_dict = defaultdict(list)
@@ -148,11 +167,9 @@ async def handle_bot_message(update: Update, context) -> None:
                     bot_username = bot_name
 
                     try:
-                        # 特定 bot 的特殊处理
                         if title == 'salai':
                             decode_row = encoder.decode(match)
                             if decode_row['bot'] == config['bot_username']:
-                                # 根据文件类型发送响应
                                 if decode_row['file_type'] == 'photo':
                                     await context.bot.send_photo(
                                         chat_id=message.chat_id,
@@ -179,59 +196,48 @@ async def handle_bot_message(update: Update, context) -> None:
                                     )
                             continue
 
-                        # 使用 db.atomic() 上下文管理器查询数据库，确保自动管理连接
-                        with db.atomic():
-                            result = datapan.get_or_none(datapan.enc_str == match)
-                            if result:
-                                # 构造回复内容
-                                reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
-                                
-                                # 根据文件类型发送相应的消息
-                                if result.file_type == 'photo':
-                                    await context.bot.send_photo(
-                                        chat_id=message.chat_id,
-                                        photo=result.file_id,
-                                        caption=reply_caption,
-                                        reply_to_message_id=reply_to_message_id,
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                elif result.file_type == 'video':   
-                                    await context.bot.send_video(
-                                        chat_id=message.chat_id,
-                                        video=result.file_id,
-                                        caption=reply_caption,
-                                        reply_to_message_id=reply_to_message_id,
-                                        parse_mode=ParseMode.HTML
-                                    )
-                                elif result.file_type == 'document':
-                                    await context.bot.send_document(
-                                        chat_id=message.chat_id,
-                                        document=result.file_id,
-                                        caption=reply_caption,
-                                        reply_to_message_id=reply_to_message_id,
-                                        parse_mode=ParseMode.HTML
-                                    )
-                            else:
-                                unparse_enc = True
-                                if bot_mode == 'enctext':
-                                    match_results += match + "\n"
-                                elif bot_mode == 'link':
-                                    match_results += f"https://t.me/{bot_name}?start={match}\n"
-
-                                await context.bot.send_message(
-                                    chat_id=f"-100{config['work_chat_id']}",
-                                    text=match
+                        # 执行封装的数据库操作
+                        result = await handle_database_operations(match)
+                        if result:
+                            reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
+                            
+                            if result.file_type == 'photo':
+                                await context.bot.send_photo(
+                                    chat_id=message.chat_id,
+                                    photo=result.file_id,
+                                    caption=reply_caption,
+                                    reply_to_message_id=reply_to_message_id,
+                                    parse_mode=ParseMode.HTML
                                 )
-                    except peewee.InterfaceError as e:
-                        print(f"Database connection error: {e}. Attempting to reconnect...", flush=True)
-                        # 在出现连接问题时，重新连接数据库
-                        check_connection()
-                        with db.atomic():
-                            result = datapan.get_or_none(datapan.enc_str == match)
+                            elif result.file_type == 'video':   
+                                await context.bot.send_video(
+                                    chat_id=message.chat_id,
+                                    video=result.file_id,
+                                    caption=reply_caption,
+                                    reply_to_message_id=reply_to_message_id,
+                                    parse_mode=ParseMode.HTML
+                                )
+                            elif result.file_type == 'document':
+                                await context.bot.send_document(
+                                    chat_id=message.chat_id,
+                                    document=result.file_id,
+                                    caption=reply_caption,
+                                    reply_to_message_id=reply_to_message_id,
+                                    parse_mode=ParseMode.HTML
+                                )
+                        else:
+                            unparse_enc = True
+                            if bot_mode == 'enctext':
+                                match_results += match + "\n"
+                            elif bot_mode == 'link':
+                                match_results += f"https://t.me/{bot_name}?start={match}\n"
+                            await context.bot.send_message(
+                                chat_id=f"-100{config['work_chat_id']}",
+                                text=match
+                            )
                     except Exception as e:
-                        print(f"An error occurred while querying the database: {e}", flush=True)
+                        print(f"An unexpected error occurred: {e}", flush=True)
 
-                # 生成未匹配结果的响应
                 if unparse_enc:
                     if bot_mode == 'enctext':
                         response += f"<pre>{match_results}</pre> via @{bot_username}\n\n"
@@ -239,40 +245,17 @@ async def handle_bot_message(update: Update, context) -> None:
                         response += f"{match_results}\n\n"
 
     elif message.photo:
-        # 照片消息处理
+        print("Photo message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
-        message_type = "照片"
-    
     elif message.video:
-        # 视频消息处理
+        print("Video message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
-        message_type = "视频"
-    
     elif message.document:
-        # 文档/文件消息处理
+        print("Document message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
-        message_type = "文件"
-    
-    elif message.voice:
-        # 语音消息处理
-        message_type = "语音"
-    
-    elif message.audio:
-        # 音频消息处理
-        message_type = "音频"
-    
-    elif message.video_note:
-        # 视频笔记消息处理
-        message_type = "视频笔记"
 
-    else:
-        # 其他类型消息处理
-        message_type = "未知类型"
-
-    # 发送文本消息响应
     if response:
         await update.message.reply_text(response, parse_mode=ParseMode.HTML)
-
 
 
 # 创建客户端
