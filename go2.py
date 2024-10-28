@@ -82,8 +82,8 @@ db = PooledPostgresqlDatabase(
     host=os.getenv('DB_HOST'),
     port=int(os.getenv('DB_PORT', 5432)),
     sslmode=os.getenv('DB_SSLMODE', 'require'),
-    max_connections=50,  # 最大连接数
-    stale_timeout=2400  # 5 分钟内未使用的连接将被关闭
+    max_connections=32,  # 最大连接数
+    stale_timeout=300  # 5 分钟内未使用的连接将被关闭
 )
 
 # 定义一个 Peewee 数据模型
@@ -208,7 +208,7 @@ async def handle_bot_message(update: Update, context) -> None:
                             is_show_enc = True
                             check_connection()
                         else:
-                            print("[B]Database connection is open.", flush=True)
+                            
                             
                             result = await handle_database_operations(match)
                         
@@ -242,7 +242,7 @@ async def handle_bot_message(update: Update, context) -> None:
                                     )
                             else:
                                 is_show_enc = True
-                                
+
                         if is_show_enc:
                             unparse_enc = True
                             if bot_mode == 'enctext':
@@ -281,17 +281,18 @@ async def handle_bot_message(update: Update, context) -> None:
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
         message_id = message['message_id']
-        reply_to_message_id = message['reply_to_message']['message_id']  
-        
-        # print(f"chat_id: {chat_id}, message_id: {message_id}, reply_to_message_id: {reply_to_message_id}", flush=True)
-
-        # 删除消息
-        try:
-            await context.bot.delete_message(chat_id=chat_id, message_id=reply_to_message_id)
-            await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+        if message['reply_to_message']:
+            reply_to_message_id = message['reply_to_message']['message_id']  
             
-        except Exception as e:
-            await update.message.reply_text(f"删除失败: {e}")   
+            # print(f"chat_id: {chat_id}, message_id: {message_id}, reply_to_message_id: {reply_to_message_id}", flush=True)
+
+            # 删除消息
+            try:
+                await context.bot.delete_message(chat_id=chat_id, message_id=reply_to_message_id)
+                await context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+                
+            except Exception as e:
+                await update.message.reply_text(f"删除失败: {e}")   
 
        
 
