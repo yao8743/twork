@@ -128,7 +128,7 @@ check_connection()
 # db.create_tables([datapan], safe=True)
 
 
-@retry_atomic(retries=3, delay=1)
+@retry_atomic(retries=5, delay=5)
 async def handle_database_operations(match):
     # 执行数据库查询
     print(f"[B]Querying database for {match}...", flush=True)
