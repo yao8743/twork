@@ -344,6 +344,8 @@ class LYClass:
 
     async def update_wpbot_data(self, client, message, datapan):
         try:
+
+
             if self.config['bot_username'] is not None:
                 bot_username = self.config['bot_username']
             else:

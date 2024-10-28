@@ -202,6 +202,7 @@ async def handle_bot_message(update: Update, context) -> None:
                             continue
 
                         # 执行封装的数据库操作
+                        
                         if db.is_closed():
                             db_pass = False
                             check_connection()
@@ -256,14 +257,17 @@ async def handle_bot_message(update: Update, context) -> None:
                         response += f"{match_results}\n\n"
 
     elif message.photo:
-        print("[B]Photo message received", flush=True)
-        await tgbot.update_wpbot_data('', message, datapan)
+        if db.is_connection_usable():
+            print("[B]Photo message received", flush=True)
+            await tgbot.update_wpbot_data('', message, datapan)
     elif message.video:
-        print("[B]Video message received", flush=True)
-        await tgbot.update_wpbot_data('', message, datapan)
+        if db.is_connection_usable():
+            print("[B]Video message received", flush=True)
+            await tgbot.update_wpbot_data('', message, datapan)
     elif message.document:
-        print("[B]Document message received", flush=True)
-        await tgbot.update_wpbot_data('', message, datapan)
+        if db.is_connection_usable():
+            print("[B]Document message received", flush=True)
+            await tgbot.update_wpbot_data('', message, datapan)
 
     # print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
 
