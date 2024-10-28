@@ -15,6 +15,7 @@ from vendor.class_bot import LYClass  # 导入 LYClass
 from vendor.wpbot import wp_bot  # 导入 wp_bot
 import asyncio
 import time
+import random
 import re
 import traceback
 from vendor.class_lycode import LYCode  # 导入 LYClass
@@ -81,8 +82,8 @@ db = PooledPostgresqlDatabase(
     host=os.getenv('DB_HOST'),
     port=int(os.getenv('DB_PORT', 5432)),
     sslmode=os.getenv('DB_SSLMODE', 'require'),
-    max_connections=32,  # 最大连接数
-    stale_timeout=600  # 5 分钟内未使用的连接将被关闭
+    max_connections=50,  # 最大连接数
+    stale_timeout=2400  # 5 分钟内未使用的连接将被关闭
 )
 
 # 定义一个 Peewee 数据模型
@@ -98,7 +99,7 @@ class datapan(Model):
         database = db
 
 # 封装重试逻辑
-def retry_atomic(retries=5, delay=5):
+def retry_atomic(retries=5, base_delay=1):
     def decorator(func):
         async def wrapper(*args, **kwargs):
             for attempt in range(retries):
@@ -107,9 +108,9 @@ def retry_atomic(retries=5, delay=5):
                     with db.atomic():
                         return await func(*args, **kwargs)
                 except (peewee.InterfaceError, OperationalError) as e:
-                    print(f"Database error: {e}. Retrying {attempt + 1}/{retries}...", flush=True)
+                    delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+                    print(f"Database error: {e}. Retrying {attempt + 1}/{retries} after {delay:.2f} seconds...", flush=True)
                     if db.is_closed():
-                        print(f"Reconnecting to database...", flush=True)
                         db.connect(reuse_if_open=True)
                     time.sleep(delay)
             print("Max retries reached. Operation failed.")
@@ -201,8 +202,14 @@ async def handle_bot_message(update: Update, context) -> None:
                             continue
 
                         # 执行封装的数据库操作
-                        result = await handle_database_operations(match)
-                        if result:
+                        if db.is_closed():
+                            db_pass = False
+                            check_connection()
+                        else:
+                            db_pass = True
+                            result = await handle_database_operations(match)
+                        
+                        if db_pass:
                             reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
                             
                             if result.file_type == 'photo':
