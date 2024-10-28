@@ -204,9 +204,11 @@ async def handle_bot_message(update: Update, context) -> None:
                         # 执行封装的数据库操作
                         
                         if db.is_closed():
+                            print("[B]Database connection is closed. Reconnecting...", flush=True)
                             db_pass = False
                             check_connection()
                         else:
+                            print("[B]Database connection is open.", flush=True)
                             db_pass = True
                             result = await handle_database_operations(match)
                         
@@ -249,6 +251,7 @@ async def handle_bot_message(update: Update, context) -> None:
                             )
                     except Exception as e:
                         print(f"An unexpected error occurred: {e}", flush=True)
+                        traceback.print_exc()
 
                 if unparse_enc:
                     if bot_mode == 'enctext':
