@@ -353,6 +353,7 @@ class LYClass:
             # print(f"message: {message}\n")
             ck_message = SimpleNamespace()
             ck_message.id = message.id
+            ck_message.text = ''
             if message.reply_to_message and message.reply_to_message.text:
                 ck_message.text = message.reply_to_message.text
                
@@ -365,7 +366,7 @@ class LYClass:
 
             # print(f"\nck_message: {ck_message}\n")
 
-            if ck_message.text:            
+            if ck_message.text not in ['',' ']:            
                 query = await self.process_by_check_text(ck_message,'query')
                 # print(f"query: {query}")
                 if query:
