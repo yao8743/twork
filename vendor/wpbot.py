@@ -47,7 +47,7 @@ wp_bot = [
         'bot_name': 'FileSaveNewBot',
         'id': '7008164392',  # 6854050358
         'mode': 'enctext',
-        'pattern': r'(?:P_|V_|D_)[a-zA-Z0-9-_]{15,29}\b',
+        'pattern': r'(?:^|\s)(?:P_|V_|D_)[a-zA-Z0-9-_]{15,29}\b',
         'message_thread_id': '25'
     },
     {
