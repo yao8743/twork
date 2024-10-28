@@ -57,11 +57,11 @@ try:
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
-    max_process_time = 3600  # 10分钟
+    max_process_time = 1700  # 10分钟
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 20  # 休息时间
+    max_break_time = 30  # 休息时间
 
     # 创建 LYClass 实例
 
@@ -99,7 +99,7 @@ class datapan(Model):
         database = db
 
 # 封装重试逻辑
-def retry_atomic(retries=5, base_delay=1):
+def retry_atomic(retries=3, base_delay=1):
     def decorator(func):
         async def wrapper(*args, **kwargs):
             for attempt in range(retries):
@@ -114,6 +114,18 @@ def retry_atomic(retries=5, base_delay=1):
                         db.connect(reuse_if_open=True)
                     time.sleep(delay)
             print("Max retries reached. Operation failed.")
+            db.close()
+            db = PooledPostgresqlDatabase(
+                os.getenv('DB_NAME'),
+                user=os.getenv('DB_USER'),
+                password=os.getenv('DB_PASSWORD'),
+                host=os.getenv('DB_HOST'),
+                port=int(os.getenv('DB_PORT', 5432)),
+                sslmode=os.getenv('DB_SSLMODE', 'require'),
+                max_connections=32,  # 最大连接数
+                stale_timeout=300  # 5 分钟内未使用的连接将被关闭
+            )
+
             return None
         return wrapper
     return decorator
@@ -129,7 +141,7 @@ check_connection()
 # db.create_tables([datapan], safe=True)
 
 
-@retry_atomic(retries=5, base_delay=5)
+@retry_atomic(retries=3, base_delay=1)
 async def handle_database_operations(match):
     # 执行数据库查询
     print(f"[B]Querying database for {match}...", flush=True)
@@ -522,6 +534,13 @@ async def main():
     while True:
         loop_start_time = time.time()
         await telegram_loop(client, tgbot, max_process_time, max_media_count, max_count_per_chat)
+        
+
+        if not db.is_closed():
+            try:
+                db.execute_sql('SELECT 1')
+            except Exception as e:
+                print(f"Error keeping pool connection alive: {e}")
         
 
 
