@@ -102,6 +102,7 @@ class datapan(Model):
 def retry_atomic(retries=3, base_delay=1):
     def decorator(func):
         async def wrapper(*args, **kwargs):
+            global db  # Add this line
             for attempt in range(retries):
                 try:
                     # 在 db.atomic() 中进行数据库操作
