@@ -98,7 +98,7 @@ class datapan(Model):
         database = db
 
 # 封装重试逻辑
-def retry_atomic(retries=3, delay=1):
+def retry_atomic(retries=5, delay=5):
     def decorator(func):
         async def wrapper(*args, **kwargs):
             for attempt in range(retries):
@@ -109,6 +109,7 @@ def retry_atomic(retries=3, delay=1):
                 except (peewee.InterfaceError, OperationalError) as e:
                     print(f"Database error: {e}. Retrying {attempt + 1}/{retries}...", flush=True)
                     if db.is_closed():
+                        print(f"Reconnecting to database...", flush=True)
                         db.connect(reuse_if_open=True)
                     time.sleep(delay)
             print("Max retries reached. Operation failed.")
