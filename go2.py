@@ -131,7 +131,7 @@ check_connection()
 @retry_atomic(retries=3, delay=1)
 async def handle_database_operations(match):
     # 执行数据库查询
-    print(f"Querying database for {match}...", flush=True)
+    print(f"[B]Querying database for {match}...", flush=True)
     return datapan.get_or_none(datapan.enc_str == match)
 
 async def handle_bot_message(update: Update, context) -> None:
@@ -249,21 +249,16 @@ async def handle_bot_message(update: Update, context) -> None:
                         response += f"{match_results}\n\n"
 
     elif message.photo:
-        print("Photo message received", flush=True)
+        print("[B]Photo message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
     elif message.video:
-        print("Video message received", flush=True)
+        print("[B]Video message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
     elif message.document:
-        print("Document message received", flush=True)
-        
-        print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
-        if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
-            print(f"2-{message['chat']['id']} {bot_chat_id}", flush=True)
-
+        print("[B]Document message received", flush=True)
         await tgbot.update_wpbot_data('', message, datapan)
 
-    print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
+    # print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
