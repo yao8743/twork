@@ -349,7 +349,7 @@ class LYClass:
             else:
                 bot_username = 'Qing002BOT'
 
-            print(f">>>update_wpbot_data\n")
+            print(f"[B]update_wpbot_data\n")
             # print(f"message: {message}\n")
             ck_message = SimpleNamespace()
             ck_message.id = message.id
@@ -423,7 +423,7 @@ class LYClass:
                             
             
         except Exception as e:
-            print(f"发生错误: {e}")
+            print(f"[B]发生错误: {e}")
             traceback.print_exc()  # 打印完整的 traceback
     
 
