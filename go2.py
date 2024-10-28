@@ -205,41 +205,45 @@ async def handle_bot_message(update: Update, context) -> None:
                         
                         if db.is_closed():
                             print("[B]Database connection is closed. Reconnecting...", flush=True)
-                            db_pass = False
+                            is_show_enc = True
                             check_connection()
                         else:
                             print("[B]Database connection is open.", flush=True)
-                            db_pass = True
+                            
                             result = await handle_database_operations(match)
                         
-                        if db_pass:
-                            reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
-                            
-                            if result.file_type == 'photo':
-                                await context.bot.send_photo(
-                                    chat_id=message.chat_id,
-                                    photo=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                            elif result.file_type == 'video':   
-                                await context.bot.send_video(
-                                    chat_id=message.chat_id,
-                                    video=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                            elif result.file_type == 'document':
-                                await context.bot.send_document(
-                                    chat_id=message.chat_id,
-                                    document=result.file_id,
-                                    caption=reply_caption,
-                                    reply_to_message_id=reply_to_message_id,
-                                    parse_mode=ParseMode.HTML
-                                )
-                        else:
+                            if result:
+                                is_show_enc = False
+                                reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
+                                
+                                if result.file_type == 'photo':
+                                    await context.bot.send_photo(
+                                        chat_id=message.chat_id,
+                                        photo=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                elif result.file_type == 'video':   
+                                    await context.bot.send_video(
+                                        chat_id=message.chat_id,
+                                        video=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                elif result.file_type == 'document':
+                                    await context.bot.send_document(
+                                        chat_id=message.chat_id,
+                                        document=result.file_id,
+                                        caption=reply_caption,
+                                        reply_to_message_id=reply_to_message_id,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                            else:
+                                is_show_enc = True
+                                
+                        if is_show_enc:
                             unparse_enc = True
                             if bot_mode == 'enctext':
                                 match_results += match + "\n"
