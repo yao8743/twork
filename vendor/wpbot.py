@@ -47,7 +47,7 @@ wp_bot = [
         'bot_name': 'FileSaveNewBot',
         'id': '7008164392',  # 6854050358
         'mode': 'enctext',
-        'pattern': r'(?:P_|V_|D_)[a-zA-Z0-9-_]{15,29}\b',
+        'pattern': r'(?:^|\s)(?:P_|V_|D_)[a-zA-Z0-9-_]{15,29}\b',
         'message_thread_id': '25'
     },
     {
@@ -88,6 +88,14 @@ wp_bot = [
         'id': '5231326048',
         'mode': 'link',
         'pattern': r'https:\/\/t\.me\/WangPanBOT\?start=(file\w{14,20})',
+        'message_thread_id': '32'
+    },
+    {
+        'title': 'salai',
+        'bot_name': 'salaiZTDBOT',
+        'id': '8116549849',
+        'mode': 'enctext',
+        'pattern': r'^(正(?:[\u4e00-\u9fff]{5,10})太(?:[\u4e00-\u9fff]{34,100})密(?:[\u4e00-\u9fff]{5,10})[文图影])$',
         'message_thread_id': '32'
     }
 ]
