@@ -57,11 +57,11 @@ try:
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
-    max_process_time = 1500  # 25分钟
+    max_process_time = 6000  # 25分钟
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 30  # 休息时间
+    max_break_time = 60  # 休息时间
 
     # 创建 LYClass 实例
 
