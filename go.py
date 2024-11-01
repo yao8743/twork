@@ -87,7 +87,7 @@ async def main():
                 continue
 
             # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过 
-            blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646,93372553,2197546676]  # Example blacklist with entity IDs
+            blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646,93372553,2197546676, 2022425523]  # Example blacklist with entity IDs
             # blacklist = [2154650877,2190384328,2098764817,1647589965,1731239234,1877274724,2131062766, 1766929647, 1781549078, 6701952909, 6366395646,93372553,2215190216,2239552986,2215190216,2171778803,1704752058]
 
             enclist = [2012816724,2239552986,2215190216,7061290326,2175483382,2252083262] 
@@ -188,6 +188,17 @@ async def main():
                             media_count = media_count + 1
                             count_per_chat = count_per_chat +1
                             last_read_message_id = last_message_id
+
+                        elif entity.id == 827297596:
+                            print(f"{entity.id} \n", flush=True)
+                            async with client.conversation(1808436284) as conv:
+                                photo = message.media.photo
+                                
+                                forwarded_message = await conv.send_file(photo)
+                                print(f"forwarded_message: {message} {message.id}")
+                                await client.delete_messages(entity.id, message.id)
+                             
+
 
                         elif tgbot.config['warehouse_chat_id']!=0 and entity.id != tgbot.config['work_chat_id'] and entity.id != tgbot.config['warehouse_chat_id']:
                             
