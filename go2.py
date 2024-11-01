@@ -160,10 +160,11 @@ async def handle_bot_message(update: Update, context) -> None:
 
     # 处理文本消息
     if message.text:
-
+        
         # 检查是否为私信
-        if message.chat.type not in ['private']:
+        if message.chat.type not in ['private'] and str(message['chat']['id']).strip() not in [str(bot_chat_id).strip()]:
             return
+        
 
         message_type = "文本"
         query = await tgbot.process_by_check_text(message, 'query')
@@ -289,7 +290,8 @@ async def handle_bot_message(update: Update, context) -> None:
             print("[B]Document message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
 
-    # print(f"{message['chat']['id']} {bot_chat_id}", flush=True)
+    
+
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
