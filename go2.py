@@ -556,9 +556,7 @@ async def main():
         loop_elapsed_time = time.time() - loop_start_time
         if loop_elapsed_time < max_break_time:
             await asyncio.sleep(max_break_time - loop_elapsed_time)
-            await application.stop()  # 停止轮询
-            await application.start()
-            await application.updater.start_polling()
+           
             
 
 
