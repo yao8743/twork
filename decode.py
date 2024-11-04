@@ -1,6 +1,6 @@
-from vendor.class_lycode import Lycode  # 导入 LYClass
+from vendor.class_lycode import LYCode  # 导入 LYClass
 
-lycode = Lycode()
+lycode = LYCode()
 
 row = {
     'file_unique_id': 'AQADaasxG5DaiUd-',
