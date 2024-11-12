@@ -9,14 +9,14 @@ from telethon.errors import UserNotParticipantError
 
 
 from telethon import TelegramClient, events
-from telethon.tl.functions.messages import AddChatUserRequest
+from telethon.tl.functions.messages import AddChatUserRequest, CreateChatRequest
 from telethon.errors import ChatAdminRequiredError, UserAlreadyParticipantError
 
 
 
 from telegram import Update 
 
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 from telegram.constants import ParseMode
 
 from vendor.class_bot import LYClass  # 导入 LYClass
@@ -76,7 +76,7 @@ try:
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 5  # 休息时间
+    max_break_time = 60  # 休息时间
 
     # 创建 LYClass 实例
 
@@ -107,12 +107,6 @@ async def handle_bot_message(update: Update, context) -> None:
         if message.chat.type not in ['private'] and str(message['chat']['id']).strip() not in [str(bot_chat_id).strip()]:
             return
         
-
-       
-       
-       
-           
-
     elif message.photo:
         print("[B]Photo message received", flush=True)
     elif message.video:
@@ -133,13 +127,31 @@ async def handle_bot_message(update: Update, context) -> None:
         await update.message.reply_text(response, parse_mode=ParseMode.HTML)
 
 
+# 定义处理 /start 命令的回调函数
+async def start(update: Update, context: CallbackContext) -> None:
+    # 获取 /start 后面的参数，如果有的话
+    print("start")
+    if context.args:
+        parameter = context.args[0]
+        await update.message.reply_text(f"Received parameter: {parameter}")
+    else:
+        await update.message.reply_text("No parameter provided with /start.")
+
+
+
 # # 创建客户端
 client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
 application = Application.builder().token(bot_token).build()
+
+# 注册 /start 命令的处理器
+application.add_handler(CommandHandler("start", start))  
+
 # # 注册消息处理程序，处理所有消息类型
 application.add_handler(MessageHandler(filters.ALL, handle_bot_message))
-    
+
+  
+
 tgbot = LYClass(client,config)
 
 encoder = LYCode()
@@ -147,17 +159,53 @@ encoder = LYCode()
 
 
 
-async def approve_user_join_request(user_id, group_id):
-    """批准用户加入群组"""
+
+
+async def create_group():
+    # 设定群组的名称
+    group_name = "My New Group"
+    
+    # 使用自己的用户名或ID作为初始成员
+    # initial_members = [int(man_bot_id)]  # 将 'your_own_username' 替换为您的实际用户名或用户ID
+    
     try:
-        await client(ApproveChannelJoinRequest(channel=group_id, user_id=user_id))
-        print(f"Approved user {user_id} to join group {group_id}")
-    except UserAlreadyParticipantError:
-        print(f"User {user_id} is already in the group.")
-    except ChatAdminRequiredError:
-        print("You need to be an admin in the target group to approve join requests.")
+        # 使用 get_entity 获取正确的用户实体
+        man_bot_entity = await client.get_entity(int(man_bot_id))
+        
+        # 创建群组并将获取的实体作为初始成员
+        result = await client(CreateChatRequest(users=[man_bot_entity], title=group_name))
+        
+        # 打印结果，确认返回结构
+        print("CreateChatRequest result:", result)
+        
+        # 检查创建的群组并提取信息
+        chat_id = result.updates[1].peer.chat_id  # 提取群组ID
+        print(f"Group '{group_name}' created successfully with ID: {chat_id}")
+        
     except Exception as e:
-        print(f"Error approving join request for user {user_id}: {e}")
+        print(f"Failed to create group: {e}")
+
+
+async def get_latest_message(chat_id: int):
+    # 获取指定聊天的消息，限制只获取一条最新消息
+    async for message in client.iter_messages(chat_id, limit=1):
+        if not message or not message.text:
+            return "No messages found."
+        
+        # 按行读取 message.text 的内容，并载入到 config 中
+        for line in message.text.splitlines():
+            if ':' in line:
+                index, value = line.split(':', 1)  # 分割成 index 和 value
+                index = index.strip()  # 去掉空格
+                value = value.strip()  # 去掉空格
+                
+                # 尝试将 value 转换为整数并存入 config 中
+                try:
+                    config[index] = int(value)
+                except ValueError:
+                    config[index] = value  # 如果不能转换为整数，保留原字符串值
+        print(f"{config}", flush=True)
+        return "Config updated with latest message content."
 
 
 
@@ -222,7 +270,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             NEXT_DIALOGS = True
                             break
 
-                        last_message_id = await tgbot.forward_media_to_warehouse(client, message)
+                        #last_message_id = await tgbot.forward_media_to_warehouse(client, message)
                         media_count += 1
                         count_per_chat += 1
                         last_read_message_id = last_message_id
@@ -231,7 +279,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
 
                 ## 如果是 text 类型的消息
                 elif message.text:
-                    if message.peer_id.user_id is not None:
+                    if dialog.is_user: 
                         print(f"Message from {message.peer_id.user_id} in entity {entity.id} - {entity_title}")
                         try:
                             # 检查用户是否在指定频道中
@@ -319,7 +367,16 @@ async def main():
     await application.start()
     await application.updater.start_polling()
     
+    chat_id = -940026976
+
+    latest_message = await get_latest_message(chat_id)
+    print("Latest message:", latest_message)
+
+    # await create_group()
     
+
+
+
     while True:
         loop_start_time = time.time()
         await telegram_loop(client, tgbot, max_process_time, max_media_count, max_count_per_chat)

@@ -93,6 +93,7 @@ class LYClass:
             else:
                 await asyncio.sleep(0)
 
+    # show_caption = yes, no
     async def send_message(self, client, message):
         last_message_id = message.id
         # 构建 caption
