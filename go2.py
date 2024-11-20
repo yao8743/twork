@@ -213,6 +213,7 @@ async def handle_bot_message(update: Update, context) -> None:
                                         reply_to_message_id=reply_to_message_id,
                                         parse_mode=ParseMode.HTML
                                     )
+                         
                             continue
 
                         # 执行封装的数据库操作
@@ -228,8 +229,15 @@ async def handle_bot_message(update: Update, context) -> None:
                         
                             if result:
                                 is_show_enc = False
-                                reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
+                                encode_text = encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)
+                                reply_caption = f"<code>{encode_text}</code>"
+                                # reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
                                 
+                                await context.bot.send_message(
+                                    chat_id=man_bot_id,
+                                    text=encode_text
+                                )
+
                                 if result.file_type == 'photo':
                                     await context.bot.send_photo(
                                         chat_id=message.chat_id,
@@ -284,7 +292,8 @@ async def handle_bot_message(update: Update, context) -> None:
             
             # 检查是否为私信
             if message.chat.type in ['private']:
-                reply_caption = f"<code>{encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo')}</code>"
+                encode_text = encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo');
+                reply_caption = f"<code>{encode_text}</code>"
                 await context.bot.send_photo(
                     chat_id=message.chat_id,
                     photo=message.photo[-1].file_id,
@@ -292,6 +301,10 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
+                await context.bot.send_message(
+                        chat_id=man_bot_id,
+                        text=encode_text
+                    ) 
 
     elif message.video:
         if db.is_connection_usable():
@@ -299,7 +312,11 @@ async def handle_bot_message(update: Update, context) -> None:
             await tgbot.update_wpbot_data('', message, datapan)
             # 检查是否为私信
             if message.chat.type in ['private']:
-                reply_caption = f"<code>{encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')}</code>"
+
+                encode_text = encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')
+                reply_caption = f"<code>{encode_text}</code>"
+
+                
                 await context.bot.send_video(
                     chat_id=message.chat_id,
                     video=message.video.file_id,
@@ -307,6 +324,10 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
+                await context.bot.send_message(
+                    chat_id=man_bot_id,
+                    text=encode_text
+                ) 
 
 
     elif message.document:
@@ -315,7 +336,8 @@ async def handle_bot_message(update: Update, context) -> None:
             await tgbot.update_wpbot_data('', message, datapan)
             # 检查是否为私信
             if message.chat.type in ['private']:
-                reply_caption = f"<code>{encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')}</code>"
+                encode_text = encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')
+                reply_caption = f"<code>{encode_text}</code>"
                 await context.bot.send_document(
                     chat_id=message.chat_id,
                     document=message.document.file_id,
@@ -323,6 +345,10 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
+                await context.bot.send_message(
+                    chat_id=man_bot_id,
+                    text=encode_text
+                ) 
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
