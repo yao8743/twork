@@ -469,6 +469,9 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                     except Exception as e:
                         print(f"Error kicking bot: {e}", flush=True)
 
+
+
+
                     combined_regex = r"(https?://t\.me/(?:joinchat/)?\+?[a-zA-Z0-9_\-]{15,50})|(?<![a-zA-Z0-9_\-])\+[a-zA-Z0-9_\-]{15,17}(?![a-zA-Z0-9_\-])"
                     matches = re.findall(combined_regex, message.text)
                     if matches:
@@ -528,12 +531,33 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             else:
                                 await tgbot.process_by_check_text(message, 'encstr')
                     elif dialog.is_user:
-                        if '|_request_|' in message.text:
-                            await tgbot.process_by_check_text(message, 'request')   ##Send to QQBOT with caption
-                        elif '|_sendToWZ_|' in message.text:
-                            await tgbot.process_by_check_text(message, 'sendToWZ')
-                        else:
-                            await tgbot.process_by_check_text(message, 'encstr')    ##Send to QQBOT
+
+                    
+                        try:
+                            if '|_forward_|' in message.text:
+                                match = re.search(r'\|_forward_\|\s*@([^\s]+)', message.message, re.IGNORECASE)
+                                if match:
+                                    captured_str = match.group(1).strip()
+                                    if captured_str.isdigit():
+                                        if captured_str.startswith('-100'):
+                                            captured_str = captured_str.replace('-100', '')
+                                        await tgbot.client.send_message(int(captured_str), message)
+                                    else:
+                                        await tgbot.client.send_message(captured_str, message)
+                            elif '|_request_|' in message.text:
+                                await tgbot.process_by_check_text(message, 'request')   ##Send to QQBOT with caption
+                            elif '|_sendToWZ_|' in message.text:
+                                await tgbot.process_by_check_text(message, 'sendToWZ')
+                            else:
+                                await tgbot.process_by_check_text(message, 'encstr')    ##Send to QQBOT
+
+                        except Exception as e:
+                            print(f"Error forwarding message: {e}", flush=True)
+                            traceback.print_exc()
+                        finally:
+                            NEXT_MESSAGE = True
+
+                        
 
                 tgbot.save_last_read_message_id(entity.id, last_message_id)
 
