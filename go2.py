@@ -281,17 +281,48 @@ async def handle_bot_message(update: Update, context) -> None:
         if db.is_connection_usable():
             print("[B]Photo message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            
+            # 检查是否为私信
+            if message.chat.type in ['private']:
+                reply_caption = f"<code>{encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo')}</code>"
+                await context.bot.send_photo(
+                    chat_id=message.chat_id,
+                    photo=message.photo[-1].file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+
     elif message.video:
         if db.is_connection_usable():
             print("[B]Video message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            # 检查是否为私信
+            if message.chat.type in ['private']:
+                reply_caption = f"<code>{encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')}</code>"
+                await context.bot.send_video(
+                    chat_id=message.chat_id,
+                    video=message.video.file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+
+
     elif message.document:
         if db.is_connection_usable():
             print("[B]Document message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
-
-    
-
+            # 检查是否为私信
+            if message.chat.type in ['private']:
+                reply_caption = f"<code>{encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')}</code>"
+                await context.bot.send_document(
+                    chat_id=message.chat_id,
+                    document=message.document.file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
@@ -347,7 +378,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
             continue
 
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053]
+        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053,7386890195]
         enclist = [2012816724, 2239552986, 2215190216, 7061290326, 2175483382, 2252083262]
         skip_vaildate_list = [2201450328]
 
@@ -533,6 +564,7 @@ async def main():
     await application.initialize()
     await application.start()
     await application.updater.start_polling()
+    print(f"Bot Start Polling\n", flush=True)
     
     while True:
         loop_start_time = time.time()

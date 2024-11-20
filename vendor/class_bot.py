@@ -93,6 +93,7 @@ class LYClass:
             else:
                 await asyncio.sleep(0)
 
+    # show_caption = yes, no
     async def send_message(self, client, message):
         last_message_id = message.id
         # 构建 caption
@@ -341,6 +342,9 @@ class LYClass:
                     print("Received non-media and non-text response")
         except Exception as e:
             print(f"\rAn error occurred: {e}\n")
+
+
+
 
     async def update_wpbot_data(self, client, message, datapan):
         try:

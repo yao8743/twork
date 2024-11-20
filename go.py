@@ -114,19 +114,13 @@ async def main():
             if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
                 count_per_chat=0
 
-               
-                
-
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
 
                 # if entity.id == tgbot.config['work_chat_id']:
                 #     last_read_message_id = 14244
                 # else:
                 last_read_message_id = tgbot.load_last_read_message_id(entity.id)
-                
-
-
-                
+                          
                 print(f"\r\n>Reading messages from entity {entity.id}/{entity_title} - {last_read_message_id} - U:{dialog.unread_count} \n", flush=True)
                 async for message in client.iter_messages(entity, min_id=last_read_message_id, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
                     NEXT_MESSAGE = False
