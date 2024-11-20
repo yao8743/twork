@@ -343,6 +343,9 @@ class LYClass:
         except Exception as e:
             print(f"\rAn error occurred: {e}\n")
 
+
+
+
     async def update_wpbot_data(self, client, message, datapan):
         try:
 

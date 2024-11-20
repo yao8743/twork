@@ -20,8 +20,8 @@ wp_bot = [
     },
     {
         'title': 'mediabk',
-        'bot_name': 'MediaBK4Bot',
-        'id': '7386890195',
+        'bot_name': 'MediaBK5Bot',
+        'id': '6700909600',
         'mode': 'enctext',
         'pattern': r'\b[a-zA-Z0-9\-+=_]{20,33}(?:=_grp|_mda)\b',
         'message_thread_id': '32'
