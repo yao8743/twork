@@ -265,8 +265,8 @@ async def main():
                                         break
                                 else:
                                     # print(f"'{message.text}' ->matches: {match_str}  {entity.id} {tgbot.config['link_chat_id']}. =>forward\n")
-                                   
-                                    await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
+                                    if match_str not in ['https://t.me/FilesDrive_BLGA_bot']:
+                                        await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
                             # print(f"matches: 178\n")
                                
                                      
