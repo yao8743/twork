@@ -22,6 +22,11 @@ from vendor.class_lycode import LYCode  # 导入 LYClass
 
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
 
+##
+## 目前问题，卡在 mbot 收到，无法转给 QQBOT
+
+
+
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
@@ -61,7 +66,7 @@ try:
     max_media_count = 55  # 10个媒体文件
     max_count_per_chat = 11  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
-    max_break_time = 60  # 休息时间
+    max_break_time = 10  # 休息时间
 
     # 创建 LYClass 实例
 
@@ -289,11 +294,16 @@ async def handle_bot_message(update: Update, context) -> None:
         if db.is_connection_usable():
             print("[B]Photo message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
-            
+            encode_text = encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo');
+            reply_caption = f"<code>{encode_text}</code>"
+            await context.bot.send_message(
+                chat_id=bot_chat_id,
+                text=encode_text
+            ) 
+
             # 检查是否为私信
             if message.chat.type in ['private']:
-                encode_text = encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo');
-                reply_caption = f"<code>{encode_text}</code>"
+                
                 await context.bot.send_photo(
                     chat_id=message.chat_id,
                     photo=message.photo[-1].file_id,
@@ -301,22 +311,23 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
-                await context.bot.send_message(
-                        chat_id=man_bot_id,
-                        text=encode_text
-                    ) 
+            
+
 
     elif message.video:
         if db.is_connection_usable():
             print("[B]Video message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            encode_text = encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')
+            reply_caption = f"<code>{encode_text}</code>"
+
+
             # 检查是否为私信
             if message.chat.type in ['private']:
 
-                encode_text = encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')
-                reply_caption = f"<code>{encode_text}</code>"
 
-                
+
+                print(f"[B]encode_text: {encode_text}", flush=True)
                 await context.bot.send_video(
                     chat_id=message.chat_id,
                     video=message.video.file_id,
@@ -324,20 +335,31 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
+
+            try:
                 await context.bot.send_message(
-                    chat_id=man_bot_id,
+                    chat_id=bot_chat_id,
                     text=encode_text
-                ) 
+                )
+                print(f"[B]Message sent successfully to Man-BOT-{man_bot_id}")
+            except telegram.error.BadRequest as e:
+                print(f"[B]BadRequest: {e}. Possible issues with chat_id or message formatting.")
+            except telegram.error.Forbidden as e:
+                print(f"[B]Forbidden: {e}. Bot might not have permission to send message to {man_bot_id}.")
+            except Exception as e:
+                print(f"[B]Unexpected error: {e}")
 
 
     elif message.document:
         if db.is_connection_usable():
             print("[B]Document message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            encode_text = encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')
+            reply_caption = f"<code>{encode_text}</code>"
+
             # 检查是否为私信
             if message.chat.type in ['private']:
-                encode_text = encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')
-                reply_caption = f"<code>{encode_text}</code>"
+
                 await context.bot.send_document(
                     chat_id=message.chat_id,
                     document=message.document.file_id,
@@ -345,10 +367,11 @@ async def handle_bot_message(update: Update, context) -> None:
                     reply_to_message_id=reply_to_message_id,
                     parse_mode=ParseMode.HTML
                 )
-                await context.bot.send_message(
-                    chat_id=man_bot_id,
-                    text=encode_text
-                ) 
+
+            await context.bot.send_message(
+                chat_id=bot_chat_id,
+                text=encode_text
+            ) 
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
@@ -393,20 +416,33 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         NEXT_DIALOGS = False
         entity = dialog.entity
 
+       
+
         # 跳过来自 WAREHOUSE_CHAT_ID 的对话
         if entity.id == tgbot.config['warehouse_chat_id']:
             NEXT_DIALOGS = True
             continue
 
+       
+
         # 如果entity.id 是属于 wp_bot 下的 任一 id, 则跳过
         if entity.id in [int(bot['id']) for bot in wp_bot]:
+            
             NEXT_DIALOGS = True
             continue
 
+       
+
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053,7386890195]
-        enclist = [2012816724, 2239552986, 2215190216, 7061290326, 2175483382, 2252083262]
-        skip_vaildate_list = [2201450328]
+        blacklist = [
+            777000,     #Telegram
+            93372553,   #BotFather
+            2141416413, #DataPanHome
+            2233580528, #FilesPan1Home
+            7386890195  #mediabk4bot
+            ]
+        enclist = []
+        skip_vaildate_list = []
 
         if entity.id in blacklist:
             NEXT_DIALOGS = True
@@ -420,7 +456,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         else:
             entity_title = f'Unknown entity {entity.id}'
 
-        if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
+        if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
             count_per_chat = 0
             time.sleep(0.5)  # 每次请求之间等待0.5秒
             last_read_message_id = tgbot.load_last_read_message_id(entity.id)
@@ -523,9 +559,32 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             NEXT_DIALOGS = True
                             break
 
-                        await tgbot.process_by_check_text(message, 'tobot')
-                        media_count += 1
-                        count_per_chat += 1
+                        query = await tgbot.process_by_check_text(message, 'query')
+                        if query:
+                            for bot_result in query['results']:
+                                if isinstance(bot_result, dict):
+                                    if(bot_result['title'] == 'salai'):
+                                        
+                                        async with tgbot.client.conversation(tgbot.config['work_bot_id']) as conv:
+                                            await conv.send_message(bot_result['match'])
+
+                                        await tgbot.client.delete_messages(
+                                            entity=entity.id,  # 对话的 chat_id
+                                            message_ids=message.id  # 刚刚发送消息的 ID
+                                        )
+
+
+                                    else:
+                                        await tgbot.process_by_check_text(message, 'tobot')
+                                        media_count += 1
+                                        count_per_chat += 1
+
+                                    
+
+                                        # bot_dict[bot_result['title']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
+
+
+                        
                     elif dialog.is_group or dialog.is_channel:
                         if entity.id in enclist:
                             ckresult = tgbot.check_strings(message.text)
@@ -557,7 +616,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             else:
                                 await tgbot.process_by_check_text(message, 'encstr')
                     elif dialog.is_user:
-
+                       
                     
                         try:
                             if '|_forward_|' in message.text:
