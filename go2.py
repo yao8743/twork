@@ -22,6 +22,11 @@ from vendor.class_lycode import LYCode  # 导入 LYClass
 
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
 
+##
+## 目前问题，卡在 mbot 收到，无法转给 QQBOT
+
+
+
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
@@ -404,7 +409,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
             continue
 
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053,7386890195]
+        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053]
         enclist = [2012816724, 2239552986, 2215190216, 7061290326, 2175483382, 2252083262]
         skip_vaildate_list = [2201450328]
 
