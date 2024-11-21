@@ -41,7 +41,7 @@ class LYClass:
                         enc_exist=True
                         
                         if mode == 'encstr':
-                            print(f">>send to QQ: {message.id}\n", flush=True)
+                            print(f">>send to WorkBOT(QQ): {message.id}-{match}\n", flush=True)
                             async with self.client.conversation(self.config['work_bot_id']) as conv:
                                 await conv.send_message(match)
                                 # print(match)
