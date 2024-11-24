@@ -243,7 +243,7 @@ async def handle_bot_message(update: Update, context) -> None:
                                 # reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
                                 
                                 try:
-                                    print(f"Received text message from chat_id {chat_id}")
+                                    print(f"Received text message from man_bot_id {man_bot_id}")
                                     await context.bot.send_message(
                                         chat_id=man_bot_id,
                                         text=encode_text
