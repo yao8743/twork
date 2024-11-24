@@ -474,7 +474,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         else:
             entity_title = f'Unknown entity {entity.id}'
 
-        if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
+        if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
             count_per_chat = 0
             time.sleep(0.5)  # 每次请求之间等待0.5秒
             last_read_message_id = tgbot.load_last_read_message_id(entity.id)
