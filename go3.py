@@ -85,7 +85,8 @@ try:
     
    
 except ValueError:
-    print("Environment variable WORK_CHAT_ID or WAREHOUSE_CHAT_ID is not a valid integer.", flush=True)
+    print(f"A ValueError occurred: {e}", flush=True)
+   
     exit(1)
 
 
