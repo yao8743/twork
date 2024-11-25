@@ -12,8 +12,6 @@ from telethon import TelegramClient, events
 from telethon.tl.functions.messages import AddChatUserRequest, CreateChatRequest
 from telethon.errors import ChatAdminRequiredError, UserAlreadyParticipantError
 
-
-
 from telegram import Update 
 
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
@@ -72,9 +70,9 @@ try:
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
-    max_process_time = 6000  # 25分钟
+    max_process_time = 60*27  # 25分钟
     max_media_count = 55  # 10个媒体文件
-    max_count_per_chat = 11  # 每个对话的最大消息数
+    max_count_per_chat = 12  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
     max_break_time = 60  # 休息时间
 
@@ -229,8 +227,15 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
             continue
 
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-        blacklist = [2022425523,827297596,2064344135,2252083262,1951405593,7361527575]
-       
+        blacklist = [
+            777000,     #Telegram
+            93372553,   #BotFather
+            2141416413, #DataPanHome
+            2233580528, #FilesPan1Home
+            7386890195,  #mediabk4bot
+            2143443716  #/XP Account
+            ]
+        
         skip_vaildate_list = [2201450328]
 
         if entity.id in blacklist:
@@ -245,7 +250,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         else:
             entity_title = f'Unknown entity {entity.id}'
 
-        if dialog.unread_count > 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
+        if dialog.unread_count >= 0 and (dialog.is_group or dialog.is_channel or dialog.is_user):
             count_per_chat = 0
             time.sleep(0.5)  # 每次请求之间等待0.5秒
             last_read_message_id = tgbot.load_last_read_message_id(entity.id)
@@ -270,7 +275,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             NEXT_DIALOGS = True
                             break
 
-                        #last_message_id = await tgbot.forward_media_to_warehouse(client, message)
+                        last_message_id = await tgbot.forward_media_to_warehouse(client, message)
                         media_count += 1
                         count_per_chat += 1
                         last_read_message_id = last_message_id
