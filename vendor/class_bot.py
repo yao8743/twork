@@ -582,21 +582,21 @@ class LYClass:
                     if isinstance(message.media, types.MessageMediaDocument):
                         if not any(isinstance(attr, types.DocumentAttributeSticker) for attr in message.media.document.attributes):
                             # 排除贴图
-                            print(f">>>Forwarding document to warehouse chat: {message.id}\n")
+                            print(f">>>Forwarding document to warehouse chat: {message.id}\n", flush=True)
                             last_message_id = await self.send_message(client, message)
                             if_send=True
                     elif isinstance(message.media, types.MessageMediaPhoto):
-                        print(f">>>Forwarding photo to warehouse chat: {message.id}\n")
+                        print(f">>>Forwarding photo to warehouse chat: {message.id}\n", flush=True)
                         last_message_id = await self.send_message(client, message)
                         if_send=True
                     
                     
                 else:
-                    print(f"Message is from warehouse chat, not forwarding: {message.id}\n")
+                    print(f"Message is from warehouse chat, not forwarding: {message.id}\n", flush=True)
             else:
-                print(f"No matching pattern for message: {message.text} {message} \n")
+                print(f"No matching pattern for message: {message.text} {message} \n", flush=True)
         except Exception as e:
-            print(f">>(2)An error occurred while processing message: {e} \n message:{message}\n")
+            print(f">>(2)An error occurred while processing message: {e} \n message:{message}\n", flush=True)
         finally:
             if if_send:
                 await asyncio.sleep(3)
