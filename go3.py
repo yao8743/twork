@@ -361,6 +361,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
 
 
 
+
 async def main():
 
 
@@ -393,9 +394,10 @@ async def main():
             print(f"\nStopping main loop after exceeding max_process_time of {max_process_time} seconds.\n", flush=True)
             break
 
-        loop_elapsed_time = time.time() - loop_start_time
-        if loop_elapsed_time < max_break_time:
-            await asyncio.sleep(max_break_time - loop_elapsed_time)
+        print("\nExecution time is " + str(int(elapsed_time)) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
+        print(f"-\n", flush=True)
+        print(f"-------------------------------------\n", flush=True)
+        await asyncio.sleep(max_break_time)  # 间隔180秒
            
 with client:
     client.loop.run_until_complete(main())
