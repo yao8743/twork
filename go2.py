@@ -10,7 +10,7 @@ from telegram import Update
 import telegram
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.constants import ParseMode
-
+from telegram.error import RetryAfter
 from vendor.class_bot import LYClass  # 导入 LYClass
 from vendor.wpbot import wp_bot  # 导入 wp_bot
 import asyncio
@@ -21,6 +21,11 @@ import traceback
 from vendor.class_lycode import LYCode  # 导入 LYClass
 
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
+
+##
+## 目前问题，卡在 mbot 收到，无法转给 QQBOT
+
+
 
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
@@ -57,9 +62,9 @@ try:
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
-    max_process_time = 1800  # 25分钟
+    max_process_time = 60*27  # 27分钟
     max_media_count = 55  # 10个媒体文件
-    max_count_per_chat = 11  # 每个对话的最大消息数
+    max_count_per_chat = 12  # 每个对话的最大消息数
     # max_break_time = 90  # 休息时间
     max_break_time = 60  # 休息时间
 
@@ -149,6 +154,10 @@ async def handle_database_operations(match):
     return datapan.get_or_none(datapan.enc_str == match)
 
 async def handle_bot_message(update: Update, context) -> None:
+    if not update.message:
+        print("Update does not contain a message object.")
+        return
+
     message = update.message
     reply_to_message_id = message.message_id
     response = ''
@@ -213,6 +222,7 @@ async def handle_bot_message(update: Update, context) -> None:
                                         reply_to_message_id=reply_to_message_id,
                                         parse_mode=ParseMode.HTML
                                     )
+                         
                             continue
 
                         # 执行封装的数据库操作
@@ -228,8 +238,23 @@ async def handle_bot_message(update: Update, context) -> None:
                         
                             if result:
                                 is_show_enc = False
-                                reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
+                                encode_text = encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)
+                                reply_caption = f"<code>{encode_text}</code>"
+                                # reply_caption = f"<code>{encoder.encode(result.file_unique_id, result.file_id, config['bot_username'], result.file_type)}</code>"
                                 
+                                try:
+                                    print(f"Received text message from man_bot_id {man_bot_id}")
+                                    await context.bot.send_message(
+                                        chat_id=man_bot_id,
+                                        text=encode_text
+                                    )
+                                except Exception as e:
+                                    print(f"Error while sending message: {e}")
+                                    traceback.print_exc()
+
+
+                                
+
                                 if result.file_type == 'photo':
                                     await context.bot.send_photo(
                                         chat_id=message.chat_id,
@@ -267,6 +292,12 @@ async def handle_bot_message(update: Update, context) -> None:
                                 chat_id=f"-100{config['work_chat_id']}",
                                 text=match
                             )
+                    except RetryAfter as e:
+                        retry_after = int(e.retry_after)
+                        print(f"Flood control exceeded. Pausing for {retry_after} seconds.")
+                        await asyncio.sleep(retry_after)
+                        print("Resuming operation after pause.")
+                    
                     except Exception as e:
                         print(f"An unexpected error occurred: {e}", flush=True)
                         traceback.print_exc()
@@ -281,17 +312,84 @@ async def handle_bot_message(update: Update, context) -> None:
         if db.is_connection_usable():
             print("[B]Photo message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            encode_text = encoder.encode(message.photo[-1].file_unique_id, message.photo[-1].file_id, config['bot_username'], 'photo');
+            reply_caption = f"<code>{encode_text}</code>"
+            await context.bot.send_message(
+                chat_id=bot_chat_id,
+                text=encode_text
+            ) 
+
+            # 检查是否为私信
+            if message.chat.type in ['private']:
+                
+                await context.bot.send_photo(
+                    chat_id=message.chat_id,
+                    photo=message.photo[-1].file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+            
+
+
     elif message.video:
         if db.is_connection_usable():
             print("[B]Video message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            encode_text = encoder.encode(message.video.file_unique_id, message.video.file_id, config['bot_username'], 'video')
+            reply_caption = f"<code>{encode_text}</code>"
+
+
+            # 检查是否为私信
+            if message.chat.type in ['private']:
+
+
+
+                print(f"[B]encode_text: {encode_text}", flush=True)
+                await context.bot.send_video(
+                    chat_id=message.chat_id,
+                    video=message.video.file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+
+            try:
+                await context.bot.send_message(
+                    chat_id=bot_chat_id,
+                    text=encode_text
+                )
+                print(f"[B]Message sent successfully to Man-BOT-{man_bot_id}")
+            except telegram.error.BadRequest as e:
+                print(f"[B]BadRequest: {e}. Possible issues with chat_id or message formatting.")
+            except telegram.error.Forbidden as e:
+                print(f"[B]Forbidden: {e}. Bot might not have permission to send message to {man_bot_id}.")
+            except Exception as e:
+                print(f"[B]Unexpected error: {e}")
+
+
     elif message.document:
         if db.is_connection_usable():
             print("[B]Document message received", flush=True)
             await tgbot.update_wpbot_data('', message, datapan)
+            encode_text = encoder.encode(message.document.file_unique_id, message.document.file_id, config['bot_username'], 'document')
+            reply_caption = f"<code>{encode_text}</code>"
 
-    
+            # 检查是否为私信
+            if message.chat.type in ['private']:
 
+                await context.bot.send_document(
+                    chat_id=message.chat_id,
+                    document=message.document.file_id,
+                    caption=reply_caption,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+
+            await context.bot.send_message(
+                chat_id=bot_chat_id,
+                text=encode_text
+            ) 
 
     if str(message['chat']['id']).strip() == str(bot_chat_id).strip():
         chat_id = message['chat']['id']
@@ -336,20 +434,33 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         NEXT_DIALOGS = False
         entity = dialog.entity
 
+       
+
         # 跳过来自 WAREHOUSE_CHAT_ID 的对话
         if entity.id == tgbot.config['warehouse_chat_id']:
             NEXT_DIALOGS = True
             continue
 
+       
+
         # 如果entity.id 是属于 wp_bot 下的 任一 id, 则跳过
         if entity.id in [int(bot['id']) for bot in wp_bot]:
+            
             NEXT_DIALOGS = True
             continue
 
+       
+
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-        blacklist = [2131062766, 1766929647, 1781549078, 6701952909, 6366395646, 93372553, 2197546676, 2022425523,2143443716,2156649053]
-        enclist = [2012816724, 2239552986, 2215190216, 7061290326, 2175483382, 2252083262]
-        skip_vaildate_list = [2201450328]
+        blacklist = [
+            777000,     #Telegram
+            93372553,   #BotFather
+            2141416413, #DataPanHome
+            2233580528, #FilesPan1Home
+            7386890195  #mediabk4bot
+            ]
+        enclist = []
+        skip_vaildate_list = []
 
         if entity.id in blacklist:
             NEXT_DIALOGS = True
@@ -438,6 +549,9 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                     except Exception as e:
                         print(f"Error kicking bot: {e}", flush=True)
 
+
+
+
                     combined_regex = r"(https?://t\.me/(?:joinchat/)?\+?[a-zA-Z0-9_\-]{15,50})|(?<![a-zA-Z0-9_\-])\+[a-zA-Z0-9_\-]{15,17}(?![a-zA-Z0-9_\-])"
                     matches = re.findall(combined_regex, message.text)
                     if matches:
@@ -463,9 +577,32 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             NEXT_DIALOGS = True
                             break
 
-                        await tgbot.process_by_check_text(message, 'tobot')
-                        media_count += 1
-                        count_per_chat += 1
+                        query = await tgbot.process_by_check_text(message, 'query')
+                        if query:
+                            for bot_result in query['results']:
+                                if isinstance(bot_result, dict):
+                                    if(bot_result['title'] == 'salai'):
+                                        
+                                        async with tgbot.client.conversation(tgbot.config['work_bot_id']) as conv:
+                                            await conv.send_message(bot_result['match'])
+
+                                        await tgbot.client.delete_messages(
+                                            entity=entity.id,  # 对话的 chat_id
+                                            message_ids=message.id  # 刚刚发送消息的 ID
+                                        )
+
+
+                                    else:
+                                        await tgbot.process_by_check_text(message, 'tobot')
+                                        media_count += 1
+                                        count_per_chat += 1
+
+                                    
+
+                                        # bot_dict[bot_result['title']].append((bot_result['match'], bot_result['bot_name'], bot_result['mode']))
+
+
+                        
                     elif dialog.is_group or dialog.is_channel:
                         if entity.id in enclist:
                             ckresult = tgbot.check_strings(message.text)
@@ -497,12 +634,33 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             else:
                                 await tgbot.process_by_check_text(message, 'encstr')
                     elif dialog.is_user:
-                        if '|_request_|' in message.text:
-                            await tgbot.process_by_check_text(message, 'request')   ##Send to QQBOT with caption
-                        elif '|_sendToWZ_|' in message.text:
-                            await tgbot.process_by_check_text(message, 'sendToWZ')
-                        else:
-                            await tgbot.process_by_check_text(message, 'encstr')    ##Send to QQBOT
+                       
+                    
+                        try:
+                            if '|_forward_|' in message.text:
+                                match = re.search(r'\|_forward_\|\s*@([^\s]+)', message.message, re.IGNORECASE)
+                                if match:
+                                    captured_str = match.group(1).strip()
+                                    if captured_str.isdigit():
+                                        if captured_str.startswith('-100'):
+                                            captured_str = captured_str.replace('-100', '')
+                                        await tgbot.client.send_message(int(captured_str), message)
+                                    else:
+                                        await tgbot.client.send_message(captured_str, message)
+                            elif '|_request_|' in message.text:
+                                await tgbot.process_by_check_text(message, 'request')   ##Send to QQBOT with caption
+                            elif '|_sendToWZ_|' in message.text:
+                                await tgbot.process_by_check_text(message, 'sendToWZ')
+                            else:
+                                await tgbot.process_by_check_text(message, 'encstr')    ##Send to QQBOT
+
+                        except Exception as e:
+                            print(f"Error forwarding message: {e}", flush=True)
+                            traceback.print_exc()
+                        finally:
+                            NEXT_MESSAGE = True
+
+                        
 
                 tgbot.save_last_read_message_id(entity.id, last_message_id)
 
@@ -533,6 +691,7 @@ async def main():
     await application.initialize()
     await application.start()
     await application.updater.start_polling()
+    print(f"Bot Start Polling\n", flush=True)
     
     while True:
         loop_start_time = time.time()

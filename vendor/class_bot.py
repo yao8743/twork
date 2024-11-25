@@ -41,7 +41,7 @@ class LYClass:
                         enc_exist=True
                         
                         if mode == 'encstr':
-                            print(f">>send to QQ: {message.id}\n", flush=True)
+                            print(f">>send to WorkBOT(QQ): {message.id}-{match}\n", flush=True)
                             async with self.client.conversation(self.config['work_bot_id']) as conv:
                                 await conv.send_message(match)
                                 # print(match)
@@ -295,7 +295,7 @@ class LYClass:
                             document = response.media.document
                             await client.send_file(chat_id, document, reply_to=message.id)
                           
-                            print(">>>Reply with document .")
+                            print(">>>Reply with document.")
 
                             #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
                             if chat_id != self.config['work_chat_id']:
@@ -342,6 +342,9 @@ class LYClass:
                     print("Received non-media and non-text response")
         except Exception as e:
             print(f"\rAn error occurred: {e}\n")
+
+
+
 
     async def update_wpbot_data(self, client, message, datapan):
         try:
