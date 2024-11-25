@@ -1,4 +1,6 @@
 
+import base64
+import json
 import os
 from telethon import TelegramClient,functions
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
@@ -66,8 +68,11 @@ try:
         'link_chat_id': int(os.getenv('LINK_CHAT_ID', 0)),
         'key_word': os.getenv('KEY_WORD'),
         'show_caption': os.getenv('SHOW_CAPTION'),
-        'bot_username' : os.getenv('BOT_USERNAME')
+        'bot_username' : os.getenv('BOT_USERNAME'),
+        'configure_chat_id': -940026976
     }
+
+    
 
     #max_process_time 設為 600 秒，即 10 分鐘
     max_process_time = 60*27  # 25分钟
@@ -186,25 +191,33 @@ async def create_group():
 
 
 async def get_latest_message(chat_id: int):
+
+    try:
+        chat_entity = await client.get_entity(chat_id)
+        print(f"Chat entity found: {chat_entity}")
+    except Exception as e:
+        print(f"Invalid chat_id: {e}")
+
+
     # 获取指定聊天的消息，限制只获取一条最新消息
     async for message in client.iter_messages(chat_id, limit=1):
         if not message or not message.text:
             return "No messages found."
         
-        # 按行读取 message.text 的内容，并载入到 config 中
-        for line in message.text.splitlines():
-            if ':' in line:
-                index, value = line.split(':', 1)  # 分割成 index 和 value
-                index = index.strip()  # 去掉空格
-                value = value.strip()  # 去掉空格
-                
-                # 尝试将 value 转换为整数并存入 config 中
-                try:
-                    config[index] = int(value)
-                except ValueError:
-                    config[index] = value  # 如果不能转换为整数，保留原字符串值
-        print(f"{config}", flush=True)
-        return "Config updated with latest message content."
+    # 按行读取 message.text 的内容，并载入到 config 中
+    for line in message.text.splitlines():
+        if ':' in line:
+            index, value = line.split(':', 1)  # 分割成 index 和 value
+            index = index.strip()  # 去掉空格
+            value = value.strip()  # 去掉空格
+            
+            # 尝试将 value 转换为整数并存入 config 中
+            try:
+                config[index] = int(value)
+            except ValueError:
+                config[index] = value  # 如果不能转换为整数，保留原字符串值
+    print(f"{config}", flush=True)
+    return "Config updated with latest message content."
 
 
 
@@ -255,6 +268,9 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
             count_per_chat = 0
             time.sleep(0.5)  # 每次请求之间等待0.5秒
             last_read_message_id = tgbot.load_last_read_message_id(entity.id)
+
+          
+
             print(f"\r\n>Reading messages from entity {entity.id}/{entity_title} - {last_read_message_id} - U:{dialog.unread_count} \n", flush=True)
 
             async for message in client.iter_messages(entity, min_id=last_read_message_id, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
@@ -338,10 +354,6 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                             if isinstance(entity, Channel) or isinstance(entity, Chat):
                                 entity_title = entity.title
 
-                            
-
-                                
-                        
 
                 tgbot.save_last_read_message_id(entity.id, last_message_id)
 
@@ -358,7 +370,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
 
     if NEXT_CYCLE:
         print(f"\nExecution time exceeded {int(max_process_time)} seconds. Stopping. T:{int(elapsed_time)} of {int(max_process_time)} ,C:{media_count} of {max_media_count}\n", flush=True)
-
+       
 
 
 
@@ -374,11 +386,11 @@ async def main():
     await application.start()
     await application.updater.start_polling()
     
-    chat_id = -940026976
-
-    latest_message = await get_latest_message(chat_id)
-    print("Latest message:", latest_message)
-
+   
+    configure_chat_id = tgbot.config['configure_chat_id']
+    
+    tgbot.setting = await tgbot.load_tg_setting(configure_chat_id)
+    # print(f"Setting: {setting}", flush=True)
     # await create_group()
     
 
@@ -394,10 +406,19 @@ async def main():
             print(f"\nStopping main loop after exceeding max_process_time of {max_process_time} seconds.\n", flush=True)
             break
 
+        input_string = json.dumps(tgbot.get_last_read_message_content())
+        byte_data = input_string.encode('utf-8')
+        tgbot.setting['last_read_message_content'] = base64.urlsafe_b64encode(byte_data).decode('utf-8')
+       
+        print(f"Last read message content: {tgbot.setting}", flush=True)
+        config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
+        async with client.conversation(tgbot.config['configure_chat_id']) as conv:
+            await conv.send_message(config_str2)
+
         print("\nExecution time is " + str(int(elapsed_time)) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
         print(f"-\n", flush=True)
         print(f"-------------------------------------\n", flush=True)
-        await asyncio.sleep(max_break_time)  # 间隔180秒
+        await asyncio.sleep(max_break_time)  #间隔180秒
            
 with client:
     client.loop.run_until_complete(main())
