@@ -424,9 +424,13 @@ async def handle_bot_message(update: Update, context) -> None:
 # 如果 config 有屬性 session_string，則使用 session_string 來建立 client
 if 'session_string' in config:
     session_name = StringSession(config['session_string'])
-    client = TelegramClient(session_name, config['api_id'], config['api_hash'])
+    
 else:
-    client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+    session_name = config['session_name']
+    
+
+
+client = TelegramClient(session_name, config['api_id'], config['api_hash'])
 
 application = Application.builder().token(bot_token).build()
 # 注册消息处理程序，处理所有消息类型
