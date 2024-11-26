@@ -482,7 +482,7 @@ class LYClass:
     async def load_tg_setting(self, chat_id, message_thread_id=0):
         try:
             chat_entity = await self.client.get_entity(int(chat_id))
-            # print(f"Chat entity found: {chat_entity}")
+            print(f"Chat entity found: {chat_entity}")
         except Exception as e:
             print(f"Invalid chat_id: {e}")
 
@@ -491,6 +491,7 @@ class LYClass:
         # 使用 get_messages 获取指定 thread_id 的消息
         try:
             messages = await self.client.get_messages(chat_entity, limit=1, reply_to=message_thread_id)
+            print(f"Messages found: {messages}")
         except Exception as e:
             print(f"Error fetching messages: {e}")
             return
