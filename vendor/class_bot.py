@@ -489,7 +489,7 @@ class LYClass:
         # 获取指定聊天的消息，限制只获取一条最新消息
         # 使用 get_messages 获取指定 thread_id 的消息
         try:
-            messages = await self.client.get_messages(chat_id, limit=1, reply_to=message_thread_id)
+            messages = await self.client.get_messages(chat_entity, limit=1, reply_to=message_thread_id)
         except Exception as e:
             print(f"Error fetching messages: {e}")
             return
