@@ -11,6 +11,7 @@ import telegram
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.constants import ParseMode
 from telegram.error import RetryAfter
+from telethon.sessions import StringSession
 from vendor.class_bot import LYClass  # 导入 LYClass
 from vendor.wpbot import wp_bot  # 导入 wp_bot
 import asyncio
@@ -46,6 +47,7 @@ try:
 
 
     config = {
+        'session_string': os.getenv('SESSION_STRING'),
         'api_id': os.getenv('API_ID'),
         'api_hash': os.getenv('API_HASH'),
         'phone_number': os.getenv('PHONE_NUMBER'),
@@ -58,7 +60,9 @@ try:
         'link_chat_id': int(os.getenv('LINK_CHAT_ID', 0)),
         'key_word': os.getenv('KEY_WORD'),
         'show_caption': os.getenv('SHOW_CAPTION'),
-        'bot_username' : os.getenv('BOT_USERNAME')
+        'bot_username' : os.getenv('BOT_USERNAME'),
+        'setting_chat_id': -940026976,
+        'setting_tread_id': 0,
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
@@ -415,7 +419,19 @@ async def handle_bot_message(update: Update, context) -> None:
 
 
 # 创建客户端
-client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+
+
+# 如果 config 有屬性 session_string，則使用 session_string 來建立 client
+if 'session_string' in config:
+    session_name = StringSession(config['session_string'])
+    
+else:
+    session_name = config['session_name']
+    
+
+
+client = TelegramClient(session_name, config['api_id'], config['api_hash'])
+
 application = Application.builder().token(bot_token).build()
 # 注册消息处理程序，处理所有消息类型
 application.add_handler(MessageHandler(filters.ALL, handle_bot_message))
