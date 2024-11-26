@@ -11,6 +11,7 @@ from telethon.errors import WorkerBusyTooLongRetryError
 from telethon.tl.functions.messages import ImportChatInviteRequest
 from vendor.wpbot import wp_bot  # 导入 wp_bot
 from types import SimpleNamespace
+from telethon.tl.types import PeerUser, PeerChat, PeerChannel
 
 class LYClass:
 
@@ -480,7 +481,7 @@ class LYClass:
 
     async def load_tg_setting(self, chat_id, message_thread_id=0):
         try:
-            chat_entity = await self.client.get_entity(chat_id)
+            chat_entity = await self.client.get_entity(int(chat_id))
             # print(f"Chat entity found: {chat_entity}")
         except Exception as e:
             print(f"Invalid chat_id: {e}")
