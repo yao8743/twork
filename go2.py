@@ -60,7 +60,9 @@ try:
         'link_chat_id': int(os.getenv('LINK_CHAT_ID', 0)),
         'key_word': os.getenv('KEY_WORD'),
         'show_caption': os.getenv('SHOW_CAPTION'),
-        'bot_username' : os.getenv('BOT_USERNAME')
+        'bot_username' : os.getenv('BOT_USERNAME'),
+        'setting_chat_id': -940026976,
+        'setting_tread_id': 0,
     }
 
     #max_process_time 設為 600 秒，即 10 分鐘
