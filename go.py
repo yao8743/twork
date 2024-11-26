@@ -112,9 +112,9 @@ async def main():
         print(f"Error sending message to work_bot_id: {e}", flush=True)
         return
     
-  
+    setting_chat_id = tgbot.config['setting_chat_id']
     
-    tgbot.setting = await tgbot.load_tg_setting(tgbot.config['setting_chat_id'], tgbot.config['setting_tread_id'])
+    tgbot.setting = await tgbot.load_tg_setting(setting_chat_id, tgbot.config['setting_tread_id'])
     
     # tgbot.setting = await process_chats(client, tgbot.setting)
     # print("Updated JSON:", tgbot.setting)
@@ -144,8 +144,8 @@ async def main():
 
 
 
-            # 获取 blacklist，若不存在则默认为空列表
-            blacklist = tgbot.setting.get('blacklist', [])
+            # 如果 tgbot.setting 不存在，使用空字典作为默认值
+            blacklist = (tgbot.setting or {}).get('blacklist', [])
             
 
             enclist = []
