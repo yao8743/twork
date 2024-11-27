@@ -131,7 +131,6 @@ class LYClass:
             sender = await client.get_entity(message.from_id)
 
             sender_title = f"{sender.first_name}"
-
             # if sender.last_name is not None then sender_title = f"{sender.first_name} {sender.last_name}"
             if sender.last_name:
                 sender_title = f"{sender.first_name} {sender.last_name}"
