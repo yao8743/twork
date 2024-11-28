@@ -19,7 +19,8 @@ session_name = api_id + 'session_name'  # 确保与上传的会话文件名匹�
 client = TelegramClient(session_name, api_id, api_hash)
 
 # 机器人或用户 ID 列表
-bots = ['botA', 'botB', '4478232']
+# bots = ['DeletedAcconutBot', 'has_no_access_bot', 'ztd006bot', 'ztdMiWen013Bot', 'ztdBlinkBox013Bot', 'ztdStone009BOT', 'ztdsailor012bot', 'xljdd012bot', 'ztdv014bot', 'ztdg015bot', 'ztdboutiques015bot', 'Juhuatai013bot', 'xiaojuhua010bot', 'ztdbeachboy013bot', 'xxbbt1109bot', 'xlygrade05bot', 'whaleboy013bot', 'xiaolongyang001bot', 'Qing001bot', 'ztdmover001bot', 'ztdcollector02bot', 'afu002bot', 'DavidYao812Bot', 'xiaoxun807bot', 'SharedCP666BOT', 'GetInvitation666BOT', 'getinvitationbot', 'sharedboy777bot', 'fix807bot', 'ganymederonin010bot', 'littleReviewer010BOT', 'ztdHelpCenter010BOT', 'resregs010bot', 'gc807bot', 'joinhider12_bot', 'xiaolongdd02bot', 'test13182732bot', 'test1239483bot', 'ztdreporter010bot', 'ztdthumb011bot', 'thumb74bot', 'autodecoder666bot', 'whaleboy912bot']
+bots = ['MediaBK5Bot', 'FilesPan1Bot', 'FilesDrive_BLGA_bot', 'FileSaveNewBot', 'ShowFilesBot', 'datapanbot', 'jyypbot', 'mlkautobot', 'fileinbot', 'filetobot', 'fileoffrm_bot', 'wangpanbot', 'salaiZTDBOT']
 
 async def send_messages():
     # 连接到 Telegram
@@ -33,7 +34,7 @@ async def send_messages():
         except Exception as e:
             print(f"Failed to send message to {bot_id}: {e}")
         finally:
-            await sleep(0.5)  # 等待 1 秒
+            await sleep(1)  # 等待 1 秒
 
 # 主入口
 if __name__ == "__main__":
