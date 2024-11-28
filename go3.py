@@ -387,7 +387,7 @@ async def main():
 
     
     setting_chat_id = tgbot.config['setting_chat_id']
-    print(f"Setting chat id: {tgbot.config}", flush=True)
+    # print(f"Setting chat id: {tgbot.config}", flush=True)
     tgbot.setting = await tgbot.load_tg_setting(setting_chat_id, tgbot.config['setting_tread_id'])
 
 
