@@ -147,7 +147,7 @@ class LYClass:
             caption_text = None
         
         try:
-            print(f"Message: {message}")
+            # print(f"Message: {message}")
 
             
 
