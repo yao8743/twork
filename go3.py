@@ -244,6 +244,10 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         if tgbot.setting['warehouse_chat_id']:
             tgbot.config['warehouse_chat_id'] = tgbot.setting['warehouse_chat_id']
 
+
+
+
+
         if entity.id in blacklist:
             NEXT_DIALOGS = True
             continue
@@ -400,6 +404,17 @@ async def main():
     while True:
         loop_start_time = time.time()
         tgbot.setting = await tgbot.load_tg_setting(setting_chat_id, tgbot.config['setting_tread_id'])
+
+        if tgbot.setting['max_process_time']:
+            max_process_time = tgbot.setting['max_process_time']
+        if tgbot.setting['max_media_count']:
+            max_media_count = tgbot.setting['max_media_count']
+        if tgbot.setting['max_count_per_chat']:
+            max_count_per_chat = tgbot.setting['max_count_per_chat']
+        if tgbot.setting['max_break_time']:
+            max_break_time = tgbot.setting['max_break_time']
+
+
         await telegram_loop(client, tgbot, max_process_time, max_media_count, max_count_per_chat)
         
         elapsed_time = time.time() - start_time
