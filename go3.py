@@ -231,15 +231,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         NEXT_DIALOGS = False
         entity = dialog.entity
 
-        # 跳过来自 WAREHOUSE_CHAT_ID 的对话
-        if entity.id == tgbot.config['warehouse_chat_id']:
-            NEXT_DIALOGS = True
-            continue
-
-        # 如果entity.id 是属于 wp_bot 下的 任一 id, 则跳过
-        if entity.id in [int(bot['id']) for bot in wp_bot]:
-            NEXT_DIALOGS = True
-            continue
+        
 
         # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
         blacklist = []
@@ -249,7 +241,20 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
         if tgbot.setting['blacklist']:
             blacklist = tgbot.setting['blacklist']
 
+        if tgbot.setting['warehouse_chat_id']:
+            tgbot.config['warehouse_chat_id'] = tgbot.setting['warehouse_chat_id']
+
         if entity.id in blacklist:
+            NEXT_DIALOGS = True
+            continue
+
+        # 跳过来自 WAREHOUSE_CHAT_ID 的对话
+        if entity.id == tgbot.config['warehouse_chat_id']:
+            NEXT_DIALOGS = True
+            continue
+
+        # 如果entity.id 是属于 wp_bot 下的 任一 id, 则跳过
+        if entity.id in [int(bot['id']) for bot in wp_bot]:
             NEXT_DIALOGS = True
             continue
 
