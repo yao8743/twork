@@ -153,34 +153,10 @@ jobs:
         name: last_read_message
         path: last_read_message_id.json
 
-    - name: Delete old workflow runs
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # 使用个人访问令牌
-        script: |
-          const runs = await github.rest.actions.listWorkflowRuns({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            workflow_id: 'main3.yml',  // 使用 main.yml 作为 workflow_id
-            per_page: 100,  // 获取最多100个运行
-          });
-
-          console.log('Found workflow runs:', runs.data.workflow_runs.length);
-
-          const runIdsToDelete = runs.data.workflow_runs.slice(4).map(run => run.id);
-
-          for (const runId of runIdsToDelete) {
-            await github.rest.actions.deleteWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId,
-            });
-            console.log(`Deleted workflow run with ID: ${runId}`);
-          }
     - name: Trigger Next Run
       run: |
         curl -X POST \
-        -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
         -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/dispatches \
+        https://api.github.com/repos/${{ github.repository }}/actions/workflows/main3.yml/dispatches \
         -d '{"ref":"main"}'
