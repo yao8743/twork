@@ -147,6 +147,8 @@ async def main():
             # 如果 tgbot.setting 不存在，使用空字典作为默认值
             blacklist = (tgbot.setting or {}).get('blacklist', [])
             
+            if tgbot.setting['warehouse_chat_id']:
+                tgbot.config['warehouse_chat_id'] = int(tgbot.setting['warehouse_chat_id'])
 
             enclist = []
 
