@@ -543,6 +543,7 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
                         last_read_message_id = last_message_id
 
                     elif tgbot.config['warehouse_chat_id'] != 0 and entity.id != tgbot.config['work_chat_id'] and entity.id != tgbot.config['warehouse_chat_id']:
+                        #有設倉庫,且不是工作群組,也不是倉庫群組
                         if media_count >= max_media_count:
                             NEXT_CYCLE = True
                             break

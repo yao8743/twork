@@ -21,7 +21,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-   # 步骤 2: 检查正在运行的工作流数量
+    # 步骤 2: 检查正在运行的工作流数量
     - name: Check for running workflows
       uses: actions/github-script@v6
       id: check-running
@@ -37,8 +37,10 @@ jobs:
           });
           // 过滤掉当前工作流
           const otherRuns = data.workflow_runs.filter(run => run.id !== currentRunId);
+          core.setOutput('hasOtherRuns', otherRuns.length > 0 ? 'true' : 'false');
           if (otherRuns.length > 0) {
-            core.setFailed(`Another workflow is already running.`);
+            console.log("Another workflow is already running.");
+           
           } else {
             console.log("No other running workflows.");
           }
@@ -48,11 +50,13 @@ jobs:
     
 
     - name: Set up Python
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
     - name: Install dependencies
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements2.txt
@@ -62,6 +66,7 @@ jobs:
        
 
     - name: Get previous workflow run ID
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/github-script@v6
       id: get-previous-run-id
       with:
@@ -81,6 +86,7 @@ jobs:
       continue-on-error: true
 
     - name: Download artifacts - Session
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/download-artifact@v4
       with:
         name: session_name
@@ -90,6 +96,7 @@ jobs:
       continue-on-error: true
 
     - name: Download artifacts - Last_Read_Message
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/download-artifact@v4
       with:
         name: last_read_message
@@ -99,6 +106,7 @@ jobs:
       continue-on-error: true
 
     - name: Decrypt Telethon session file
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
         API_ID: ${{ secrets.API_ID }}
         SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
@@ -107,6 +115,7 @@ jobs:
 
 
     - name: Run Telethon script
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
         API_ID: ${{ secrets.API_ID }}
         API_HASH: ${{ secrets.API_HASH }}
@@ -132,6 +141,7 @@ jobs:
         python go2.py
 
     - name: Encrypt Telethon session file
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
         API_ID: ${{ secrets.API_ID }}
         SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
@@ -139,6 +149,7 @@ jobs:
         openssl aes-256-cbc -pbkdf2 -salt -in "${{ secrets.API_ID }}session_name.session" -out "${{ secrets.API_ID }}session_name.session.enc" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
 
     - name: Upload session_name.enc artifact
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/upload-artifact@v4
       with:
         name: session_name
@@ -146,6 +157,7 @@ jobs:
 
 
     - name: Check if last_read_message_id.json was created
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       run: |
         if [ -f last_read_message_id.json ]; then
           echo "last_read_message_id.json was created."
@@ -154,12 +166,14 @@ jobs:
         fi
 
     - name: Upload last_read_message_id.json artifact
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/upload-artifact@v4
       with:
         name: last_read_message
         path: last_read_message_id.json
 
     - name: Delete old workflow runs
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # 使用个人访问令牌
@@ -185,6 +199,7 @@ jobs:
           }
 
     - name: Trigger Next Run
+      if: steps.check-running.outputs.hasOtherRuns == 'false'
       run: |
         curl -X POST \
         -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
