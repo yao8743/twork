@@ -399,7 +399,7 @@ class lybot:
             # 检查是否为加密字符串
             
             encode_code_list = self.find_encode_code(update.message.text)
-            print(f"Found {len(encode_code_list)} encode codes in the message.")
+            # print(f"Found {len(encode_code_list)} encode codes in the message.")
             if encode_code_list:
                 for encode_code in encode_code_list:
                     try:
@@ -437,9 +437,9 @@ class lybot:
                                                 file_type=fileInfoRow.file_type
                                                 )
                                         elif fileInfoRow.bot_name == self.bot_username:
-                                            print(f"=>Found - {fileInfoRow} ")
+                                            # print(f"=>Found - {fileInfoRow} ")
                                             #展示fileInfoRow的资料型态
-                                            print(type(fileInfoRow))
+                                            # print(type(fileInfoRow))
                                             
                                             new_dict = dict(
                                                 file_unique_id=fileInfoRow.file_unique_id, 
@@ -521,7 +521,7 @@ class lybot:
 
     async def send_material_by_row(self,decode_row,context,reply_to_message_id,chat_id):
         #显示decode_row的资料型态
-        print((decode_row))
+        # print((decode_row))
   
     
         encode_code = await self.encode(decode_row['file_unique_id'], decode_row['file_id'], decode_row['bot_name'], decode_row['file_type'])
