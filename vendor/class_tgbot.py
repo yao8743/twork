@@ -5,7 +5,7 @@ import time
 import traceback
 from telethon import events,types,errors
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo
-from telegram.constants import ParseMode
+from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
 #密文機器人
@@ -148,7 +148,9 @@ class lybot:
         sender_id = sender_id or "0"
 
         file_unique_id_enc = self.convert_base(file_unique_id, 64, 155)
+        
         file_id_enc = self.convert_base(file_id, 64, 155)
+        
         bot_name_enc = self.convert_base(bot_name, 64, 155)
         sender_id_enc = self.convert_base(sender_id, 10, 155)
         file_type_enc = file_type
@@ -267,7 +269,68 @@ class lybot:
         self.bot_name = bot_info.first_name
        
 
+    def extract_entity_from_message(self, message, entity_type=None):
+        """
+        从 Telegram 消息中提取指定类型的实体。
+
+        Args:
+            message (telegram.Message): Telegram 消息对象。
+            entity_type (str, optional): 要提取的实体类型。如果为 None，则提取所有实体。
+
+        Returns:
+            list: 包含消息中所有指定类型实体的列表。如果没有找到，则返回空列表。
+        """
+        entities = []
+
+        # 检查消息中的实体
+        if message.entities:
+            for entity in message.entities:
+                if entity_type is None or entity.type == entity_type:
+                    start = entity.offset
+                    end = entity.offset + entity.length
+                    entities.append(message.text[start:end])
+
+        # 如果类型是 URL 并且没有在实体中找到，用正则表达式作为备选
+        if entity_type == MessageEntityType.URL and not entities:
+            url_pattern = re.compile(
+                r'(?:(?:https?|ftp):\/\/)'  # 协议部分
+                r'[\w/\-?=%.]+\.[\w/\-?=%.]+',  # 域名部分
+                re.IGNORECASE
+            )
+            entities = re.findall(url_pattern, message.text or "")
+
+        return entities
+
     async def handle_bot_message(self,update, context) -> None:
+        
+
+        # 使用类内方法提取 URL
+        urls = self.extract_entity_from_message(update.message, MessageEntityType.URL)
+        if urls:
+
+            bot_name = self.bot_username
+            sender_id = update.message.from_user.id
+            file_type = 'u'
+            for url in urls:
+                #检查 url 的开头是否为 https://t.me/+ 或 https://t.me/joinchat/ , 若不是则跳过
+                if not url.startswith("https://t.me/+") and not url.startswith("https://t.me/joinchat/"):
+                    continue
+                # 将字符中的 https://t.me/+ 或 https://t.me/joinchat/ 替换为空
+                file_id_url = url.replace("https://t.me/+", "").replace("https://t.me/joinchat/", "")
+                url_word = await self.encode(file_id_url,"0", bot_name, file_type, sender_id)
+                #回覆指定的 update.message.message_id消息
+               
+                await context.bot.send_message(
+                    chat_id=update.message.chat.id,
+                    reply_to_message_id=update.message.message_id,
+                    text=f"<code>{url_word}</code>",
+                    parse_mode=ParseMode.HTML
+                )
+               
+                print(f"Detected URL: {url_word}")
+            
+            return
+
 
         # print(f"Received message: {update.message}", flush=True)
         if hasattr(update.message, 'media_group_id') and update.message.media_group_id:
@@ -290,7 +353,7 @@ class lybot:
             print(f"{self.bot_username}-[B]Video message received", flush=True)
             await self.upsert_file_info(update.message)
             
-            # 如果是私聊的内容，则停止
+            # 如果不是私聊的内容，则停止
             if update.message.chat.type not in ['private']:
                 return
                 
@@ -319,6 +382,8 @@ class lybot:
                 parse_mode=ParseMode.HTML
             )
 
+                
+            
             
         elif update.message.text:
             # 检查是否为私信
@@ -330,7 +395,7 @@ class lybot:
             # --- 别人的密文 => 查询自己是否有 file_id
             # ------ 若有则回覆 => 密文转资源
             # ------ 没有, 确认 HW_BOT 有没有, 若有则让 HWBOT 传给 ManBOT => Pool , 出现 "正在同步资源中,请一小时后再试"
-            print("[B]Text message received", flush=True)
+            # print("[B]Text message received", flush=True)
             # 检查是否为加密字符串
             
             encode_code_list = self.find_encode_code(update.message.text)
@@ -457,12 +522,21 @@ class lybot:
     async def send_material_by_row(self,decode_row,context,reply_to_message_id,chat_id):
         #显示decode_row的资料型态
         print((decode_row))
+  
     
         encode_code = await self.encode(decode_row['file_unique_id'], decode_row['file_id'], decode_row['bot_name'], decode_row['file_type'])
         reply_message = f"Send to @{self.bot_username} to fetch content\r\n\r\n<code>{encode_code}</code>"
        
         # 密文转资源
-        if decode_row['file_type'] == 'p' or decode_row['file_type'] == 'photo':
+        if decode_row['file_type'] == 'u' or decode_row['file_type'] == 'url':
+            print(f"URL: {decode_row['file_unique_id']}")
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"https://t.me/joinchat/{decode_row['file_unique_id']}",
+                reply_to_message_id=reply_to_message_id,
+                parse_mode=ParseMode.HTML
+            )
+        elif decode_row['file_type'] == 'p' or decode_row['file_type'] == 'photo':
             await context.bot.send_photo(
                 chat_id=chat_id,
                 photo=decode_row['file_id'],
