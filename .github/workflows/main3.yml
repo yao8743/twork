@@ -1,4 +1,4 @@
-name: Deploy Telethon
+name: Deploy JJL
 
 on: 
   schedule:
