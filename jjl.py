@@ -112,6 +112,8 @@ async def main():
     elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
         tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
 
+    tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+
     # print(f"tgbot.setting: {tgbot.setting}")
     start_time = time.time()
 
