@@ -2,6 +2,8 @@
 # pylint: disable=unused-argument
 
 import asyncio
+import json
+import time
 from peewee import PostgresqlDatabase
 from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
@@ -39,7 +41,9 @@ config = {
     'db_port': int(os.getenv('DB_PORT',5432)),
     'db_sslmode': os.getenv('DB_SSLMODE','require'),
     'man_bot_id': os.getenv('MAN_BOT_ID'),
-    'warehouse_chat_id': int(os.getenv('WAREHOUSE_CHAT_ID'))
+    'setting_chat_id': int(os.getenv('SETTING_CHAT_ID',0)),
+    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID',0)),
+    'warehouse_chat_id': int(os.getenv('WAREHOUSE_CHAT_ID',0))
 }
 
 
@@ -47,8 +51,6 @@ config = {
 
 # MBot
 client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
-
-
 
 # 使用连接池并启用自动重连
 db = PooledPostgresqlDatabase(
@@ -85,7 +87,10 @@ async def main():
     # 启动 polling
     
     await tgbot.set_bot_info(application)
+    await tgbot.set_man_bot_info(client)
     await dyerbot.set_bot_info(dyer_application)
+    await dyerbot.set_man_bot_info(client)
+    
 
     await application.initialize()
     await application.start()
@@ -98,15 +103,42 @@ async def main():
     await dyer_application.start()
     await dyer_application.updater.start_polling()
 
+
+    tgbot.setting = {}
+    tgbot.setting = await tgbot.load_tg_setting(client,tgbot.config['setting_chat_id'] , tgbot.config['setting_thread_id'])
+    if tgbot.setting is not None and 'warehouse_chat_id' in tgbot.setting:
+        tgbot.config['warehouse_chat_id'] = int(tgbot.setting['warehouse_chat_id'])
+    elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
+        tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+
+    
+    start_time = time.time()
+
     while True:
         await tgbot.man_bot_loop(client)
-        await asyncio.sleep(5)
+        
+        elapsed_time = time.time() - start_time
+
+        if elapsed_time > tgbot.MAX_PROCESS_TIME:
+            break
+
+
+        await asyncio.sleep(60)
 
         if not db.is_closed():
             try:
                 db.execute_sql('SELECT 1')
             except Exception as e:
                 print(f"Error keeping pool connection alive: {e}")
+        elif db.is_closed():
+            db.connect()
+
+    config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
+    async with client.conversation(int(tgbot.config['setting_chat_id'])) as conv:
+        await conv.send_message(config_str2, reply_to=int(tgbot.config['setting_thread_id']))
+
+
+
 
 with client:
     client.loop.run_until_complete(main())

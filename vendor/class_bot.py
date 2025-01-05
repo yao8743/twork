@@ -581,10 +581,6 @@ class LYClass:
             print(f"Error fetching messages: {e}")
             return
         
-
-   
-
-
         if not messages or not messages[0].text:
             return "No messages found."
 

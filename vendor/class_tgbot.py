@@ -1,4 +1,5 @@
 import asyncio
+import json
 import re
 import time
 import traceback
@@ -45,19 +46,17 @@ from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Cha
 # -- BOT 只会私发资源,不会发在群组, 但会转给 ManBOT => Pool  (ACT_BOT , WH_BOT, LY_BK_BOT)
 
 from collections import defaultdict
-from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField              
+from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField              
 
 class lybot:
 
-    albums = defaultdict(list)  # media_group_id: list of messages
-    album_tasks = {}  # media_group_id: asyncio.Task
-    # 超时时间（秒）
-    ALBUM_TIMEOUT = 2
+
 
     def __init__(self,db):
         self.albums = defaultdict(list)
         self.album_tasks = {}
-        self.ALBUM_TIMEOUT = 2
+        self.ALBUM_TIMEOUT = 0.5
+        self.MAX_PROCESS_TIME = 1200
 
         class BaseModel(Model):
             class Meta:
@@ -66,18 +65,36 @@ class lybot:
         self.BaseModel = BaseModel
 
         class FileInfo(BaseModel):
-            file_unique_id = CharField(max_length=50, unique=True)
-            file_id = CharField(max_length=100)
+            file_unique_id = CharField(max_length=50)
+            file_id = CharField(max_length=100, primary_key=True,unique=True)
             file_type = CharField(max_length=10, null=True)
             bot_name = CharField(max_length=50)
 
         class MediaGroup(BaseModel):
+            id = AutoField()  # 自动主键字段
             media_group_id = BigIntegerField()
             file_id = CharField(max_length=100)
             file_type = CharField(max_length=10, null=True)
 
+        class ShowFiles(BaseModel):
+            enc_str = CharField(max_length=100, primary_key=True, unique=True)
+
+        class User(BaseModel):
+            user_id = BigIntegerField(primary_key=True)
+            first_name = CharField(max_length=50, null=True)
+            last_name = CharField(max_length=50, null=True)
+            username = CharField(max_length=50, null=True)
+
+            class Meta:
+                constraints = [
+                    # 添加无符号约束
+                    'CHECK(user_id >= 0)'
+                ]
+
         self.FileInfo = FileInfo
         self.MediaGroup = MediaGroup
+        self.ShowFiles = ShowFiles
+        self.User = User
 
     def convert_base(self, value, from_base, to_base):
    
@@ -235,7 +252,12 @@ class lybot:
         return matches
 
 
-
+    async def set_man_bot_info(self, client):
+        me = await client.get_me()
+        self.config['man_bot_id'] = me.id
+        # print(f"User ID: {me.id}")
+        # print(f"Username: {me.username}")
+        # print(f"Phone: {me.phone}")
 
     async def set_bot_info(self, application):
         # 获取机器人信息并设置 tgbot.bot_username
@@ -281,12 +303,22 @@ class lybot:
 
             reply_code = await self.encode_message(update.message)
             reply_message = f"Send to @{self.bot_username} to fetch content\r\n\r\n<code>{reply_code}</code>"
-            await context.bot.send_message(
+            res = await context.bot.send_message(
                 chat_id=update.message.chat.id,
                 reply_to_message_id=update.message.message_id,
                 text=reply_message,
                 parse_mode=ParseMode.HTML
             )
+
+            print(f"Reply message: {res.message_id}", flush=True)
+
+            await context.bot.send_message(
+                chat_id=update.message.chat.id,
+                reply_to_message_id=res.message_id,
+                text="👆🏻 Share the code in groups; new users using it earn you extra rewards. \r\n分享代码到群，新用户使用可得额外奖励。",
+                parse_mode=ParseMode.HTML
+            )
+
             
         elif update.message.text:
             # 检查是否为私信
@@ -311,60 +343,11 @@ class lybot:
                         chat_id = update.message.chat_id
                         decode_row = self.decode(encode_code)
 
-                        
-
                         if decode_row['bot_name'] == self.bot_username:
                             
                             # 密文转资源
                             await self.send_material_by_row(decode_row,context,reply_to_message_id,chat_id)
-                            # if decode_row['file_type'] == 'p':
-                            #     await context.bot.send_photo(
-                            #         chat_id=update.message.chat_id,
-                            #         photo=decode_row['file_id'],
-                            #         caption=reply_message,
-                            #         reply_to_message_id=reply_to_message_id,
-                            #         parse_mode=ParseMode.HTML
-                            #     )
-                            # elif decode_row['file_type'] == 'v':
-                            #     await context.bot.send_video(
-                            #         chat_id=update.message.chat_id,
-                            #         video=decode_row['file_id'],
-                            #         caption=reply_message,
-                            #         reply_to_message_id=reply_to_message_id,
-                            #         parse_mode=ParseMode.HTML
-                            #     )
-                            # elif decode_row['file_type'] == 'd':
-                            #     await context.bot.send_document(
-                            #         chat_id=update.message.chat_id,
-                            #         document=decode_row['file_id'],
-                            #         caption=reply_message,
-                            #         reply_to_message_id=reply_to_message_id,
-                            #         parse_mode=ParseMode.HTML
-                            #     )
-                            # elif decode_row['file_type'] == 'a':
-
-                            #     records = self.MediaGroup.select().where(self.MediaGroup.media_group_id == decode_row['file_unique_id'])
-                               
-                            #     media = []
-
-                            #     # 遍历记录，根据 file_type 动态生成对应的 InputMedia 对象
-                            #     for record in records:
-                            #         if record.file_type == "photo":
-                            #             media.append(InputMediaPhoto(media=record.file_id,caption=reply_message,parse_mode=ParseMode.HTML))
-                            #         elif record.file_type == "video":
-                            #             media.append(InputMediaVideo(media=record.file_id,caption=reply_message,parse_mode=ParseMode.HTML))
-                            #         elif record.file_type == "document":
-                            #             media.append(InputMediaDocument(media=record.file_id,caption=reply_message,parse_mode=ParseMode.HTML))
-                            #         else:
-                            #             print(f"未知的文件类型: {record.file_type}")
-                                
-                            #     # 发送相册
-                            #     await context.bot.send_media_group(
-                            #         chat_id=update.message.chat_id,
-                            #         media=media,
-                            #         reply_to_message_id=reply_to_message_id
-                            #     )
-                            # await self.get_resource_from_code(update, decode_dict)
+                            await self.referral_reward(decode_row,context,chat_id)
                         else:
                             # --- 别人的密文 => 查询自己是否有 file_id
                             # ------ 若有则回覆 => 密文转资源
@@ -372,7 +355,7 @@ class lybot:
                             if decode_row['file_type'] == 'a':
                                 await context.send_message(
                                     chat_id=update.message.chat_id,
-                                    text="这是相册,正在同步资源中，请一小时后再试"
+                                    text="Album syncing, please try again in an hour. 相册同步中，请一小时后再试。"
                                 )
                                 return
                             else:
@@ -406,7 +389,7 @@ class lybot:
                                         await context.bot.send_message(  
                                             chat_id=update.message.chat_id,
                                             reply_to_message_id=update.message.message_id,
-                                            text="这是旧数正在复原中，请一小时后再试"
+                                            text="Old data restoring, please try again in an hour. 旧数复原中，请一小时后再试。"
                                         )
                                         
 
@@ -416,7 +399,7 @@ class lybot:
                                         await context.bot.send_message(
                                             chat_id=update.message.chat_id,
                                             reply_to_message_id=update.message.message_id,
-                                            text="这个代码错误或者已经过期"
+                                            text="Code invalid or expired. 代码错误或已过期。"
                                         )
                                        
                                     return None
@@ -432,6 +415,44 @@ class lybot:
                         print(f"Failed to decode message: {e}")
         else:
             await update.message.reply_text(update.message.text)
+
+    async def referral_reward(self,decode_row,context,user_id):
+        # 如果 decode_row['sender_id'] 无值或等于 0，则返回
+        if decode_row['sender_id'] == "0":
+            return
+
+        # - 回馈机制
+        # -- 新用户读取密文, 上传者得到回馈
+        # --- 新用户存到db
+        # --- 回馈给谁? 密文要包括上传者
+        # 从数据库检查 chat_id 是否存在于 User 表中,若存在则返回 false, 否则就对 decode_row['sender_id'] 进行奖励
+        try:
+            user = self.User.get(self.User.user_id == user_id)
+            return False
+        except self.User.DoesNotExist:
+            self.User.create(user_id=user_id)
+            #从数据表 showfiles 随机取5条数据,每条都断行,汇整成一个信息，再传送给 decode_row['sender_id']
+            # 从数据库中随机取5条记录
+            records = self.ShowFiles.select().order_by(fn.Random()).limit(5)
+            # 汇总记录
+            message_text = "New member joined via you; earned codes.\r\n新群友因你加入，获密文奖励。\r\n\r\n"
+            for record in records:
+                message_text += f"{record.enc_str}\r\n"
+            # 发送消息
+            await context.bot.send_message(
+                chat_id=decode_row['sender_id'],
+                text=message_text,
+                parse_mode="HTML"
+            )
+            # 发送奖励
+
+
+
+
+            
+            return
+        
+
 
     async def send_material_by_row(self,decode_row,context,reply_to_message_id,chat_id):
         #显示decode_row的资料型态
@@ -507,7 +528,7 @@ class lybot:
                 await self.upsert_file_info(message)
                 await self.insert_media_group(message)
                 await message.forward(chat_id=self.config['man_bot_id'])
-                # print(f"Album {media_group_id} contains message: {message.message_id}")
+                print(f"Album {media_group_id} contains message: {message.message_id}")
                 # print(f"Album {media_group_id} contains message: {message}")
             
             reply_code = await self.encode_message(first_message)
@@ -524,6 +545,7 @@ class lybot:
 
             # 这里可以添加保存或处理 Album 的逻辑
         except asyncio.CancelledError:
+            print(f"Album {media_group_id} 处理超时，已取消", flush=True)
             # 如果任务被取消，不做任何操作
             pass
     
@@ -555,6 +577,9 @@ class lybot:
         except self.FileInfo.DoesNotExist:
             # 如果不存在则创建
             self.FileInfo.create(file_unique_id=file_unique_id, bot_name=bot_name, file_id=file_id, file_type=file_type)
+        except Exception as e:
+            print(f"Error upserting file info: {e}")
+            traceback.print_exc()
         
     async def insert_media_group(self, message):
         media_group_id = message.media_group_id
@@ -639,7 +664,36 @@ class lybot:
                         
                     # print(f"Delete {message.id} ", flush=True)
                     #await client.delete_messages(entity.id, message.message_id)
-                    
+
+    async def load_tg_setting(self, client,chat_id, message_thread_id=0):
+        try:
+            chat_entity = await client.get_entity(int(chat_id))
+            # print(f"Chat entity found: {chat_entity}")
+        except Exception as e:
+            print(f"Invalid chat_id: {e}")
+            print("Traceback:\r\n")
+            traceback.print_exc()  # 打印完整的异常堆栈信息，包含行号
+            return None  # 提前返回，避免后续逻辑报错
+
+        # 获取指定聊天的消息，限制只获取一条最新消息
+        # 使用 get_messages 获取指定 thread_id 的消息
+        try:
+            messages = await client.get_messages(chat_entity, limit=1, reply_to=message_thread_id)
+            # print(f"Messages found: {messages}")
+        except Exception as e:
+            print(f"Error fetching messages: {e}")
+            return
+        
+        if not messages or not messages[0].text:
+            return "No messages found."
+
+        # 确认 messages[0] 中否为 json , 若是则返回, 不是则返回 None
+        if messages[0].text.startswith('{') and messages[0].text.endswith('}'):
+            return json.loads(messages[0].text)
+        else:
+            return json.loads("{}")
+
+
     # show_caption = yes, no
     async def send_message_to_dye_vat(self, client, message):
         last_message_id = message.id
@@ -658,8 +712,8 @@ class lybot:
                 if album:
                     await asyncio.sleep(0.5)  # 间隔80秒
                     last_message_id = max(row.id for row in album)
-                    # await client.send_file(self.config['warehouse_chat_id'], album, reply_to=message.id, caption=caption_text, parse_mode='html')
-                    return await client.send_file(self.config['warehouse_chat_id'], album, parse_mode='html')
+                    # await client.send_file(self.setting['warehouse_chat_id'], album, reply_to=message.id, caption=caption_text, parse_mode='html')
+                    return await client.send_file(self.setting['warehouse_chat_id'], album, parse_mode='html')
                    
 
                     
@@ -668,9 +722,9 @@ class lybot:
                 if mime_type.startswith('video/'):
                     # 处理视频
                     video = message.media.document
-                    # await client.send_file(self.config['warehouse_chat_id'], video, reply_to=message.id, caption=caption_text, parse_mode='html')
+                    # await client.send_file(self.setting['warehouse_chat_id'], video, reply_to=message.id, caption=caption_text, parse_mode='html')
                     
-                    return await client.send_file(self.config['warehouse_chat_id'], video, parse_mode='html')
+                    return await client.send_file(self.setting['warehouse_chat_id'], video, parse_mode='html')
                     
                     
                     # 调用新的函数
@@ -678,13 +732,13 @@ class lybot:
                 else:
                     # 处理文档
                     document = message.media.document
-                    # await client.send_file(self.config['warehouse_chat_id'], document, reply_to=message.id, caption=caption_text, parse_mode='html')
-                    return await client.send_file(self.config['warehouse_chat_id'], document, parse_mode='html')
+                    # await client.send_file(self.setting['warehouse_chat_id'], document, reply_to=message.id, caption=caption_text, parse_mode='html')
+                    return await client.send_file(self.setting['warehouse_chat_id'], document, parse_mode='html')
                   
             elif isinstance(message.media, types.MessageMediaPhoto):
                 # 处理图片
                 photo = message.media.photo
-                return await client.send_file(self.config['warehouse_chat_id'], photo, parse_mode='html')
+                return await client.send_file(self.setting['warehouse_chat_id'], photo, parse_mode='html')
                 
                
             else:
