@@ -52,7 +52,7 @@ jobs:
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements2.txt
 
 
        
