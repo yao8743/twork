@@ -105,18 +105,29 @@ async def main():
     await dyer_application.updater.start_polling()
 
 
-    tgbot.setting = {}
-    tgbot.setting = await tgbot.load_tg_setting(client,tgbot.config['setting_chat_id'] , tgbot.config['setting_thread_id'])
-    if tgbot.setting is not None and 'warehouse_chat_id' in tgbot.setting:
-        tgbot.config['warehouse_chat_id'] = int(tgbot.setting['warehouse_chat_id'])
-    elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
-        tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+    # 确保 tgbot.setting 是一个字典
+    if not isinstance(tgbot.setting, dict):
+        tgbot.setting = {}
 
-    #若 tgbot.config['warehouse_chat_id'] 不是int, 则转成 int, 否则直接assgin 给 tgbot.setting['warehouse_chat_id']
-    if not isinstance(tgbot.config['warehouse_chat_id'],int):
+    # 检查 warehouse_chat_id 的配置
+    if 'warehouse_chat_id' in tgbot.config and tgbot.config['warehouse_chat_id'] is not None:
         tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
     else:
-        tgbot.setting['warehouse_chat_id'] = (tgbot.config['warehouse_chat_id'])
+        print("Error: 'warehouse_chat_id' is missing or None in tgbot.config")
+
+
+    
+    # tgbot.setting = await tgbot.load_tg_setting(client,tgbot.config['setting_chat_id'] , tgbot.config['setting_thread_id'])
+    # if tgbot.setting is not None and 'warehouse_chat_id' in tgbot.setting:
+    #     tgbot.config['warehouse_chat_id'] = int(tgbot.setting['warehouse_chat_id'])
+    # elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
+    #     tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+
+    # #若 tgbot.config['warehouse_chat_id'] 不是int, 则转成 int, 否则直接assgin 给 tgbot.setting['warehouse_chat_id']
+    # if not isinstance(tgbot.config['warehouse_chat_id'],int):
+    #     tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+    # else:
+    #     tgbot.setting['warehouse_chat_id'] = (tgbot.config['warehouse_chat_id'])
 
     # print(f"tgbot.setting: {tgbot.setting}")
     start_time = time.time()
