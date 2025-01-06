@@ -400,7 +400,7 @@ class lybot:
                 parse_mode=ParseMode.HTML
             )
 
-            print(f"Reply message: {res.message_id}", flush=True)
+            # print(f"Reply message: {res.message_id}", flush=True)
 
             await context.bot.send_message(
                 chat_id=update.message.chat.id,
@@ -740,7 +740,8 @@ class lybot:
             if dialog.unread_count > 0 and (dialog.is_user):
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
                 
-                print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
                 async for message in client.iter_messages(entity, min_id=0, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
                     time.sleep(1)  # 每次请求之间等待0.5秒
