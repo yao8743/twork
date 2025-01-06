@@ -527,7 +527,11 @@ class lybot:
     
         encode_code = await self.encode(decode_row['file_unique_id'], decode_row['file_id'], decode_row['bot_name'], decode_row['file_type'])
         reply_message = f"Send to @{self.bot_username} to fetch content\r\n\r\n<code>{encode_code}</code>"
-       
+        
+        # 暫停1秒
+        await asyncio.sleep(1)  
+        
+
         # 密文转资源
         if decode_row['file_type'] == 'u' or decode_row['file_type'] == 'url':
             print(f"URL: {decode_row['file_unique_id']}")
