@@ -105,15 +105,16 @@ async def main():
     await dyer_application.updater.start_polling()
 
 
-    # 确保 tgbot.setting 是一个字典
-    if not isinstance(tgbot.setting, dict):
+    # 确保 setting 和 config 存在
+    if not hasattr(tgbot, 'setting'):
         tgbot.setting = {}
 
-    # 检查 warehouse_chat_id 的配置
-    if 'warehouse_chat_id' in tgbot.config and tgbot.config['warehouse_chat_id'] is not None:
-        tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+    if hasattr(tgbot, 'config') and 'warehouse_chat_id' in tgbot.config:
+        tgbot.setting['warehouse_chat_id'] = tgbot.config['warehouse_chat_id']
     else:
-        print("Error: 'warehouse_chat_id' is missing or None in tgbot.config")
+        print("Error: 'config' or 'warehouse_chat_id' is missing")
+
+    
 
 
     
