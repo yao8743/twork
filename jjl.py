@@ -19,7 +19,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-
 logger = logging.getLogger(__name__)
 
 # 检查是否在本地开发环境中运行
@@ -69,11 +68,17 @@ db = PooledPostgresqlDatabase(
 # 初始化 Bot 和 Application
 tgbot = lybot(db)
 tgbot.config = config
+tgbot.logger = logger
 application = Application.builder().token(config['bot_token']).build()
 application.add_handler(MessageHandler(filters.ALL, tgbot.handle_bot_message))
 
+# 注册错误处理器
+application.add_error_handler(tgbot.error_handler)
+
+
 dyerbot = lybot(db)
 dyerbot.config = config
+dyerbot.logger = logger
 dyer_application = Application.builder().token(config['dyer_bot_token']).build()
 dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
 # 添加消息处理程序

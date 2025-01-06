@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+import sys
 import time
 import traceback
 from telethon import events,types,errors
@@ -8,6 +9,9 @@ from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
+from collections import defaultdict
+from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
+
 #密文機器人
 
 # # - 用戶轉資源,得到密文 ( get_code_from_resource )
@@ -45,13 +49,9 @@ from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Cha
 # -- 机器人收到任何的资源都会写到DB
 # -- BOT 只会私发资源,不会发在群组, 但会转给 ManBOT => Pool  (ACT_BOT , WH_BOT, LY_BK_BOT)
 
-from collections import defaultdict
-from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField              
+             
 
 class lybot:
-
-
-
     def __init__(self,db):
         self.albums = defaultdict(list)
         self.album_tasks = {}
@@ -302,6 +302,30 @@ class lybot:
 
         return entities
 
+   
+    # 错误处理器
+    async def error_handler(self, update, context):
+
+        # 构建错误信息
+        error_message = (
+            f"An error occurred:\n"
+            f"Update: {update}\n"
+            f"Error: {context.error}"
+        )
+        
+        # 使用机器人发送错误信息到指定 chat_id 和线程 ID
+        try:
+            await context.bot.send_message(
+                chat_id=self.config['setting_chat_id'],
+                text=error_message,
+                message_thread_id=self.config['setting_thread_id']  # 添加线程 ID
+            )
+        except Exception as e:
+            # print(f"Failed to send error message: {e}")
+            self.logger.error(f"Failed to send error message: {e}")
+
+
+
     async def handle_bot_message(self,update, context) -> None:
         
 
@@ -328,7 +352,8 @@ class lybot:
                     parse_mode=ParseMode.HTML
                 )
                
-                print(f"Detected URL: {url_word}")
+                self.logger.info(f"Detected URL: {url_word}")
+               
             
             return
 
@@ -351,7 +376,8 @@ class lybot:
 
             # print(f"[B]media_group_id message received {update.message.media_group_id}", flush=True)
         elif update.message.photo or update.message.video or update.message.document:
-            print(f"{self.bot_username}-[B]Video message received", flush=True)
+            self.logger.info(f"{self.bot_username}-[B]Video message received")
+            # print(f"{self.bot_username}-[B]Video message received", flush=True)
             await self.upsert_file_info(update.message)
             
             # 如果不是私聊的内容，则停止
@@ -478,7 +504,10 @@ class lybot:
                             
                             
                     except ValueError as e:
-                        print(f"Failed to decode message: {e}")
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        line_number = exc_tb.tb_lineno
+                        self.logger.error(f"An exception occurred on line {line_number}: {e}")
+                        # print(f"Failed to decode message: {e}")
         else:
             await update.message.reply_text(update.message.text)
 
