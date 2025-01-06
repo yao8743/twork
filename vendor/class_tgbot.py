@@ -347,9 +347,9 @@ class lybot:
             # 创建新的定时任务
             self.album_tasks[media_group_id] = asyncio.create_task(self.handle_album_completion(media_group_id,context))
 
-            print(f"Media Group ID: {media_group_id}, Photos in Album: {len(self.albums[media_group_id])}")
+            # print(f"Media Group ID: {media_group_id}, Photos in Album: {len(self.albums[media_group_id])}")
 
-            print(f"[B]media_group_id message received {update.message.media_group_id}", flush=True)
+            # print(f"[B]media_group_id message received {update.message.media_group_id}", flush=True)
         elif update.message.photo or update.message.video or update.message.document:
             print(f"{self.bot_username}-[B]Video message received", flush=True)
             await self.upsert_file_info(update.message)
@@ -530,7 +530,7 @@ class lybot:
         
         # 暫停1秒
         await asyncio.sleep(1)  
-        
+
 
         # 密文转资源
         if decode_row['file_type'] == 'u' or decode_row['file_type'] == 'url':
@@ -607,7 +607,7 @@ class lybot:
                 await self.upsert_file_info(message)
                 await self.insert_media_group(message)
                 await message.forward(chat_id=self.config['man_bot_id'])
-                print(f"Album {media_group_id} contains message: {message.message_id}")
+                # print(f"Album {media_group_id} contains message: {message.message_id}")
                 # print(f"Album {media_group_id} contains message: {message}")
             
             reply_code = await self.encode_message(first_message)
