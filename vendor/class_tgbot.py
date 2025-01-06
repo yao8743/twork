@@ -240,7 +240,7 @@ class lybot:
             }
 
         except (ValueError, IndexError) as e:
-            raise ValueError(f"Failed to decode the string: {e}")   
+            raise ValueError(f"Failed to decode the string: {e}, {encoded_str}")   
 
     #寫一個函數, 用來判斷給出的字符串是否是加密字符串
     def find_encode_code(self, text):
@@ -305,24 +305,24 @@ class lybot:
    
     # 错误处理器
     async def error_handler(self, update, context):
-
-        # 构建错误信息
         error_message = (
             f"An error occurred:\n"
             f"Update: {update}\n"
-            f"Error: {context.error}"
+            f"Error: {context.error}\n"
         )
+
+        # 获取异常信息
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        if exc_tb is not None:
+            # 提取异常发生的行号
+            line_number = exc_tb.tb_lineno
+            # 将行号添加到错误信息
+            error_message += f"Error occurred on line: {line_number}\n"
         
-        # 使用机器人发送错误信息到指定 chat_id 和线程 ID
-        try:
-            await context.bot.send_message(
-                chat_id=self.config['setting_chat_id'],
-                text=error_message,
-                message_thread_id=self.config['setting_thread_id']  # 添加线程 ID
-            )
-        except Exception as e:
-            # print(f"Failed to send error message: {e}")
-            self.logger.error(f"Failed to send error message: {e}")
+        # 记录错误信息到日志
+        self.logger.error(error_message, exc_info=True)
+
+        
 
 
 
@@ -649,12 +649,14 @@ class lybot:
             )
 
 
-            print(f"Album {media_group_id} 完成，包含 {len(album_set)} 张照片")
+            
+            self.logger.info(f"Album {media_group_id} 完成，包含 {len(album_set)} 张照片")
 
             # 这里可以添加保存或处理 Album 的逻辑
         except asyncio.CancelledError:
-            print(f"Album {media_group_id} 处理超时，已取消", flush=True)
             # 如果任务被取消，不做任何操作
+            self.logger.debug(f"Album {media_group_id} 处理超时，已取消")
+            
             pass
     
     async def upsert_file_info(self,message):
