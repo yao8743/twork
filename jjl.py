@@ -112,7 +112,11 @@ async def main():
     elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
         tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
 
-    tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+    #若 tgbot.config['warehouse_chat_id'] 不是int, 则转成 int, 否则直接assgin 给 tgbot.setting['warehouse_chat_id']
+    if not isinstance(tgbot.config['warehouse_chat_id'],int):
+        tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
+    else:
+        tgbot.setting['warehouse_chat_id'] = (tgbot.config['warehouse_chat_id'])
 
     # print(f"tgbot.setting: {tgbot.setting}")
     start_time = time.time()
