@@ -55,6 +55,7 @@ class lybot:
     def __init__(self,db):
         self.albums = defaultdict(list)
         self.album_tasks = {}
+        self.setting = {}
         self.ALBUM_TIMEOUT = 0.5
         self.MAX_PROCESS_TIME = 1200
 
