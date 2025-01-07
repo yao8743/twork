@@ -225,7 +225,7 @@ class lybot:
             components = data_part.split('§')
            
             if len(components) != 5:
-                raise ValueError("Invalid encoded string format.")
+                raise ValueError(f"Invalid encoded string format. len = {len(components)}")
 
             file_unique_id_enc, file_id_enc, bot_name_enc, sender_id_enc, tail = components
 
@@ -255,7 +255,8 @@ class lybot:
         # pattern = fr"^[pvdau]_didipanbot_[{allowed_chars}]*§[{allowed_chars}]*§[{allowed_chars}]*§[{allowed_chars}]*§$"
 
         # 构造正则表达式
-        pattern = r"^[pvdau]_didipanbot_[^\s]*§[^\s]*§[^\s]*§[^\s]*§$"
+        pattern = r"[pvdau]_didipanbot_[^\s§]+§[^\s§]+§[^\s§]+§[^\s§]+"
+        # pattern = r"^[pvdau]_didipanbot_[^\s]*§[^\s]*§[^\s]*§[^\s]*§$"
         matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
         return matches
 
@@ -940,25 +941,20 @@ class lybot:
 
 
    
-# tgbot = JJLode()     
-# encode_text = tgbot.encode("AgADgwEAAorgCFY","BAACAgUAAxkBAAIJImR_62QHj9z8JBk9TfHEdzy9yx8hAAKDAQACiuAIVuRai5Vm89YVLwQ","test13182732bot","p","2312167403")
-# print(encode_text)
+# tgbot = lybot(None)     
+# # encode_text = tgbot.encode("AgADgwEAAorgCFY","BAACAgUAAxkBAAIJImR_62QHj9z8JBk9TfHEdzy9yx8hAAKDAQACiuAIVuRai5Vm89YVLwQ","test13182732bot","p","2312167403")
+# # print(encode_text)
 
-# decode_text = tgbot.decode(encode_text)
-# print(f"{decode_text}")
+# # decode_text = tgbot.decode(encode_text)
+# # print(f"{decode_text}")
 
 # # 测试案例：多行文字
 # test_text = """
-# p_didipanbot_abc§def§ghi§jkl§
-# v_didipanbot_test123§456§789§end§
-# D_didipanbot_A§B§C§D§
-# A_didipanbot_1§2§3§4§
-# x_didipanbot_abc§def§ghi§jkl§  # 不符合
-# p_didipanbot_abc§def§ghi§jkl
-# u_didipanbot_only_three§one§two§  # 不符合
-# p_didipanbot_1BRàD¶ãÅbUFÁÎ§2Úë4-otdC_ríÛÙí9íjeëà×ßÈqý©ÃaÉäÌïUfçÇýß¤0ê®üØÐ¡äè·£Ç¶7¾oæ¢H§5Á¨DuT¦¡ÆËUÚê§0§
-# p_didipanbot_2BRàD¶ãÅbUFÁÎ§2Úë4-otdC_ríÛÙí9íjeëà×ßÈqý©ÃaÉäÌïUfçÇýß¤0ê®üØÐ¡äè·£Ç¶7¾oæ¢H§5Á¨DuT¦¡ÆËUÚê§0§
+# a_didipanbot_2ßK¨wa°¢òäõÏbÆ§0§SMûeÈgÓbÛ¦§Ch¾¸Q§v_didipanbot_1BRßy¦I¯åf8²á§1LÌqãÖßãLJOc¥è®¬µqPéXp¥æÛç¾ôÎÖ¦k¥¸Ëû¦÷CëX¤ÄÐÖÒXÀHÊMåàkÚ-BDÛè§SMûeÈgÓbÛ¦§Ch¾¸Q§
 # """
 
-# decode_row = tgbot.find_encode_code(test_text)
+# endcode_row = tgbot.find_encode_code(test_text)
+# print(f"{endcode_row[0]}")
+
+# decode_row = tgbot.decode(endcode_row[0])
 # print(f"{decode_row}")
