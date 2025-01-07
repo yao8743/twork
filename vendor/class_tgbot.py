@@ -440,7 +440,7 @@ class lybot:
                         decode_row = self.decode(encode_code)
 
                         if decode_row['file_type'] == "wrong":
-                            await context.send_message(
+                            await context.bot.send_message(
                                     chat_id=update.message.chat_id,
                                     text="Code invalid 代码错误。"
                                 )
@@ -455,7 +455,7 @@ class lybot:
                             # ------ 若有则回覆 => 密文转资源
                             # ------ 没有, 确认 HW_BOT 有没有, 若有则让 HWBOT 传给 ManBOT => Pool , 出现 "正在同步资源中,请一小时后再试"
                             if decode_row['file_type'] == 'a':
-                                await context.send_message(
+                                await context.bot.send_message(
                                     chat_id=update.message.chat_id,
                                     text="Album syncing, please try again in an hour. 相册同步中，请一小时后再试。"
                                 )
