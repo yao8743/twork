@@ -4,7 +4,9 @@ import re
 import sys
 import time
 import traceback
+import telegram.error
 from telethon import events,types,errors
+
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
@@ -58,6 +60,8 @@ class lybot:
 
         self.ads = defaultdict(list)
         self.ad_tasks = {}
+
+        self.blocked_users = set()
 
         self.setting = {}
         self.ALBUM_TIMEOUT = 0.5
@@ -603,6 +607,10 @@ class lybot:
         #显示decode_row的资料型态
         # print((decode_row))
   
+        if chat_id in self.blocked_users:
+            self.logger.info(f"Skipping blocked user: {chat_id}")
+            return
+
     
         encode_code = await self.encode(decode_row['file_unique_id'], decode_row['file_id'], decode_row['bot_name'], decode_row['file_type'])
         reply_message = f"Send to @{self.bot_username} to fetch content\r\n\r\n<code>{encode_code}</code>"
@@ -630,6 +638,13 @@ class lybot:
                 )
                 # 暫停0.7秒
                 await asyncio.sleep(0.7)
+            except telegram.error.Forbidden as e:
+                if "bot was blocked by the user" in str(e):
+                    self.logger.error(f"Bot was blocked by user: {chat_id}")
+                    self.blocked_users.add(chat_id)  # 添加到 blocked_users
+                else:
+                    self.logger.error(f"Other Forbidden error: {e}")
+           
             except Exception as e:
                 self.logger.error(f"Failed to send photo: {e}")
 
@@ -646,7 +661,17 @@ class lybot:
                 )
                 # 暫停0.7秒
                 await asyncio.sleep(0.7)
+           
+            except telegram.error.Forbidden as e:
+                if "bot was blocked by the user" in str(e):
+                    self.logger.error(f"Bot was blocked by user: {chat_id}")
+                    self.blocked_users.add(chat_id)  # 添加到 blocked_users
+                else:
+                    self.logger.error(f"Other Forbidden error: {e}")
+        
             except Exception as e:
+                #Forbidden: bot was blocked by the user
+
                 self.logger.error(f"Failed to send video: {e}")
 
 
@@ -665,6 +690,13 @@ class lybot:
                 )
                  # 暫停0.7秒
                 await asyncio.sleep(0.7) 
+            except telegram.error.Forbidden as e:
+                if "bot was blocked by the user" in str(e):
+                    self.logger.error(f"Bot was blocked by user: {chat_id}")
+                    self.blocked_users.add(chat_id)  # 添加到 blocked_users
+                else:
+                    self.logger.error(f"Other Forbidden error: {e}")
+            
             except Exception as e:
                 self.logger.error(f"Failed to send document: {e}")
 
@@ -696,6 +728,13 @@ class lybot:
                 )
                 # 暫停2秒
                 await asyncio.sleep(2)  
+            except telegram.error.Forbidden as e:
+                if "bot was blocked by the user" in str(e):
+                    self.logger.error(f"Bot was blocked by user: {chat_id}")
+                    self.blocked_users.add(chat_id)  # 添加到 blocked_users
+                else:
+                    self.logger.error(f"Other Forbidden error: {e}")
+            
             except Exception as e:
                 self.logger.error(f"Failed to send media group: {e}")
 
