@@ -607,8 +607,7 @@ class lybot:
         encode_code = await self.encode(decode_row['file_unique_id'], decode_row['file_id'], decode_row['bot_name'], decode_row['file_type'])
         reply_message = f"Send to @{self.bot_username} to fetch content\r\n\r\n<code>{encode_code}</code>"
         
-        # 暫停1秒
-        await asyncio.sleep(1)  
+       
 
 
         # 密文转资源
@@ -621,29 +620,56 @@ class lybot:
                 parse_mode=ParseMode.HTML
             )
         elif decode_row['file_type'] == 'p' or decode_row['file_type'] == 'photo':
-            await context.bot.send_photo(
-                chat_id=chat_id,
-                photo=decode_row['file_id'],
-                caption=reply_message,
-                reply_to_message_id=reply_to_message_id,
-                parse_mode=ParseMode.HTML
-            )
+            try:
+                await context.bot.send_photo(
+                    chat_id=chat_id,
+                    photo=decode_row['file_id'],
+                    caption=reply_message,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+                # 暫停0.7秒
+                await asyncio.sleep(0.7)
+            except Exception as e:
+                self.logger.error(f"Failed to send photo: {e}")
+
+            
+
         elif decode_row['file_type'] == 'v' or decode_row['file_type'] == 'video':
-            await context.bot.send_video(
-                chat_id=chat_id,
-                video=decode_row['file_id'],
-                caption=reply_message,
-                reply_to_message_id=reply_to_message_id,
-                parse_mode=ParseMode.HTML
-            )
+            try:
+                await context.bot.send_video(
+                    chat_id=chat_id,
+                    video=decode_row['file_id'],
+                    caption=reply_message,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+                # 暫停0.7秒
+                await asyncio.sleep(0.7)
+            except Exception as e:
+                self.logger.error(f"Failed to send video: {e}")
+
+
+
+            # 暫停0.7秒
+            await asyncio.sleep(0.7)  
+
         elif decode_row['file_type'] == 'd' or decode_row['file_type'] == 'document':
-            await context.bot.send_document(
-                chat_id=chat_id,
-                document=decode_row['file_id'],
-                caption=reply_message,
-                reply_to_message_id=reply_to_message_id,
-                parse_mode=ParseMode.HTML
-            )
+            try:
+                await context.bot.send_document(
+                    chat_id=chat_id,
+                    document=decode_row['file_id'],
+                    caption=reply_message,
+                    reply_to_message_id=reply_to_message_id,
+                    parse_mode=ParseMode.HTML
+                )
+                 # 暫停0.7秒
+                await asyncio.sleep(0.7) 
+            except Exception as e:
+                self.logger.error(f"Failed to send document: {e}")
+
+            
+
         elif decode_row['file_type'] == 'a' or decode_row['file_type'] == 'album':
 
             records = self.MediaGroup.select().where(self.MediaGroup.media_group_id == decode_row['file_unique_id'])
@@ -662,11 +688,17 @@ class lybot:
                     print(f"未知的文件类型: {record.file_type}")
             
             # 发送相册
-            await context.bot.send_media_group(
-                chat_id=chat_id,
-                media=media,
-                reply_to_message_id=reply_to_message_id
-            )
+            try:
+                await context.bot.send_media_group(
+                    chat_id=chat_id,
+                    media=media,
+                    reply_to_message_id=reply_to_message_id
+                )
+                # 暫停2秒
+                await asyncio.sleep(2)  
+            except Exception as e:
+                self.logger.error(f"Failed to send media group: {e}")
+
         # await self.get_resource_from_code(update, decode_dict)
     
     
