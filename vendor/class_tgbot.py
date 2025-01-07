@@ -511,63 +511,64 @@ class lybot:
         else:
             await update.message.reply_text(update.message.text)
 
-    async def referral_reward(self,decode_row,context,user_id):
-        # 如果 decode_row['sender_id'] 无值或等于 0，则返回
-        if decode_row['sender_id'] == "0":
+    async def referral_reward(self, decode_row, context, user_id):
+        # 检查 sender_id 是否有效
+        sender_id = decode_row.get('sender_id')
+        if not sender_id or sender_id == "0":
+            self.logger.info("No valid sender_id provided.")
             return
 
-        # - 回馈机制
-        # -- 新用户读取密文, 上传者得到回馈
-        # --- 新用户存到db
-        # --- 回馈给谁? 密文要包括上传者
-        # 从数据库检查 chat_id 是否存在于 User 表中,若存在则返回 false, 否则就对 decode_row['sender_id'] 进行奖励
+        # 检查 user_id 是否已经存在于数据库
         try:
             user = self.User.get(self.User.user_id == user_id)
-            return False
+            return False  # 如果已存在，不处理
         except self.User.DoesNotExist:
+            # 如果不存在，新增记录
             self.User.create(user_id=user_id)
-            #从数据表 showfiles 随机取5条数据,每条都断行,汇整成一个信息，再传送给 decode_row['sender_id']
-            # 从数据库中随机取5条记录
+
+            # 从数据库随机获取5条记录
             records = self.ShowFiles.select().order_by(fn.Random()).limit(5)
-            # 汇总记录
             message_text = "New member joined via you; earned codes.\r\n新群友因你加入，获密文奖励。\r\n\r\n"
             for record in records:
                 message_text += f"{record.enc_str}\r\n"
-            # 发送消息
+
+            # 向发送者发送奖励信息
             await context.bot.send_message(
-                chat_id=decode_row['sender_id'],
+                chat_id=sender_id,
                 text=message_text,
                 parse_mode="HTML"
             )
-            # 发送奖励
+
+            # 获取发送者的用户信息
             user_first_name = ""
             try:
-                user = context.bot.get_chat(chat_id=decode_row['sender_id'])
-                user_first_name = user.first_name
+                user = await context.bot.get_chat(chat_id=sender_id)
+                user_first_name = user.first_name or "Anonymous"  # 默认值防止为空
             except Exception as e:
                 self.logger.error(f"Failed to get user info: {e}")
 
-            
+            # 发送奖励通知到中文群
+            try:
+                await context.bot.send_message(
+                    chat_id=-1002086803190,  # 中文群ID
+                    text=f"群友{user_first_name}分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to send message to Chinese group: {e}")
 
-            # 发送消息到中文群
-            await context.bot.send_message(
-                chat_id=-1002086803190,
-                text=f"群友{user_first_name}分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
-                parse_mode="HTML"
-            )
+            # 发送奖励通知到外文群
+            try:
+                await context.bot.send_message(
+                    chat_id=-1002138063591,  # 外文群ID
+                    text=f"Our group member, {user_first_name}, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to send message to English group: {e}")
 
-            
-
-            # 发送消息到外文群
-            english_message_text = "New member joined via you; earned codes.\r\n\r\n"
-            await context.bot.send_message(
-                chat_id=-1002138063591,
-                text=f"Our group member, {user_first_name}, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
-                parse_mode="HTML"
-            )
-
-            
             return
+
         
 
 
