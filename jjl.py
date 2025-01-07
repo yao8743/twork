@@ -15,11 +15,21 @@ from telegram.ext import Application, MessageHandler, filters
 from telethon import TelegramClient, events
 
 # Enable logging
+class FlushStreamHandler(logging.StreamHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
+
+# 使用自定义 Handler
+flush_handler = FlushStreamHandler()
+logger.addHandler(flush_handler)
+
 
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
