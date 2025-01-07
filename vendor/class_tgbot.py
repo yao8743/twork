@@ -234,10 +234,9 @@ class lybot:
                     "file_type": "wrong"
                 }
 
-            if len(components) is 5:
-                file_unique_id_enc, file_id_enc, bot_name_enc, sender_id_enc, tail = components
-            else:
-                file_unique_id_enc, file_id_enc, bot_name_enc, sender_id_enc = components
+          
+            file_unique_id_enc, file_id_enc, bot_name_enc, sender_id_enc = components[:4]
+           
 
             # Decode each component
             file_unique_id = self.convert_base(file_unique_id_enc, 155, 64)
