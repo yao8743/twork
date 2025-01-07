@@ -524,7 +524,7 @@ class lybot:
         else:
             await update.message.reply_text(update.message.text)
 
-    async def referral_reward(self, decode_row, context, user_id, sender_id):
+    async def referral_reward(self, decode_row, context, user_id):
         # 检查 sender_id 是否有效
         sender_id = decode_row.get('sender_id')
         if not sender_id or sender_id == "0":
