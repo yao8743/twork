@@ -225,7 +225,13 @@ class lybot:
             components = data_part.split('§')
            
             if len(components) != 5:
-                raise ValueError(f"Invalid encoded string format. len = {len(components)}")
+                return {
+                    "file_unique_id": "0",
+                    "file_id": "0",
+                    "bot_name": "0",
+                    "sender_id": "0",
+                    "file_type": "wrong"
+                }
 
             file_unique_id_enc, file_id_enc, bot_name_enc, sender_id_enc, tail = components
 
@@ -433,7 +439,13 @@ class lybot:
                         chat_id = update.message.chat_id
                         decode_row = self.decode(encode_code)
 
-                        if decode_row['bot_name'] == self.bot_username:
+                        if decode_row['file_type'] == "wrong":
+                            await context.send_message(
+                                    chat_id=update.message.chat_id,
+                                    text="Code invalid 代码错误。"
+                                )
+                            return
+                        elif decode_row['bot_name'] == self.bot_username:
                             
                             # 密文转资源
                             await self.send_material_by_row(decode_row,context,reply_to_message_id,chat_id)
