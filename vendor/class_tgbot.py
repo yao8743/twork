@@ -678,7 +678,18 @@ class lybot:
             ad_set = self.ads.pop(action, [])
             self.ad_tasks.pop(action, None)
 
-            sender_id = ad_set[0].sender_id
+            # Check if ad_set is empty
+            if not ad_set:
+                self.logger.debug(f"No ads to process for action: {action}")
+                return
+
+            # Extract sender_id safely
+            first_ad = ad_set[0]
+            sender_id = first_ad.get('sender_id')  # Safely get the sender_id key
+
+            if not sender_id:
+                self.logger.error(f"No sender_id found in the ad set for action: {action}")
+                return
 
             # 获取发送者的用户信息
             user_first_name = ""
@@ -686,7 +697,7 @@ class lybot:
                 user = await context.bot.get_chat(chat_id=sender_id)
                 user_first_name = user.first_name or "Anonymous"  # 默认值防止为空
             except Exception as e:
-                self.logger.error(f"Failed to get user info: {e}")
+                self.logger.error(f"Failed to get user info {sender_id}: {e}")
 
             # 发送奖励通知到中文群
             try:
