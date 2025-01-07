@@ -850,11 +850,12 @@ class lybot:
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
                 async for message in client.iter_messages(entity, min_id=0, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
-                    time.sleep(1)  # 每次请求之间等待0.5秒
+                    
                     # for message in iter_messages:
             
                     ## 如果是 media 类型的消息
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
+                        time.sleep(1)  # 每次请求之间等待0.5秒
                         if dialog.is_user:
                             try:
                                 send_result = await self.send_message_to_dye_vat(client, message)
@@ -872,9 +873,9 @@ class lybot:
                         else:
                             continue
                     else:
-                        
+                        time.sleep(0.7)  # 每次请求之间等待0.5秒
                         await client.delete_messages(entity.id, message.id)
-                        self.logger.info(f"Delete {message.id} ")
+                        # self.logger.info(f"Delete {message.id} ")
                         
                     # print(f"Delete {message.id} ", flush=True)
                     #await client.delete_messages(entity.id, message.message_id)
