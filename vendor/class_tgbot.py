@@ -456,7 +456,13 @@ class lybot:
                             
                             # 密文转资源
                             await self.send_material_by_row(decode_row,context,reply_to_message_id,chat_id)
-                            await self.referral_reward(decode_row,context,chat_id)
+
+                            sender_id = int(decode_row.get('sender_id') or 0)
+                            if sender_id and sender_id > 0:
+                                await self.referral_reward(decode_row,context,chat_id)
+                               
+
+                            
                         else:
                             # --- 别人的密文 => 查询自己是否有 file_id
                             # ------ 若有则回覆 => 密文转资源
