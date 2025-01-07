@@ -66,7 +66,7 @@ class lybot:
         self.setting = {}
         self.ALBUM_TIMEOUT = 0.5
         self.AD_TIMEOUT = 600
-        self.MAX_PROCESS_TIME = 1600
+        self.MAX_PROCESS_TIME = 1200
 
         class BaseModel(Model):
             class Meta:
