@@ -80,7 +80,7 @@ tgbot = lybot(db)
 tgbot.config = config
 tgbot.logger = logger
 application = Application.builder().token(config['bot_token']).build()
-application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.DOCUMENT , tgbot.handle_bot_message))
+application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.ATTACHMENT | filters.Document.ALL, tgbot.handle_bot_message))
 
 # 注册错误处理器
 application.add_error_handler(tgbot.error_handler)
