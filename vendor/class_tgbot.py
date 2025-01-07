@@ -540,10 +540,10 @@ class lybot:
                 parse_mode="HTML"
             )
             # 发送奖励
-            user_full_name = ""
+            user_first_name = ""
             try:
                 user = context.bot.get_chat(chat_id=decode_row['sender_id'])
-                user_full_name = user.full_name
+                user_first_name = user.first_name
             except Exception as e:
                 self.logger.error(f"Failed to get user info: {e}")
 
@@ -552,7 +552,7 @@ class lybot:
             # 发送消息到中文群
             await context.bot.send_message(
                 chat_id=-1002086803190,
-                text=f"群友{user_full_name}分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
+                text=f"群友{user_first_name}分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
                 parse_mode="HTML"
             )
 
@@ -562,7 +562,7 @@ class lybot:
             english_message_text = "New member joined via you; earned codes.\r\n\r\n"
             await context.bot.send_message(
                 chat_id=-1002138063591,
-                text=f"Our group member, {user_full_name}, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
+                text=f"Our group member, {user_first_name}, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
                 parse_mode="HTML"
             )
 
