@@ -322,10 +322,6 @@ class lybot:
         # 记录错误信息到日志
         self.logger.error(error_message, exc_info=True)
 
-        
-
-
-
     async def handle_bot_message(self,update, context) -> None:
         
 
@@ -408,10 +404,6 @@ class lybot:
                 text="👆🏻 Share the code in groups; new users using it earn you extra rewards. \r\n分享代码到群，新用户使用可得额外奖励。",
                 parse_mode=ParseMode.HTML
             )
-
-                
-            
-            
         elif update.message.text:
             # 检查是否为私信
             if update.message.chat.type not in ['private']:
@@ -569,9 +561,6 @@ class lybot:
 
             return
 
-        
-
-
     async def send_material_by_row(self,decode_row,context,reply_to_message_id,chat_id):
         #显示decode_row的资料型态
         # print((decode_row))
@@ -642,8 +631,6 @@ class lybot:
             )
         # await self.get_resource_from_code(update, decode_dict)
     
-
-
     async def handle_album_completion(self,media_group_id: str, context) -> None:
         try:
             # 等待超时时间
@@ -826,7 +813,6 @@ class lybot:
             return json.loads(messages[0].text)
         else:
             return json.loads("{}")
-
 
     # show_caption = yes, no
     async def send_message_to_dye_vat(self, client, message):
