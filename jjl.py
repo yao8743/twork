@@ -36,6 +36,9 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     load_dotenv()
 
+
+db_port = os.getenv('DB_PORT')
+
 config = {
     'api_id': os.getenv('API_ID'),
     'api_hash': os.getenv('API_HASH'),
@@ -47,13 +50,17 @@ config = {
     'db_user': os.getenv('DB_USER'),
     'db_password': os.getenv('DB_PASSWORD'),
     'db_host': os.getenv('DB_HOST'),
-    'db_port': int(os.getenv('DB_PORT',5432)),
+    'db_port': int(db_port) if db_port and db_port.isdigit() else 5432,
     'db_sslmode': os.getenv('DB_SSLMODE','require'),
     'man_bot_id': os.getenv('MAN_BOT_ID'),
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID',0)),
     'setting_thread_id': int(os.getenv('SETTING_THREAD_ID',0)),
     'warehouse_chat_id': int(os.getenv('WAREHOUSE_CHAT_ID',0))
 }
+
+
+
+
 
 # print(f"config: {config}")
 module_enable = {
