@@ -61,7 +61,7 @@ class lybot:
 
         self.setting = {}
         self.ALBUM_TIMEOUT = 0.5
-        self.AD_TIMEOUT = 300
+        self.AD_TIMEOUT = 600
         self.MAX_PROCESS_TIME = 2400
 
         class BaseModel(Model):
@@ -524,7 +524,7 @@ class lybot:
         else:
             await update.message.reply_text(update.message.text)
 
-    async def referral_reward(self, decode_row, context, user_id):
+    async def referral_reward(self, decode_row, context, user_id, sender_id):
         # 检查 sender_id 是否有效
         sender_id = decode_row.get('sender_id')
         if not sender_id or sender_id == "0":
@@ -557,8 +557,8 @@ class lybot:
             self.ad_tasks = {}
 
 
-            # 添加消息到 Album
-            self.ads['referral_reward'].append({sender_id: sender_id})
+            # 添加消息到广告
+            self.ads['referral_reward'].append({'sender_id': sender_id})
 
             # 如果已有任务，取消旧任务
             if 'referral_reward' in self.ad_tasks:
