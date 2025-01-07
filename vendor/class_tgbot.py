@@ -824,6 +824,7 @@ class lybot:
 
         NEXT_CYCLE = False
         async for dialog in client.iter_dialogs():
+
             NEXT_DIALOGS = False
             entity = dialog.entity
 
@@ -856,15 +857,11 @@ class lybot:
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
                         if dialog.is_user:
                             try:
-
-                                
                                 send_result = await self.send_message_to_dye_vat(client, message)
                                 if send_result:
                                     await client.delete_messages(entity.id, message.id)
                                     # print(f"Send result: {send_result}", flush=True)
-                                else:
-                                    print(f"Error forwarding message: {e}", flush=True)
-                                    traceback.print_exc()
+                                
                                 
                                 #await self.forward_media_to_warehouse(client, message)
                             except Exception as e:
@@ -877,6 +874,7 @@ class lybot:
                     else:
                         
                         await client.delete_messages(entity.id, message.id)
+                        self.logger.info(f"Delete {message.id} ")
                         
                     # print(f"Delete {message.id} ", flush=True)
                     #await client.delete_messages(entity.id, message.message_id)
@@ -915,6 +913,17 @@ class lybot:
         # 构建 caption
 
         try:
+            destination_chat_id = self.setting['warehouse_chat_id']
+            match = re.search(r'\|_forward_\|\s*@([^\s]+)', message.message, re.IGNORECASE)
+            if match:
+                captured_str = match.group(1).strip()  # 捕获到的字符串
+                #将captured_str转成字串
+                captured_str = str(captured_str)
+                if captured_str.startswith('-100'):
+                    captured_str = captured_str.replace('-100','')
+                destination_chat_id = int(captured_str)
+
+
             if hasattr(message, 'grouped_id') and message.grouped_id:
                 
                 # 获取相册中的所有消息
@@ -928,7 +937,7 @@ class lybot:
                     await asyncio.sleep(0.5)  # 间隔80秒
                     last_message_id = max(row.id for row in album)
                     # await client.send_file(self.setting['warehouse_chat_id'], album, reply_to=message.id, caption=caption_text, parse_mode='html')
-                    return await client.send_file(self.setting['warehouse_chat_id'], album, parse_mode='html')
+                    return await client.send_file(destination_chat_id, album, parse_mode='html')
                    
 
                     
@@ -939,7 +948,7 @@ class lybot:
                     video = message.media.document
                     # await client.send_file(self.setting['warehouse_chat_id'], video, reply_to=message.id, caption=caption_text, parse_mode='html')
                     
-                    return await client.send_file(self.setting['warehouse_chat_id'], video, parse_mode='html')
+                    return await client.send_file(destination_chat_id, video, parse_mode='html')
                     
                     
                     # 调用新的函数
@@ -948,12 +957,12 @@ class lybot:
                     # 处理文档
                     document = message.media.document
                     # await client.send_file(self.setting['warehouse_chat_id'], document, reply_to=message.id, caption=caption_text, parse_mode='html')
-                    return await client.send_file(self.setting['warehouse_chat_id'], document, parse_mode='html')
+                    return await client.send_file(destination_chat_id, document, parse_mode='html')
                   
             elif isinstance(message.media, types.MessageMediaPhoto):
                 # 处理图片
                 photo = message.media.photo
-                return await client.send_file(self.setting['warehouse_chat_id'], photo, parse_mode='html')
+                return await client.send_file(destination_chat_id, photo, parse_mode='html')
                 
                
             else:

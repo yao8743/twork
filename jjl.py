@@ -56,42 +56,65 @@ config = {
 }
 
 # print(f"config: {config}")
+module_enable = {
+    'man_bot': False,
+    'dyer_bot': False,
+    'bot': False,
+    'db': False,
+}
+
+#如果 config 存在 seesion_name, 且有值(非空), 则使用
+if 'api_id' in config and config['api_id']:
+    module_enable['man_bot'] = True
+if 'dyer_bot_token' in config and config['dyer_bot_token']:
+    module_enable['dyer_bot'] = True
+if 'bot_token' in config and config['bot_token']:
+    module_enable['bot'] = True
+if 'db_name' in config and config['db_name']:
+    module_enable['db'] = True        
 
 
 
 # MBot
-client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+#如果 config 存在 seesion_name, 则使用
+if module_enable['man_bot'] == True:
+    client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+
 
 # 使用连接池并启用自动重连
-db = PooledPostgresqlDatabase(
-    config['db_name'],
-    user=config['db_user'],
-    password=config['db_password'],
-    host=config['db_host'],
-    port=config['db_port'],
-    sslmode=config['db_sslmode'],
-    max_connections=32,  # 最大连接数
-    stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-)
+if module_enable['db'] == True:
+    db = PooledPostgresqlDatabase(
+        config['db_name'],
+        user=config['db_user'],
+        password=config['db_password'],
+        host=config['db_host'],
+        port=config['db_port'],
+        sslmode=config['db_sslmode'],
+        max_connections=32,  # 最大连接数
+        stale_timeout=300  # 5 分钟内未使用的连接将被关闭
+    )
+else:
+    db = None
 
 
 # 初始化 Bot 和 Application
 tgbot = lybot(db)
 tgbot.config = config
 tgbot.logger = logger
-application = Application.builder().token(config['bot_token']).build()
-application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.ATTACHMENT | filters.Document.ALL, tgbot.handle_bot_message))
 
-# 注册错误处理器
-application.add_error_handler(tgbot.error_handler)
+if module_enable['bot'] == True:
+    application = Application.builder().token(config['bot_token']).build()
+    application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.ATTACHMENT | filters.Document.ALL, tgbot.handle_bot_message))
+    # 注册错误处理器
+    application.add_error_handler(tgbot.error_handler)
 
-
-dyerbot = lybot(db)
-dyerbot.config = config
-dyerbot.logger = logger
-dyer_application = Application.builder().token(config['dyer_bot_token']).build()
-dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
-# 添加消息处理程序
+if module_enable['dyer_bot'] == True:
+    dyerbot = lybot(db)
+    dyerbot.config = config
+    dyerbot.logger = logger
+    dyer_application = Application.builder().token(config['dyer_bot_token']).build()
+    dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
+    # 添加消息处理程序
 
 
 
@@ -101,23 +124,27 @@ dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_mess
 # 主运行函数
 async def main():
     # 启动 polling
+    if module_enable['bot'] == True:
+        await tgbot.set_bot_info(application)
     
-    await tgbot.set_bot_info(application)
-    await tgbot.set_man_bot_info(client)
-    await dyerbot.set_bot_info(dyer_application)
-    await dyerbot.set_man_bot_info(client)
+    if module_enable['man_bot'] == True:
+        await tgbot.set_man_bot_info(client)
+
+    if module_enable['dyer_bot'] == True and module_enable['man_bot'] == True: 
+        await dyerbot.set_bot_info(dyer_application)
+        await dyerbot.set_man_bot_info(client)
     
+    if module_enable['bot'] == True:
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling()
 
-    await application.initialize()
-    await application.start()
-    await application.updater.start_polling()
-
-    tgbot.dyer_bot_username = dyerbot.bot_username
-    tgbot.dyer_application = dyer_application
-
-    await dyer_application.initialize()
-    await dyer_application.start()
-    await dyer_application.updater.start_polling()
+    if module_enable['dyer_bot']:
+        tgbot.dyer_bot_username = dyerbot.bot_username
+        tgbot.dyer_application = dyer_application
+        await dyer_application.initialize()
+        await dyer_application.start()
+        await dyer_application.updater.start_polling()
 
 
     # 确保 setting 和 config 存在
@@ -130,46 +157,32 @@ async def main():
         print("Error: 'config' or 'warehouse_chat_id' is missing")
 
     
-
-
-    
-    # tgbot.setting = await tgbot.load_tg_setting(client,tgbot.config['setting_chat_id'] , tgbot.config['setting_thread_id'])
-    # if tgbot.setting is not None and 'warehouse_chat_id' in tgbot.setting:
-    #     tgbot.config['warehouse_chat_id'] = int(tgbot.setting['warehouse_chat_id'])
-    # elif tgbot.setting is not None and 'warehouse_chat_id' not in tgbot.setting and 'warehouse_chat_id' in tgbot.config:
-    #     tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
-
-    # #若 tgbot.config['warehouse_chat_id'] 不是int, 则转成 int, 否则直接assgin 给 tgbot.setting['warehouse_chat_id']
-    # if not isinstance(tgbot.config['warehouse_chat_id'],int):
-    #     tgbot.setting['warehouse_chat_id'] = int(tgbot.config['warehouse_chat_id'])
-    # else:
-    #     tgbot.setting['warehouse_chat_id'] = (tgbot.config['warehouse_chat_id'])
-
-    # print(f"tgbot.setting: {tgbot.setting}")
     start_time = time.time()
 
-    while True:
-        await tgbot.man_bot_loop(client)
-        
-        elapsed_time = time.time() - start_time
+    if module_enable['man_bot'] == True:
+        while True:
+            await tgbot.man_bot_loop(client)
+            
+            elapsed_time = time.time() - start_time
 
-        if elapsed_time > tgbot.MAX_PROCESS_TIME:
-            break
+            if elapsed_time > tgbot.MAX_PROCESS_TIME:
+                break
 
 
-        await asyncio.sleep(60)
+            await asyncio.sleep(60)
 
-        if not db.is_closed():
-            try:
-                db.execute_sql('SELECT 1')
-            except Exception as e:
-                print(f"Error keeping pool connection alive: {e}")
-        elif db.is_closed():
-            db.connect()
+            if module_enable['db'] == True:
+                if not db.is_closed():
+                    try:
+                        db.execute_sql('SELECT 1')
+                    except Exception as e:
+                        print(f"Error keeping pool connection alive: {e}")
+                elif db.is_closed():
+                    db.connect()
 
-    config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
-    async with client.conversation(int(tgbot.config['setting_chat_id'])) as conv:
-        await conv.send_message(config_str2, reply_to=int(tgbot.config['setting_thread_id']))
+        config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
+        async with client.conversation(int(tgbot.config['setting_chat_id'])) as conv:
+            await conv.send_message(config_str2, reply_to=int(tgbot.config['setting_thread_id']))
 
 
 
