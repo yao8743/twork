@@ -225,6 +225,7 @@ class lybot:
             components = data_part.split('§')
            
             if len(components) != 5:
+                self.logger.error(f"Invalid encoded string: {components}")
                 return {
                     "file_unique_id": "0",
                     "file_id": "0",
