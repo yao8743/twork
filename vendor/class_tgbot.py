@@ -224,7 +224,7 @@ class lybot:
             type_part, data_part = encoded_str.split('_didipanbot_', 1)
             components = data_part.split('§')
            
-            if len(components) != 5:
+            if len(components) < 4 and len(components) > 5:
                 self.logger.error(f"Invalid encoded string: {components}")
                 return {
                     "file_unique_id": "0",
