@@ -828,9 +828,9 @@ class lybot:
             NEXT_DIALOGS = False
             entity = dialog.entity
 
-            if dialog.id == 7361527575:
-                await client.delete_dialog(dialog.id)
-                continue
+            # if dialog.id == 7361527575:
+            #     await client.delete_dialog(dialog.id)
+            #     continue
 
             # 打印处理的实体名称（频道或群组的标题）
             if isinstance(entity, Channel) or isinstance(entity, Chat):
