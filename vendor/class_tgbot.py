@@ -68,6 +68,14 @@ class lybot:
         self.AD_TIMEOUT = 600
         self.MAX_PROCESS_TIME = 1200
 
+
+        # 配置速率限制参数
+        self.RATE_LIMIT_WINDOW = 60  # 时间窗口（秒）
+        self.MAX_REQUESTS = 10       # 单个用户的最大请求次数
+
+        # 全局字典存储用户请求记录 {user_id: [timestamp1, timestamp2, ...]}
+        self.user_requests = {}
+
         class BaseModel(Model):
             class Meta:
                 database = db
@@ -430,6 +438,26 @@ class lybot:
             if update.message.chat.type not in ['private']:
                 return
             
+            user_id = update.effective_user.id
+            now = time()
+
+            # 初始化或清理超时的请求记录
+            if user_id not in self.user_requests:
+                self.user_requests[user_id] = []
+            self.user_requests[user_id] = [t for t in self.user_requests[user_id] if now - t < self.RATE_LIMIT_WINDOW]
+
+            # 检查是否超过速率限制
+            if len(self.user_requests[user_id]) >= self.MAX_REQUESTS:
+                await update.message.reply_text(
+                    "You are operating too frequently. Please try again later! \r\n您操作过于频繁，请稍后再试！"
+                )
+                print(f"Rate limit exceeded: {user_id}", flush=True)
+                return
+
+            # 记录当前请求
+            self.user_requests[user_id].append(now)
+
+
             # # -- 收到密文先解析 
             # --- 自己的密文 => 密文转资源
             # --- 别人的密文 => 查询自己是否有 file_id
@@ -439,7 +467,7 @@ class lybot:
             # 检查是否为加密字符串
             
             encode_code_list = self.find_encode_code(update.message.text)
-            print(f"Found {len(encode_code_list)} encode codes in the message. "+update.message.text, flush=True)
+            # print(f"Found {len(encode_code_list)} encode codes in the message. "+update.message.text, flush=True)
             if encode_code_list:
                 for encode_code in encode_code_list:
                     try:
