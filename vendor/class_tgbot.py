@@ -811,16 +811,21 @@ class lybot:
     
     async def handle_album_completion(self,media_group_id: str, context) -> None:
         try:
+            print(f"Album {media_group_id} 处理开始", flush=True)
             # 等待超时时间
             await asyncio.sleep(self.ALBUM_TIMEOUT)
+            
             
             # 处理 Album 完成逻辑
             album_set = self.albums.pop(media_group_id, [])
             self.album_tasks.pop(media_group_id, None)
 
+            
+
             # 轮询album_set
             first_message = album_set[0]
             for message in album_set:
+                print(f"Album {media_group_id} contains message: {message.message_id}")
                 await self.upsert_file_info(message)
                 await self.insert_media_group(message)
                 await message.forward(chat_id=self.config['man_bot_id'])
