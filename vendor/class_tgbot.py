@@ -439,7 +439,8 @@ class lybot:
                 return
             
             user_id = update.effective_user.id
-            now = time()
+            
+            now = time.time()
 
             # 初始化或清理超时的请求记录
             if user_id not in self.user_requests:
