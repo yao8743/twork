@@ -351,6 +351,9 @@ class lybot:
 
     async def handle_bot_message(self,update, context) -> None:
         
+    
+
+            
 
         # 使用类内方法提取 URL
         urls = self.extract_entity_from_message(update.message, MessageEntityType.URL)
@@ -427,10 +430,18 @@ class lybot:
 
             # print(f"Reply message: {res.message_id}", flush=True)
 
+            # 检查是否有语言代码
+            send_message_text = "👆🏻 Share the code in groups; new users using it earn you extra rewards. \r\n分享代码到群，新用户使用可得额外奖励。"
+            if update.message and update.message.from_user:
+                language_code = update.message.from_user.language_code
+                if language_code == 'in' or language_code == 'id':
+                    send_message_text = "👆🏻 Bagikan kode ini ke grup di bawah, pengguna baru dapat hadiah tambahan saat menggunakan. "
+
+
             await context.bot.send_message(
                 chat_id=update.message.chat.id,
                 reply_to_message_id=res.message_id,
-                text="👆🏻 Share the code in groups; new users using it earn you extra rewards. \r\n分享代码到群，新用户使用可得额外奖励。",
+                text=send_message_text,
                 parse_mode=ParseMode.HTML
             )
         elif update.message.text:
@@ -488,6 +499,33 @@ class lybot:
                             print(f"[T]My own code: {encode_code}")
                             # 密文转资源
                             await self.send_material_by_row(decode_row,context,reply_to_message_id,chat_id)
+
+                            # 检查是否有语言代码
+                            
+                            send_message_text = ''
+                            if update.message and update.message.from_user:
+                                language_code = update.message.from_user.language_code
+                                if language_code == 'in' or language_code == 'id':
+                                    send_message_text = "👆🏻 Bagikan kode ini ke grup di bawah, pengguna baru dapat hadiah tambahan saat menggunakan. "
+                                elif language_code == 'en':
+                                    send_message_text = "👆🏻 Share the code in groups; new users using it earn you extra rewards. "
+                                elif language_code == 'es':
+                                    send_message_text = "👆🏻 Comparte el código en grupos; los nuevos usuarios que lo usen te dan recompensas adicionales. "
+                                elif language_code == 'ar':
+                                    send_message_text = "👆🏻 شارك الرمز في المجموعات؛ يمنحك المستخدمون الجدد الذين يستخدمونه مكافآت إضافية. "
+                               
+
+                                # 如果 send_message_text 有值且非空
+                                if send_message_text:
+                                    send_message_text = send_message_text + f"\r\n https://t.me/+OrYhYXD4PfU1Njc0"
+                                    await context.bot.send_message(
+                                        chat_id=update.message.chat.id,
+                                        reply_to_message_id=res.message_id,
+                                        text=send_message_text,
+                                        parse_mode=ParseMode.HTML
+            )
+
+
 
                             sender_id = int(decode_row.get('sender_id') or 0)
                             if sender_id and sender_id > 0:
@@ -812,24 +850,24 @@ class lybot:
                 self.logger.error(f"Failed to get user info {sender_id}: {e}")
 
             # 发送奖励通知到中文群
-            try:
-                await context.bot.send_message(
-                    chat_id=-1002086803190,  # 中文群ID
-                    text=f"群友<code>{user_first_name}</code>分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                self.logger.error(f"Failed to send message to Chinese group: {e}")
+            # try:
+            #     await context.bot.send_message(
+            #         chat_id=-1002086803190,  # 中文群ID
+            #         text=f"群友<code>{user_first_name}</code>分享了他的代码到<u>其他友群</u>，轻松领取了额外的五个珍贵资源！机会难得，你也赶快试试吧！",
+            #         parse_mode="HTML"
+            #     )
+            # except Exception as e:
+            #     self.logger.error(f"Failed to send message to Chinese group: {e}")
 
             # 发送奖励通知到外文群
-            try:
-                await context.bot.send_message(
-                    chat_id=-1002138063591,  # 外文群ID
-                    text=f"Our group member, <code>{user_first_name}</code>, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                self.logger.error(f"Failed to send message to English group: {e}")
+            # try:
+            #     await context.bot.send_message(
+            #         chat_id=-1002138063591,  # 外文群ID
+            #         text=f"Our group member, <code>{user_first_name}</code>, shared his code with <u>other groups</u> and easily earned five extra valuable resources! Don't miss out—give it a try now!",
+            #         parse_mode="HTML"
+            #     )
+            # except Exception as e:
+            #     self.logger.error(f"Failed to send message to English group: {e}")
 
 
 
