@@ -520,7 +520,6 @@ class lybot:
                                     send_message_text = send_message_text + f"\r\n https://t.me/+OrYhYXD4PfU1Njc0"
                                     await context.bot.send_message(
                                         chat_id=update.message.chat.id,
-                                        reply_to_message_id=res.message_id,
                                         text=send_message_text,
                                         parse_mode=ParseMode.HTML
             )
