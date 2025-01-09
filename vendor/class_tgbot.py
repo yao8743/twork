@@ -70,7 +70,7 @@ class lybot:
 
 
         # 配置速率限制参数
-        self.RATE_LIMIT_WINDOW = 60  # 时间窗口（秒）
+        self.RATE_LIMIT_WINDOW = 80  # 时间窗口（秒）
         self.MAX_REQUESTS = 10       # 单个用户的最大请求次数
 
         # 全局字典存储用户请求记录 {user_id: [timestamp1, timestamp2, ...]}
