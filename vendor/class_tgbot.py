@@ -460,9 +460,9 @@ class lybot:
 
             # 检查是否超过速率限制
             if len(self.user_requests[user_id]) >= self.MAX_REQUESTS:
-                await update.message.reply_text(
-                    "You are operating too frequently. Please try again later! \r\n您操作过于频繁，请稍后再试！"
-                )
+                # await update.message.reply_text(
+                #     "You are operating too frequently. Please try again later! \r\n您操作过于频繁，请稍后再试！"
+                # )
                 print(f"Rate limit exceeded: {user_id}", flush=True)
                 return
 
