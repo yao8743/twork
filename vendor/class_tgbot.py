@@ -6,6 +6,7 @@ import time
 import traceback
 import telegram.error
 from telethon import events,types,errors
+from telegram.error import BadRequest
 
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo
 from telegram.constants import ParseMode, MessageEntityType
@@ -350,11 +351,6 @@ class lybot:
         self.logger.error(error_message, exc_info=True)
 
     async def handle_bot_message(self,update, context) -> None:
-        
-    
-
-            
-
         # 使用类内方法提取 URL
         urls = self.extract_entity_from_message(update.message, MessageEntityType.URL)
         if urls:
@@ -378,7 +374,7 @@ class lybot:
                     parse_mode=ParseMode.HTML
                 )
                
-                self.logger.info(f"Detected URL: {url_word}")
+                self.logger.info(f"[O]Detected URL: {url_word}")
                
             
             return
@@ -403,7 +399,7 @@ class lybot:
 
             # print(f"[B]media_group_id message received {update.message.media_group_id}", flush=True)
         elif update.message.photo or update.message.video or update.message.document:
-            print(f"{self.bot_username}-[B]Video message received",flush=True)
+            print(f"{self.bot_username}-[B]Media message received",flush=True)
             self.logger.info(f"{self.bot_username}-[B]Video message received")
             # print(f"{self.bot_username}-[B]Video message received", flush=True)
             await self.upsert_file_info(update.message)
@@ -444,6 +440,7 @@ class lybot:
                 text=send_message_text,
                 parse_mode=ParseMode.HTML
             )
+            self.logger.info(f"[I]{self.bot_username}-Media message received")
         elif update.message.text:
             # 检查是否为私信
             if update.message.chat.type not in ['private']:
@@ -627,12 +624,27 @@ class lybot:
             for record in records:
                 message_text += f"{record.enc_str}\r\n"
 
-            # 向发送者发送奖励信息
-            await context.bot.send_message(
-                chat_id=sender_id,
-                text=message_text,
-                parse_mode="HTML"
-            )
+            try:
+                # 向发送者发送奖励信息
+                await context.bot.send_message(
+                    chat_id=sender_id,
+                    text=message_text,
+                    parse_mode="HTML"
+                )
+            #如果显示使用者不存在  An error occurred: Could not find the input entity for PeerUser
+        
+            except BadRequest as e:
+                # Check if the error is related to the user not being found or blocked
+                if "Could not find the input entity" in str(e):
+                    self.logger.error(f"Sender with ID {sender_id} not found or has blocked the bot.")
+                else:
+                    # Handle other BadRequest exceptions
+                    self.logger.error(f"Failed to send message to sender {sender_id}: {e}")
+                return False
+            except Exception as e:
+                # Catch any other exceptions and log them
+                self.logger.error(f"Unexpected error while sending message to {sender_id}: {e}")
+                return False
 
 
             self.ads = defaultdict(list)
@@ -909,7 +921,7 @@ class lybot:
 
 
             
-            self.logger.info(f"Album {media_group_id} 完成，包含 {len(album_set)} 张照片")
+            self.logger.info(f"[I]Album {media_group_id} 完成，包含 {len(album_set)} 张照片")
 
             # 这里可以添加保存或处理 Album 的逻辑
         except asyncio.CancelledError:
@@ -1129,7 +1141,7 @@ class lybot:
         except WorkerBusyTooLongRetryError:
             print(f"WorkerBusyTooLongRetryError encountered. Skipping message {message.id}.")
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An error occurred here 1144: {e}")
         
 
 
