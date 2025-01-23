@@ -1143,6 +1143,13 @@ class lybot:
             print(f"WorkerBusyTooLongRetryError encountered. Skipping message {message.id}.")
         except Exception as e:
             print(f"An error occurred here 1144: {e}")
+            #取得错误的行号
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            line_number = exc_tb.tb_lineno
+            print(f"Error at line {line_number}")
+            traceback.print_exc()
+        return None
+    
         
 
 
