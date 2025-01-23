@@ -10,7 +10,7 @@ from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
 import logging
 import os
 from telegram import Update
-from telegram.ext import Application, MessageHandler, filters
+from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
 from telethon import TelegramClient, events
 
@@ -111,6 +111,7 @@ tgbot.logger = logger
 
 if module_enable['bot'] == True:
     application = Application.builder().token(config['bot_token']).build()
+    application.add_handler(CommandHandler("set", tgbot.set_command))
     application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.ATTACHMENT | filters.Document.ALL, tgbot.handle_bot_message))
     # 注册错误处理器
     application.add_error_handler(tgbot.error_handler)
@@ -120,6 +121,7 @@ if module_enable['dyer_bot'] == True:
     dyerbot.config = config
     dyerbot.logger = logger
     dyer_application = Application.builder().token(config['dyer_bot_token']).build()
+    # 添加命令处理程序
     dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
     # 添加消息处理程序
 

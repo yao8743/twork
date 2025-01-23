@@ -8,7 +8,8 @@ import telegram.error
 from telethon import events,types,errors
 from telegram.error import BadRequest
 
-from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo
+from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Update
+from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
@@ -1147,10 +1148,22 @@ class lybot:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             line_number = exc_tb.tb_lineno
             print(f"Error at line {line_number}")
+            print(f"destination_chat_id: {destination_chat_id}")
             traceback.print_exc()
         return None
     
         
+    async def set_command(self,update: Update, context: CallbackContext) -> None:
+        """处理 /set 命令，存储用户的键值设置"""
+        if len(context.args) < 2:
+            await update.message.reply_text("用法: /set <键> <值>\n示例: /set warehouse_chat_id 200321231")
+            return
+        
+        key = context.args[0]
+        value = " ".join(context.args[1:])  # 允许值包含空格
+        user_id = update.effective_user.id
+
+        self.setting[key] = value
 
 
 
