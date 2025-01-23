@@ -510,7 +510,8 @@ class lybot:
                                     send_message_text = "👆🏻 Comparte el código en grupos; los nuevos usuarios que lo usen te dan recompensas adicionales. "
                                 elif language_code == 'ar':
                                     send_message_text = "👆🏻 شارك الرمز في المجموعات؛ يمنحك المستخدمون الجدد الذين يستخدمونه مكافآت إضافية. "
-                               
+                                else:
+                                    send_message_text = "👆🏻 学会分享代码到聊天群，您将可获得额外的奖励 "
 
                                 # 如果 send_message_text 有值且非空
                                 if send_message_text:
