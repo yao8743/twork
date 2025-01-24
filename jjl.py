@@ -137,7 +137,9 @@ async def main():
         await tgbot.set_bot_info(application)
     
     if module_enable['man_bot'] == True:
+
         await tgbot.set_man_bot_info(client)
+        
 
     if module_enable['dyer_bot'] == True and module_enable['man_bot'] == True: 
         await dyerbot.set_bot_info(dyer_application)
@@ -171,7 +173,7 @@ async def main():
     if module_enable['man_bot'] == True:
         while True:
             await tgbot.man_bot_loop(client)
-            
+            print(f"ok")
             elapsed_time = time.time() - start_time
 
             if elapsed_time > tgbot.MAX_PROCESS_TIME:

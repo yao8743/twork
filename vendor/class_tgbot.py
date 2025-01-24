@@ -12,7 +12,7 @@ from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Updat
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
-from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage
+from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto
 from collections import defaultdict
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
 
@@ -1009,13 +1009,15 @@ class lybot:
                 entity_title = f'Unknown entity {entity.id}'
 
             # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
-            blacklist = [777000,93372553]
+            # blacklist = [777000,93372553]
+            blacklist = [777000,93372553,6976547743,291481095]
+            
 
             if entity.id in blacklist:
                 NEXT_DIALOGS = True
                 continue
 
-            if dialog.unread_count > 0 and (dialog.is_user):
+            if dialog.unread_count >= 0 and (dialog.is_user):
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
                 
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
@@ -1027,6 +1029,26 @@ class lybot:
             
                     ## 如果是 media 类型的消息
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
+                        print(f"Media message: {message}", flush=True)
+
+
+                        # if isinstance(message.media, MessageMediaPhoto):  # 如果是照片
+                        #     try:
+                        #         # 下载图片并保存
+                        #         file_path = await message.download_media(file='downloads/')
+                        #         print(f"Downloaded photo to {file_path}", flush=True)
+
+                        #          # 将照片转发给 @bot123
+                        #         bot_username = '@filetobot'  # 机器人用户名
+                        #         await client.forward_messages(bot_username, message.id, entity)  # 转发照片
+
+                        #         print(f"Forwarded photo to {bot_username}", flush=True)
+
+                        #     except Exception as e:
+                        #         print(f"Error downloading photo: {e}", flush=True)
+                        #         traceback.print_exc()
+
+
                         time.sleep(1)  # 每次请求之间等待0.5秒
                         if dialog.is_user:
                             try:
