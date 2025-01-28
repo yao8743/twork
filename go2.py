@@ -575,7 +575,11 @@ async def telegram_loop(client, tgbot, max_process_time, max_media_count, max_co
 
                     combined_regex = r"(https?://t\.me/(?:joinchat/)?\+?[a-zA-Z0-9_\-]{15,50})|(?<![a-zA-Z0-9_\-])\+[a-zA-Z0-9_\-]{15,17}(?![a-zA-Z0-9_\-])"
                     matches = re.findall(combined_regex, message.text)
-                    if matches:
+                    
+                    #如果 matches 不为 ['']
+                    
+                    if matches and matches != ['']:
+                        
                         for match in matches:
                             match_str = match[0] or match[1]
                             if not match_str.startswith('https://t.me/'):
@@ -720,7 +724,7 @@ async def main():
 
 
     setting_chat_id = tgbot.config['setting_chat_id']
-    print(f"Setting chat id: {tgbot.config}", flush=True)
+    # print(f"Setting chat id: {tgbot.config}", flush=True)
     tgbot.setting = await tgbot.load_tg_setting(setting_chat_id, tgbot.config['setting_tread_id'])
 
 
