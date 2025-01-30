@@ -295,8 +295,10 @@ async def main():
                                         print(f"Forward to bot: {captured_str}")
                                         await tgbot.client.send_message(captured_str, message)  # 如果不是数字，按字符串发送
                                 else:
-                                    # 如果没有匹配到正则，走默认的处理逻辑
+                                    # 如果没有匹配到正则，走默认的处理逻辑,并删除原消息
                                     await tgbot.send_video_to_filetobot_and_send_to_qing_bot(client, message)
+                                    await client.delete_messages(entity.id, message.id)
+
                             except Exception as e:
                                 print(f"Error forwarding message: {e}", flush=True)
                                 traceback.print_exc()  # 打印完整的异常堆栈信息
@@ -333,7 +335,7 @@ async def main():
                                 await client.delete_messages(entity.id, message.id)
                              
 
-
+                        #除了工作区和仓库区，其他的都转发到仓库区
                         elif tgbot.config['warehouse_chat_id']!=0 and entity.id != tgbot.config['work_chat_id'] and entity.id != tgbot.config['warehouse_chat_id']:
                             
                             if media_count >= max_media_count:
@@ -345,7 +347,7 @@ async def main():
                                 break
 
                             last_message_id = await tgbot.forward_media_to_warehouse(client,message)
-                            
+                            await client.delete_messages(entity.id, message.id)
                             # print(f"\r\n@>{dialog}", flush=True)
 
                             
@@ -483,7 +485,7 @@ async def main():
                             else:
                                 await tgbot.process_by_check_text(message,'encstr')
                             
-
+                        await client.delete_messages(entity.id, message.id)
 
                            
                     tgbot.save_last_read_message_id(entity.id, last_message_id)
