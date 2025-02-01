@@ -417,12 +417,12 @@ async def main():
                                         NEXT_DIALOGS = True
                                         break
                                 else:
-                                    print(f"'{message.text}' ->matches: {match_str}  {entity.id} link chat id:{tgbot.config['link_chat_id']}. =>forward\n")
-                                    
+                                     
                                     if match_str not in ['https://t.me/FilesDrive_BLGA_bot']:
                                         if entity.id == tgbot.config['work_chat_id']:
                                             pass
                                         else:
+                                            print(f"'{message.text}' ->matches: {match_str}  {entity.id} link chat id:{tgbot.config['link_chat_id']}. =>forward\n")
                                             await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
                             
                             
