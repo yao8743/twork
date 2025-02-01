@@ -509,14 +509,16 @@ async def main():
             print(f"\nExecution time exceeded {int(max_process_time)} seconds. Stopping. T:{int(elapsed_time)} of {int(max_process_time)} ,C:{media_count} of {max_media_count}\n", flush=True)
             print(f"-\n", flush=True)
             #await tgbot.client.send_message(tgbot.config['warehouse_chat_id'], tgbot.get_last_read_message_content())
+            
+            config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
+            async with client.conversation(tgbot.config['setting_chat_id']) as conv:
+                await conv.send_message(config_str2, reply_to=tgbot.config['setting_tread_id'])
             break
         
 
 
 
-        config_str2 = json.dumps(tgbot.setting, indent=2)  # 转换为 JSON 字符串
-        async with client.conversation(tgbot.config['setting_chat_id']) as conv:
-            await conv.send_message(config_str2, reply_to=tgbot.config['setting_tread_id'])
+
 
         print("\nExecution time is " + str(int(elapsed_time)) + f" seconds. Continuing next cycle... after {max_break_time} seconds.\n\n", flush=True)
         print(f"-\n", flush=True)
