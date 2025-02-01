@@ -370,6 +370,11 @@ async def main():
 
                     elif message.text:
                        
+                        # 1.先检查是否为kick命令
+                        # 2.检查是否为链接, 若是传给work_bot ,若是键接群则加入
+                        
+
+
                         # 使用正则表达式进行匹配，忽略大小写
                         try:
                             match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
@@ -377,6 +382,8 @@ async def main():
                                 botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
                                 print(f"Kick:{botname}")
                                 await tgbot.client.send_message(botname, "/start")
+                                await tgbot.client.send_message(botname, "[~bot~]")
+                                
                                 NEXT_MESSAGE = True
                         except Exception as e:
                             print(f"Error kicking bot: {e}", flush=True)
@@ -392,7 +399,11 @@ async def main():
                         # pattern = r'(https?://t\.me/(?:joinchat/)?\+?[a-zA-Z0-9_\-]{15,50}|\+?[a-zA-Z0-9_\-]{15,17})'
                         matches = re.findall(combined_regex, message.text)
                         # matches = re.findall(pattern, message.text)
-                        if matches:
+                        if NEXT_MESSAGE == True:
+                        
+                            #略过
+                            pass
+                        elif matches:
                             for match in matches:
                                 match_str = match[0] or match[1]
                                 if not match_str.startswith('https://t.me/'):
@@ -410,8 +421,9 @@ async def main():
                                     if match_str not in ['https://t.me/FilesDrive_BLGA_bot']:
                                         await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
                             print(f"matches: 178\n")
+                            
                                
-                                     
+                        # 3.检查是否在工作群,若是再判断密文类型,若是salai则删除,若是其他则转发给bot             
                         elif entity.id == tgbot.config['work_chat_id']:
                             if media_count >= max_media_count:
                                 NEXT_CYCLE = True
@@ -438,7 +450,8 @@ async def main():
                                             await tgbot.process_by_check_text(message, 'tobot')
                                             media_count += 1
                                             count_per_chat += 1
-
+                            
+                        # 4.检查是否在群组或频道, 若是在enclist名单内,则检查是否有关键字,若是则转发给workbot,反之检查有无活动词,若无也转发给workbot
                         elif dialog.is_group or dialog.is_channel:
                         
                             if entity.id in enclist:
@@ -477,6 +490,8 @@ async def main():
                                         print(f"Message from entity {entity.id} has no sender.", flush=True)
                                 else:
                                     await tgbot.process_by_check_text(message,'encstr')
+                            
+                        # 5.检查是否在私信
                         elif dialog.is_user:
                             if '|_request_|' in message.text:
                                 await tgbot.process_by_check_text(message,'request')
@@ -484,8 +499,14 @@ async def main():
                                 await tgbot.process_by_check_text(message,'sendToWZ')
                             else:
                                 await tgbot.process_by_check_text(message,'encstr')
-                            
-                        await client.delete_messages(entity.id, message.id)
+
+                        # 如何 message.text 是 [~bot~] 则跳过
+                        
+                    if message.text == '[~bot~]':
+                        print(f"Skip message")
+                    else:
+                        await client.delete_messages(entity.id, message.id)   
+                        
 
                            
                     tgbot.save_last_read_message_id(entity.id, last_message_id)
