@@ -520,6 +520,7 @@ class lybot:
                                     await context.bot.send_message(
                                         chat_id=update.message.chat.id,
                                         text=send_message_text,
+                                        rotect_content=True,
                                         parse_mode=ParseMode.HTML
             )
 
