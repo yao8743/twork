@@ -417,10 +417,14 @@ async def main():
                                         NEXT_DIALOGS = True
                                         break
                                 else:
-                                    print(f"'{message.text}' ->matches: {match_str}  {entity.id} {tgbot.config['link_chat_id']}. =>forward\n")
+                                     
                                     if match_str not in ['https://t.me/FilesDrive_BLGA_bot']:
-                                        await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
-                            print(f"matches: 178\n")
+                                        if entity.id == tgbot.config['work_chat_id']:
+                                            pass
+                                        else:
+                                            print(f"'{message.text}' ->matches: {match_str}  {entity.id} link chat id:{tgbot.config['link_chat_id']}. =>forward\n")
+                                            await client.send_message(tgbot.config['work_bot_id'], f"{match_str}")  
+                            
                             
                                
                         # 3.检查是否在工作群,若是再判断密文类型,若是salai则删除,若是其他则转发给bot             
@@ -498,7 +502,13 @@ async def main():
                             elif '|_sendToWZ_|' in message.text:
                                 await tgbot.process_by_check_text(message,'sendToWZ')
                             else:
-                                await tgbot.process_by_check_text(message,'encstr')
+                                if entity.id == tgbot.config['work_chat_id']:
+                                    pass
+                                elif message.text == 'doc+vzvd_WpvvhUc0tI+2wYG_RQAAsU=_mda':
+                                    print(f"{message.id}-Skip message")
+                                    pass
+                                else:
+                                    await tgbot.process_by_check_text(message,'encstr')
 
                         # 如何 message.text 是 [~bot~] 则跳过
                         
