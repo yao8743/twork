@@ -125,11 +125,6 @@ if module_enable['dyer_bot'] == True:
     dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
     # 添加消息处理程序
 
-
-
-
-
-
 # 主运行函数
 async def main():
     # 启动 polling
@@ -182,7 +177,7 @@ async def main():
                 break
 
 
-            await asyncio.sleep(60)
+            await asyncio.sleep(120)
 
             if module_enable['db'] == True:
                 if not db.is_closed():
