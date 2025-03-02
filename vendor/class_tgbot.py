@@ -5,14 +5,16 @@ import sys
 import time
 import traceback
 import telegram.error
-from telethon import events,types,errors
+from telethon import events, types, errors
+
+
 from telegram.error import BadRequest
 
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Update
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
-from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto
+from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto, PeerUser, KeyboardButtonUrl, KeyboardButtonCallback
 from collections import defaultdict
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
 
@@ -1026,8 +1028,6 @@ class lybot:
                 NEXT_DIALOGS = True
                 continue
 
-            
-
             if dialog.unread_count >= 0 and (dialog.is_user):
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
                 
@@ -1042,24 +1042,6 @@ class lybot:
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
                         print(f"Media message: {message}", flush=True)
 
-
-                        # if isinstance(message.media, MessageMediaPhoto):  # 如果是照片
-                        #     try:
-                        #         # 下载图片并保存
-                        #         file_path = await message.download_media(file='downloads/')
-                        #         print(f"Downloaded photo to {file_path}", flush=True)
-
-                        #          # 将照片转发给 @bot123
-                        #         bot_username = '@filetobot'  # 机器人用户名
-                        #         await client.forward_messages(bot_username, message.id, entity)  # 转发照片
-
-                        #         print(f"Forwarded photo to {bot_username}", flush=True)
-
-                        #     except Exception as e:
-                        #         print(f"Error downloading photo: {e}", flush=True)
-                        #         traceback.print_exc()
-
-
                         time.sleep(1)  # 每次请求之间等待0.5秒
                         if dialog.is_user:
                             try:
@@ -1067,8 +1049,6 @@ class lybot:
                                 if send_result:
                                     await client.delete_messages(entity.id, message.id)
                                     # print(f"Send result: {send_result}", flush=True)
-                                
-                                
                                 #await self.forward_media_to_warehouse(client, message)
                             except Exception as e:
                                 print(f"Error forwarding message: {e}", flush=True)
@@ -1080,10 +1060,221 @@ class lybot:
                     else:
                         time.sleep(0.7)  # 每次请求之间等待0.5秒
                         await client.delete_messages(entity.id, message.id)
-                        # self.logger.info(f"Delete {message.id} ")
+    #self.shellbot(message,client)
+    async def shellbot(self, client, message):
+        async with client.conversation("She11PostBot") as conv:
+            # 根据bot_username 找到 wp_bot 中对应的 bot_name = bot_username 的字典
+            
+
+            # 发送消息到机器人
+            forwarded_message = await conv.send_message(message.text)
+            
+            try:
+                # 获取机器人的响应，等待30秒
+                response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=30)
+            except asyncio.TimeoutError:
+                # 如果超时，发送超时消息
+                await client.send_message(chat_id, "the bot was timeout", reply_to=message.id)
+                print("Response timeout.")
+                return
+            # print(f"Response: {response}")
+
+            if hasattr(response, 'grouped_id') and response.grouped_id:
+            
+                # 获取相册中的所有消息
+                # print(f"\r\nPeer ID: {response.peer_id}",flush=True)
+
+                album_messages = await client.get_messages(response.peer_id, limit=100, min_id=response.id,reverse=True)
+
+                # print(f"\r\nAlbum messages: {album_messages}",flush=True)
+
+                album = [msg for msg in album_messages if msg.grouped_id == response.grouped_id]
+                # print(f"\r\nAlbum: {album}",flush=True)
+
+                if album:
+                    await asyncio.sleep(0.5)  # 间隔80秒
+                    await client.send_file(self.config['work_chat_id'], album, reply_to=message.id)
+                    await self.check_more(album)
+                
+
+            elif response.media:
+                if isinstance(response.media, types.MessageMediaDocument):
+                    mime_type = response.media.document.mime_type
+                    if mime_type.startswith('video/'):
+                        # 处理视频
+                        video = response.media.document
+                        await client.send_file(chat_id, video, reply_to=message.id)
                         
-                    # print(f"Delete {message.id} ", flush=True)
-                    #await client.delete_messages(entity.id, message.message_id)
+                        print(">>>Reply with video .")
+
+                        #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
+                        if chat_id != self.config['work_chat_id']:
+                            await client.send_file(self.config['work_chat_id'], video)
+                        
+                        # 调用新的函数
+                        #await self.send_video_to_filetobot_and_publish(client, video, message)
+                    else:
+                        # 处理文档
+                        document = response.media.document
+                        await client.send_file(chat_id, document, reply_to=message.id)
+                        
+                        print(">>>Reply with document.")
+
+                        #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
+                        if chat_id != self.config['work_chat_id']:
+                            await client.send_file(self.config['work_chat_id'], document)
+
+                        #caption_text = "|_SendToBeach_|\n"+message.text
+                        #await client.send_file(self.config['public_bot_id'], document, caption=caption_text)
+                        
+                elif isinstance(response.media, types.MessageMediaPhoto):
+                    # 处理图片
+                    photo = response.media.photo
+                    await client.send_file(chat_id, photo, reply_to=message.id)
+                    print(">>>Reply with photo .")
+
+                    #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
+                    if chat_id != self.config['work_chat_id']:
+                        await client.send_file(self.config['work_chat_id'], photo)
+
+                    #caption_text = "|_SendToBeach_|\n"+message.text
+                    #await client.send_file(self.config['public_bot_id'], photo, caption=caption_text)
+                    
+                else:
+                    print("Received media, but not a document, video, or photo.")
+            elif response.text:
+                # 处理文本
+                if response.text == "在您发的这条消息中，没有代码可以被解析":
+                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
+                elif "💔抱歉，未找到可解析内容。" in response.text:
+                    await client.send_message(chat_id, response.text, reply_to=message.id)   
+                elif "不能为你服务" in response.text:
+                    await client.send_message(chat_id, "the bot was timeout", reply_to=message.id)
+                    
+                elif response.text == "创建者申请了新的分享链接，此链接已过期":
+                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
+                elif response.text == "此机器人面向外国用户使用，访问 @MediaBKHome 获取面向国内用户使用的机器人":
+                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
+                    
+                elif response.text == "access @MediaBKHome to get media backup bot for non-chinese-speaking user":
+                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
+                else:
+                    print("Received text response: "+response.text)
+                print("Forwarded text.")
+            else:
+                print("Received non-media and non-text response")
+        pass
+
+    async def man_bot_loop_group(self, client):
+        start_time = time.time()
+        media_count = 0
+
+        # 如果 tgbot.setting 不存在，使用空字典作为默认值
+        blacklist = (self.setting or {}).get('blacklist', [])
+
+        NEXT_CYCLE = False
+        async for dialog in client.iter_dialogs():
+
+            NEXT_DIALOGS = False
+            entity = dialog.entity
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue   
+
+            # 打印处理的实体名称（频道或群组的标题）
+            if isinstance(entity, Channel) or isinstance(entity, Chat):
+                entity_title = entity.title
+            elif isinstance(entity, User):
+                entity_title = f'{entity.first_name or ""} {entity.last_name or ""}'.strip()
+            else:
+                entity_title = f'Unknown entity {entity.id}'
+
+            # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
+            # blacklist = [777000,93372553]
+            blacklist = [777000,
+                         2325062741,    #话题
+                         2252083262,  #广寒宫
+                         93372553,
+                         6976547743,
+                         291481095
+                         ]
+            # 将 9938338 加到 blacklist
+            blacklist.append(int(self.config['setting_chat_id']))
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue
+
+            if entity.id != 2423760953:
+                continue
+
+            if dialog.unread_count >= 0:
+                time.sleep(0.5)  # 每次请求之间等待0.5秒
+                
+                # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
+                # , filter=InputMessagesFilterEmpty()
+                async for message in client.iter_messages(entity, min_id=32320, limit=10, reverse=True):
+                    
+                    # if re.search(r'https?://\S+|www\.\S+', message.text):
+                        # print(f"Message contains link: {message.text}", flush=True)
+
+                    if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7294369541:
+                        # 检查是否有内联键盘
+                        if message.reply_markup:
+                            for row in message.reply_markup.rows:
+                                for button in row.buttons:
+                                    # 判断是否是 KeyboardButtonUrl 类型的按钮，并检查文本是否为 "👀查看"
+                                    if isinstance(button, KeyboardButtonUrl) and button.text == '👀查看':
+                                        await self.shellbot(message,client)
+                                        print(f"Message from {message.from_id.user_id} contains a URL button: {button.url}")
+
+                    # if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7785946202:
+                    #     # 检查是否有内联键盘
+                    #     if message.reply_markup:
+                    #         for row in message.reply_markup.rows:
+                    #             for i, button in enumerate(row.buttons):  # 遍历所有按钮
+                    #                 # 判断是否是 "🧧 抢红包" 按钮
+                    #                 if isinstance(button, KeyboardButtonCallback) and button.text == '🧧 抢红包':
+                    #                     print(f"找到 '🧧 抢红包' 按钮，索引: {i}, 回调数据: {button.data.decode()}")
+
+                    #                     try:
+                    #                         # 优先使用 click() 直接点击按钮
+                    #                         await message.click(i)  
+                    #                         print("抢红包成功！")
+                    #                         break  # 成功后跳出循环，避免重复点击
+
+                    #                     except Exception as e:
+                    #                         print("click() 失败，尝试使用 GetBotCallbackAnswer:", e)
+
+                                          
+
+                    # print(f"message: {message}", flush=True)
+                    # for message in iter_messages:
+            
+                    ## 如果是 media 类型的消息
+                    # if message.media and not isinstance(message.media, MessageMediaWebPage):
+                    #     print(f"Media message: {message}", flush=True)
+
+                    #     time.sleep(1)  # 每次请求之间等待0.5秒
+                    #     if dialog.is_user:
+                    #         try:
+                    #             send_result = await self.send_message_to_dye_vat(client, message)
+                    #             if send_result:
+                    #                 await client.delete_messages(entity.id, message.id)
+                    #                 # print(f"Send result: {send_result}", flush=True)
+                    #             #await self.forward_media_to_warehouse(client, message)
+                    #         except Exception as e:
+                    #             print(f"Error forwarding message: {e}", flush=True)
+                    #             traceback.print_exc()
+                    #         finally:
+                    #             NEXT_MESSAGE = True
+                    #     else:
+                    #         continue
+                    # else:
+                    #     time.sleep(0.7)  # 每次请求之间等待0.5秒
+                    #     await client.delete_messages(entity.id, message.id)                       
 
     async def load_tg_setting(self, client,chat_id, message_thread_id=0):
         try:

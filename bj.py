@@ -174,13 +174,12 @@ async def main():
 
     if module_enable['man_bot'] == True:
         while True:
-            await tgbot.man_bot_loop(client)
+            await tgbot.man_bot_loop_group(client)
             print(f"ok")
             elapsed_time = time.time() - start_time
 
             if elapsed_time > tgbot.MAX_PROCESS_TIME:
                 break
-
 
             await asyncio.sleep(60)
 
