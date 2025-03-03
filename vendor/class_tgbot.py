@@ -11,11 +11,12 @@ from telethon import events, types, errors
 from telegram.error import BadRequest
 
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Update
+
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
-from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto, PeerUser, KeyboardButtonUrl, KeyboardButtonCallback
-from collections import defaultdict
+from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto, PeerUser, KeyboardButtonUrl, MessageEntityMentionName
+from collections import defaultdict,namedtuple
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
 
 #密文機器人
@@ -1034,7 +1035,7 @@ class lybot:
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
-                async for message in client.iter_messages(entity, min_id=0, limit=30, reverse=True, filter=InputMessagesFilterEmpty()):
+                async for message in client.iter_messages(entity, min_id=0, limit=20, reverse=True, filter=InputMessagesFilterEmpty()):
                     
                     # for message in iter_messages:
             
@@ -1042,7 +1043,7 @@ class lybot:
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
                         print(f"Media message: {message}", flush=True)
 
-                        time.sleep(1)  # 每次请求之间等待0.5秒
+                        time.sleep(3)  # 每次请求之间等待0.5秒
                         if dialog.is_user:
                             try:
                                 send_result = await self.send_message_to_dye_vat(client, message)
@@ -1065,105 +1066,131 @@ class lybot:
         async with client.conversation("She11PostBot") as conv:
             # 根据bot_username 找到 wp_bot 中对应的 bot_name = bot_username 的字典
             
-
             # 发送消息到机器人
             forwarded_message = await conv.send_message(message.text)
-            
+
+            # print(f"Forwarded message: {forwarded_message}")
             try:
                 # 获取机器人的响应，等待30秒
                 response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=30)
+
+                # print(f"Response: {response}")
             except asyncio.TimeoutError:
                 # 如果超时，发送超时消息
-                await client.send_message(chat_id, "the bot was timeout", reply_to=message.id)
+                await client.send_message(forwarded_message.chat_id, "the bot was timeout", reply_to=message.id)
                 print("Response timeout.")
                 return
-            # print(f"Response: {response}")
+            print(f"Response: {response}\r\n\r\n")
 
-            if hasattr(response, 'grouped_id') and response.grouped_id:
-            
-                # 获取相册中的所有消息
-                # print(f"\r\nPeer ID: {response.peer_id}",flush=True)
-
-                album_messages = await client.get_messages(response.peer_id, limit=100, min_id=response.id,reverse=True)
-
-                # print(f"\r\nAlbum messages: {album_messages}",flush=True)
-
-                album = [msg for msg in album_messages if msg.grouped_id == response.grouped_id]
-                # print(f"\r\nAlbum: {album}",flush=True)
-
-                if album:
-                    await asyncio.sleep(0.5)  # 间隔80秒
-                    await client.send_file(self.config['work_chat_id'], album, reply_to=message.id)
-                    await self.check_more(album)
-                
-
-            elif response.media:
-                if isinstance(response.media, types.MessageMediaDocument):
-                    mime_type = response.media.document.mime_type
-                    if mime_type.startswith('video/'):
-                        # 处理视频
-                        video = response.media.document
-                        await client.send_file(chat_id, video, reply_to=message.id)
-                        
-                        print(">>>Reply with video .")
-
-                        #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
-                        if chat_id != self.config['work_chat_id']:
-                            await client.send_file(self.config['work_chat_id'], video)
-                        
-                        # 调用新的函数
-                        #await self.send_video_to_filetobot_and_publish(client, video, message)
-                    else:
-                        # 处理文档
-                        document = response.media.document
-                        await client.send_file(chat_id, document, reply_to=message.id)
-                        
-                        print(">>>Reply with document.")
-
-                        #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
-                        if chat_id != self.config['work_chat_id']:
-                            await client.send_file(self.config['work_chat_id'], document)
-
-                        #caption_text = "|_SendToBeach_|\n"+message.text
-                        #await client.send_file(self.config['public_bot_id'], document, caption=caption_text)
-                        
-                elif isinstance(response.media, types.MessageMediaPhoto):
+            if response.media:
+                if isinstance(response.media, types.MessageMediaPhoto):
                     # 处理图片
                     photo = response.media.photo
-                    await client.send_file(chat_id, photo, reply_to=message.id)
-                    print(">>>Reply with photo .")
 
-                    #如果 chat_id 不是 work_chat_id，则将视频发送到 qing bot
-                    if chat_id != self.config['work_chat_id']:
-                        await client.send_file(self.config['work_chat_id'], photo)
+                    # **Step 1: 取得 content1 和 user_name**
+                    content1 = None
+                    user_name = None
 
-                    #caption_text = "|_SendToBeach_|\n"+message.text
-                    #await client.send_file(self.config['public_bot_id'], photo, caption=caption_text)
-                    
-                else:
-                    print("Received media, but not a document, video, or photo.")
-            elif response.text:
-                # 处理文本
-                if response.text == "在您发的这条消息中，没有代码可以被解析":
-                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
-                elif "💔抱歉，未找到可解析内容。" in response.text:
-                    await client.send_message(chat_id, response.text, reply_to=message.id)   
-                elif "不能为你服务" in response.text:
-                    await client.send_message(chat_id, "the bot was timeout", reply_to=message.id)
-                    
-                elif response.text == "创建者申请了新的分享链接，此链接已过期":
-                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
-                elif response.text == "此机器人面向外国用户使用，访问 @MediaBKHome 获取面向国内用户使用的机器人":
-                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
-                    
-                elif response.text == "access @MediaBKHome to get media backup bot for non-chinese-speaking user":
-                    await self.wpbot(self.client, message, 'ShowFilesBot',chat_id)
-                else:
-                    print("Received text response: "+response.text)
-                print("Forwarded text.")
+                    if "Posted by" in response.text:
+                        print("response.text:", response.text)
+
+                        parts = response.text.split("Posted by", 1)  # 只分割一次
+                        # content1 = parts[0].replace("\n", "").strip()  # 去掉所有换行符
+                        content1 = parts[0].replace("__", "").strip()  # 去掉所有换行符
+
+                        # 获取 "Posted by" 之后的文本
+                        after_posted_by = parts[1].strip()
+
+                        # 将after_posted_by 以 /n 分割
+                        after_posted_by_parts = after_posted_by.split("\n")
+                        print("after_posted_by_parts:", after_posted_by_parts)
+
+
+                        # 提取 Markdown 链接文本内容（去除超链接）
+                        match = re.search(r"\[__(.*?)__\]", after_posted_by_parts[0])
+                        print("match:", match)
+                        if match:
+                            user_fullname = match.group(1)  # 取得用户名
+                            print("提取的用户名:", user_fullname)
+                        else:
+                            print("未找到用户名")
+
+                       
+
+
+                       
+
+                    # **Step 2: 取得 enc_user_id**
+                    enc_user_id = None
+                    for entity in response.entities or []:
+                        if isinstance(entity, types.MessageEntityTextUrl):
+                            url = entity.url
+                            if url.startswith("https://t.me/She11PostBot?start=up_"):
+                                enc_user_id = url.split("up_")[1]  # 取得 up_ 后的字串
+                                break
+
+                    # **Step 3: 取得 fee & bj_file_id**
+                    fee = None
+                    bj_file_id = None
+                    if response.reply_markup:
+                        for row in response.reply_markup.rows:
+                            for button in row.buttons:
+                                if isinstance(button, types.KeyboardButtonCallback) and "💎" in button.text:
+                                    fee = button.text.split("💎")[1].strip()  # 获取💎后的数字
+                                    callback_data = button.data.decode()
+                                    if callback_data.startswith("buy@file@"):
+                                        bj_file_id = callback_data.split("buy@file@")[1]
+                                    break
+
+                    # **Step 4: 提取 file_size, duration, buy_time**
+                    file_size, duration, buy_time = None, None, None
+                    size_match = re.search(r"💾([\d.]+ MB)", response.text)
+                    duration_match = re.search(r"🕐([\d:]+)", response.text)
+                    buy_time_match = re.search(r"🛒(\d+)", response.text)
+
+                    if size_match:
+                        file_size = size_match.group(1)  # 提取 MB 数字
+                    if duration_match:
+                        duration = self.convert_duration_to_seconds(duration_match.group(1))
+                    if buy_time_match:
+                        buy_time = buy_time_match.group(1)  # 提取购买次数
+
+                    # **Step 5: 组装 JSON**
+                    caption_json = json.dumps({
+                        "content1": content1,
+                        'enc_user_id': enc_user_id,
+                        "user_id": message.user_id,
+                        "user_fullname": user_fullname,
+                        "fee": fee,
+                        "bj_file_id": bj_file_id,
+                        "file_size": file_size,
+                        "duration": duration,
+                        "buy_time": buy_time
+                    }, ensure_ascii=False, indent=4)
+
+                    # **Step 6: 发送图片到用户 6941890966**
+                    if response.media and isinstance(response.media, types.MessageMediaPhoto):
+                        photo = response.media.photo  # 获取图片
+                        await client.send_file(
+                            6941890966,  # 发送到用户 ID
+                            photo,  # 发送最大尺寸图片
+                            caption=caption_json  # 发送 JSON 作为 caption
+                        )
+
+                        print("成功发送 JSON caption 的图片给用户 6941890966！")
+                    else:
+                        print("Received non-media and non-text response")
+
+                         
+            
             else:
                 print("Received non-media and non-text response")
         pass
+
+
+        
+
+
 
     async def man_bot_loop_group(self, client):
         start_time = time.time()
@@ -1215,19 +1242,41 @@ class lybot:
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
                 # , filter=InputMessagesFilterEmpty()
-                async for message in client.iter_messages(entity, min_id=32320, limit=10, reverse=True):
-                    
+                async for message in client.iter_messages(entity, min_id=35964, limit=1, reverse=True):
+                    print(f"Message: {message}")
                     # if re.search(r'https?://\S+|www\.\S+', message.text):
                         # print(f"Message contains link: {message.text}", flush=True)
 
                     if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7294369541:
                         # 检查是否有内联键盘
+
+
+
                         if message.reply_markup:
                             for row in message.reply_markup.rows:
                                 for button in row.buttons:
                                     # 判断是否是 KeyboardButtonUrl 类型的按钮，并检查文本是否为 "👀查看"
                                     if isinstance(button, KeyboardButtonUrl) and button.text == '👀查看':
-                                        await self.shellbot(message,client)
+                                        user_id = None
+                                        if message.entities:
+                                            for entity in message.entities:
+                                                if isinstance(entity, MessageEntityMentionName):
+                                                    user_id = entity.user_id  # 返回 user_id
+
+
+                                        # 创建 NamedTuple 代替 dict
+                                        ShellMessage = namedtuple("ShellMessage", ["text", "id", "user_id"])
+
+
+                                        match = re.search(r"(?i)start=([a-zA-Z0-9_]+)", button.url )
+                                        message_text = '/start ' + match.group(1)
+
+                                        # print(f"Message: {message}")
+
+                                        # 创建对象
+                                        shellmessage = ShellMessage(text=message_text, id=message.id, user_id=user_id)
+
+                                        await self.shellbot(client,shellmessage)
                                         print(f"Message from {message.from_id.user_id} contains a URL button: {button.url}")
 
                     # if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7785946202:
@@ -1276,6 +1325,10 @@ class lybot:
                     #     time.sleep(0.7)  # 每次请求之间等待0.5秒
                     #     await client.delete_messages(entity.id, message.id)                       
 
+    def convert_duration_to_seconds(self,duration):
+        parts = list(map(int, duration.split(":")))
+        return sum(x * 60 ** i for i, x in enumerate(reversed(parts)))
+    
     async def load_tg_setting(self, client,chat_id, message_thread_id=0):
         try:
             chat_entity = await client.get_entity(int(chat_id))
