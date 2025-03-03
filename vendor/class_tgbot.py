@@ -1035,7 +1035,7 @@ class lybot:
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
-                async for message in client.iter_messages(entity, min_id=0, limit=20, reverse=True, filter=InputMessagesFilterEmpty()):
+                async for message in client.iter_messages(entity, min_id=0, limit=10, reverse=True, filter=InputMessagesFilterEmpty()):
                     
                     # for message in iter_messages:
             
