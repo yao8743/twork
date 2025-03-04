@@ -125,6 +125,11 @@ if module_enable['dyer_bot'] == True:
     dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
     # 添加消息处理程序
 
+
+
+
+
+
 # 主运行函数
 async def main():
     # 启动 polling
@@ -169,15 +174,14 @@ async def main():
 
     if module_enable['man_bot'] == True:
         while True:
-            await tgbot.man_bot_loop(client)
-            print(f"ok")
+            await tgbot.man_bot_loop_group(client)
+            
             elapsed_time = time.time() - start_time
 
             if elapsed_time > tgbot.MAX_PROCESS_TIME:
                 break
 
-
-            await asyncio.sleep(1800)
+            await asyncio.sleep(600)
 
             if module_enable['db'] == True:
                 if not db.is_closed():

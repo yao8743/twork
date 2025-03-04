@@ -5,15 +5,18 @@ import sys
 import time
 import traceback
 import telegram.error
-from telethon import events,types,errors
+from telethon import events, types, errors
+
+
 from telegram.error import BadRequest
 
 from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Update
+
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
 from telethon.errors import WorkerBusyTooLongRetryError
-from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto
-from collections import defaultdict
+from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto, PeerUser, KeyboardButtonUrl, MessageEntityMentionName
+from collections import defaultdict,namedtuple
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
 
 #密文機器人
@@ -1026,15 +1029,13 @@ class lybot:
                 NEXT_DIALOGS = True
                 continue
 
-            
-
             if dialog.unread_count >= 0 and (dialog.is_user):
                 time.sleep(0.5)  # 每次请求之间等待0.5秒
                 
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
-                async for message in client.iter_messages(entity, min_id=0, limit=50, reverse=True, filter=InputMessagesFilterEmpty()):
+                async for message in client.iter_messages(entity, min_id=0, limit=10, reverse=True, filter=InputMessagesFilterEmpty()):
                     
                     # for message in iter_messages:
             
@@ -1042,33 +1043,13 @@ class lybot:
                     if message.media and not isinstance(message.media, MessageMediaWebPage):
                         print(f"Media message: {message}", flush=True)
 
-
-                        # if isinstance(message.media, MessageMediaPhoto):  # 如果是照片
-                        #     try:
-                        #         # 下载图片并保存
-                        #         file_path = await message.download_media(file='downloads/')
-                        #         print(f"Downloaded photo to {file_path}", flush=True)
-
-                        #          # 将照片转发给 @bot123
-                        #         bot_username = '@filetobot'  # 机器人用户名
-                        #         await client.forward_messages(bot_username, message.id, entity)  # 转发照片
-
-                        #         print(f"Forwarded photo to {bot_username}", flush=True)
-
-                        #     except Exception as e:
-                        #         print(f"Error downloading photo: {e}", flush=True)
-                        #         traceback.print_exc()
-
-
-                        time.sleep(1)  # 每次请求之间等待0.5秒
+                        time.sleep(3)  # 每次请求之间等待0.5秒
                         if dialog.is_user:
                             try:
                                 send_result = await self.send_message_to_dye_vat(client, message)
                                 if send_result:
                                     await client.delete_messages(entity.id, message.id)
                                     # print(f"Send result: {send_result}", flush=True)
-                                
-                                
                                 #await self.forward_media_to_warehouse(client, message)
                             except Exception as e:
                                 print(f"Error forwarding message: {e}", flush=True)
@@ -1080,11 +1061,274 @@ class lybot:
                     else:
                         time.sleep(0.7)  # 每次请求之间等待0.5秒
                         await client.delete_messages(entity.id, message.id)
-                        # self.logger.info(f"Delete {message.id} ")
-                        
-                    # print(f"Delete {message.id} ", flush=True)
-                    #await client.delete_messages(entity.id, message.message_id)
+    #self.shellbot(message,client)
+    async def shellbot(self, client, message):
+        async with client.conversation("She11PostBot") as conv:
+            # 根据bot_username 找到 wp_bot 中对应的 bot_name = bot_username 的字典
+            
+            # 发送消息到机器人
+            forwarded_message = await conv.send_message(message.text)
 
+            # print(f"Forwarded message: {forwarded_message}")
+            try:
+                # 获取机器人的响应，等待30秒
+                response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=30)
+
+                # print(f"Response: {response}")
+            except asyncio.TimeoutError:
+                # 如果超时，发送超时消息
+                await client.send_message(forwarded_message.chat_id, "the bot was timeout", reply_to=message.id)
+                print("Response timeout.")
+                return
+            print(f"Response: {response}\r\n\r\n")
+
+            if response.media:
+                if isinstance(response.media, types.MessageMediaPhoto):
+                    # 处理图片
+                    photo = response.media.photo
+
+                    # **Step 1: 取得 content1 和 user_name**
+                    content1 = None
+                    user_name = None
+
+                    if "Posted by" in response.text:
+                        print("response.text:", response.text)
+
+                        parts = response.text.split("Posted by", 1)  # 只分割一次
+                        # content1 = parts[0].replace("\n", "").strip()  # 去掉所有换行符
+                        content1 = parts[0].replace("__", "").strip()  # 去掉所有换行符
+
+                        # 获取 "Posted by" 之后的文本
+                        after_posted_by = parts[1].strip()
+
+                        # 将after_posted_by 以 /n 分割
+                        after_posted_by_parts = after_posted_by.split("\n")
+                        print("after_posted_by_parts:", after_posted_by_parts)
+
+
+                        # 提取 Markdown 链接文本内容（去除超链接）
+                        match = re.search(r"\[__(.*?)__\]", after_posted_by_parts[0])
+                        print("match:", match)
+                        if match:
+                            user_fullname = match.group(1)  # 取得用户名
+                            print("提取的用户名:", user_fullname)
+                        else:
+                            print("未找到用户名")
+
+                       
+
+
+                       
+
+                    # **Step 2: 取得 enc_user_id**
+                    enc_user_id = None
+                    for entity in response.entities or []:
+                        if isinstance(entity, types.MessageEntityTextUrl):
+                            url = entity.url
+                            if url.startswith("https://t.me/She11PostBot?start=up_"):
+                                enc_user_id = url.split("up_")[1]  # 取得 up_ 后的字串
+                                break
+
+                    # **Step 3: 取得 fee & bj_file_id**
+                    fee = None
+                    bj_file_id = None
+                    if response.reply_markup:
+                        for row in response.reply_markup.rows:
+                            for button in row.buttons:
+                                if isinstance(button, types.KeyboardButtonCallback) and "💎" in button.text:
+                                    fee = button.text.split("💎")[1].strip()  # 获取💎后的数字
+                                    callback_data = button.data.decode()
+                                    if callback_data.startswith("buy@file@"):
+                                        bj_file_id = callback_data.split("buy@file@")[1]
+                                    break
+
+                    # **Step 4: 提取 file_size, duration, buy_time**
+                    file_size, duration, buy_time = None, None, None
+                    size_match = re.search(r"💾([\d.]+ MB)", response.text)
+                    duration_match = re.search(r"🕐([\d:]+)", response.text)
+                    buy_time_match = re.search(r"🛒(\d+)", response.text)
+
+                    if size_match:
+                        file_size = size_match.group(1)  # 提取 MB 数字
+                    if duration_match:
+                        duration = self.convert_duration_to_seconds(duration_match.group(1))
+                    if buy_time_match:
+                        buy_time = buy_time_match.group(1)  # 提取购买次数
+
+                    # **Step 5: 组装 JSON**
+                    caption_json = json.dumps({
+                        "content1": content1,
+                        'enc_user_id': enc_user_id,
+                        "user_id": message.user_id,
+                        "user_fullname": user_fullname,
+                        "fee": fee,
+                        "bj_file_id": bj_file_id,
+                        "file_size": file_size,
+                        "duration": duration,
+                        "buy_time": buy_time
+                    }, ensure_ascii=False, indent=4)
+
+                    # **Step 6: 发送图片到用户 6941890966**
+                    if response.media and isinstance(response.media, types.MessageMediaPhoto):
+                        photo = response.media.photo  # 获取图片
+                        await client.send_file(
+                            6941890966,  # 发送到用户 ID
+                            photo,  # 发送最大尺寸图片
+                            caption=caption_json  # 发送 JSON 作为 caption
+                        )
+
+                        print("成功发送 JSON caption 的图片给用户 6941890966！")
+                    else:
+                        print("Received non-media and non-text response")
+
+                         
+            
+            else:
+                print("Received non-media and non-text response")
+        pass
+
+
+        
+
+
+
+    async def man_bot_loop_group(self, client):
+        start_time = time.time()
+        media_count = 0
+
+        # 如果 tgbot.setting 不存在，使用空字典作为默认值
+        blacklist = (self.setting or {}).get('blacklist', [])
+
+        NEXT_CYCLE = False
+        async for dialog in client.iter_dialogs():
+
+            NEXT_DIALOGS = False
+            entity = dialog.entity
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue   
+
+            # 打印处理的实体名称（频道或群组的标题）
+            if isinstance(entity, Channel) or isinstance(entity, Chat):
+                entity_title = entity.title
+            elif isinstance(entity, User):
+                entity_title = f'{entity.first_name or ""} {entity.last_name or ""}'.strip()
+            else:
+                entity_title = f'Unknown entity {entity.id}'
+
+            # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
+            # blacklist = [777000,93372553]
+            blacklist = [777000,
+                         2325062741,    #话题
+                         2252083262,  #广寒宫
+                         93372553,
+                         6976547743,
+                         291481095
+                         ]
+            # 将 9938338 加到 blacklist
+            blacklist.append(int(self.config['setting_chat_id']))
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue
+
+            if entity.id != 2423760953:
+                continue
+
+            if dialog.unread_count >= 0:
+                time.sleep(0.5)  # 每次请求之间等待0.5秒
+                
+                # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
+                # , filter=InputMessagesFilterEmpty()
+                async for message in client.iter_messages(entity, min_id=35964, limit=1, reverse=True):
+                    print(f"Message: {message}")
+                    # if re.search(r'https?://\S+|www\.\S+', message.text):
+                        # print(f"Message contains link: {message.text}", flush=True)
+
+                    if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7294369541:
+                        # 检查是否有内联键盘
+
+
+
+                        if message.reply_markup:
+                            for row in message.reply_markup.rows:
+                                for button in row.buttons:
+                                    # 判断是否是 KeyboardButtonUrl 类型的按钮，并检查文本是否为 "👀查看"
+                                    if isinstance(button, KeyboardButtonUrl) and button.text == '👀查看':
+                                        user_id = None
+                                        if message.entities:
+                                            for entity in message.entities:
+                                                if isinstance(entity, MessageEntityMentionName):
+                                                    user_id = entity.user_id  # 返回 user_id
+
+
+                                        # 创建 NamedTuple 代替 dict
+                                        ShellMessage = namedtuple("ShellMessage", ["text", "id", "user_id"])
+
+
+                                        match = re.search(r"(?i)start=([a-zA-Z0-9_]+)", button.url )
+                                        message_text = '/start ' + match.group(1)
+
+                                        # print(f"Message: {message}")
+
+                                        # 创建对象
+                                        shellmessage = ShellMessage(text=message_text, id=message.id, user_id=user_id)
+
+                                        await self.shellbot(client,shellmessage)
+                                        print(f"Message from {message.from_id.user_id} contains a URL button: {button.url}")
+
+                    # if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7785946202:
+                    #     # 检查是否有内联键盘
+                    #     if message.reply_markup:
+                    #         for row in message.reply_markup.rows:
+                    #             for i, button in enumerate(row.buttons):  # 遍历所有按钮
+                    #                 # 判断是否是 "🧧 抢红包" 按钮
+                    #                 if isinstance(button, KeyboardButtonCallback) and button.text == '🧧 抢红包':
+                    #                     print(f"找到 '🧧 抢红包' 按钮，索引: {i}, 回调数据: {button.data.decode()}")
+
+                    #                     try:
+                    #                         # 优先使用 click() 直接点击按钮
+                    #                         await message.click(i)  
+                    #                         print("抢红包成功！")
+                    #                         break  # 成功后跳出循环，避免重复点击
+
+                    #                     except Exception as e:
+                    #                         print("click() 失败，尝试使用 GetBotCallbackAnswer:", e)
+
+                                          
+
+                    # print(f"message: {message}", flush=True)
+                    # for message in iter_messages:
+            
+                    ## 如果是 media 类型的消息
+                    # if message.media and not isinstance(message.media, MessageMediaWebPage):
+                    #     print(f"Media message: {message}", flush=True)
+
+                    #     time.sleep(1)  # 每次请求之间等待0.5秒
+                    #     if dialog.is_user:
+                    #         try:
+                    #             send_result = await self.send_message_to_dye_vat(client, message)
+                    #             if send_result:
+                    #                 await client.delete_messages(entity.id, message.id)
+                    #                 # print(f"Send result: {send_result}", flush=True)
+                    #             #await self.forward_media_to_warehouse(client, message)
+                    #         except Exception as e:
+                    #             print(f"Error forwarding message: {e}", flush=True)
+                    #             traceback.print_exc()
+                    #         finally:
+                    #             NEXT_MESSAGE = True
+                    #     else:
+                    #         continue
+                    # else:
+                    #     time.sleep(0.7)  # 每次请求之间等待0.5秒
+                    #     await client.delete_messages(entity.id, message.id)                       
+
+    def convert_duration_to_seconds(self,duration):
+        parts = list(map(int, duration.split(":")))
+        return sum(x * 60 ** i for i, x in enumerate(reversed(parts)))
+    
     async def load_tg_setting(self, client,chat_id, message_thread_id=0):
         try:
             chat_entity = await client.get_entity(int(chat_id))
