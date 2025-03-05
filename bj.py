@@ -4,6 +4,7 @@
 import asyncio
 import json
 import time
+from fastapi import FastAPI, Request
 from peewee import PostgresqlDatabase
 from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
@@ -62,32 +63,22 @@ config = {
 
 
 
-# print(f"config: {config}")
+# 启用模块
 module_enable = {
-    'man_bot': False,
-    'dyer_bot': False,
-    'bot': False,
-    'db': False,
+    'man_bot': bool(config['api_id']),
+    'dyer_bot': bool(config['dyer_bot_token']),
+    'bot': bool(config['bot_token']),
+    'db': bool(config['db_name']),
 }
 
-#如果 config 存在 seesion_name, 且有值(非空), 则使用
-if 'api_id' in config and config['api_id']:
-    module_enable['man_bot'] = True
-if 'dyer_bot_token' in config and config['dyer_bot_token']:
-    module_enable['dyer_bot'] = True
-if 'bot_token' in config and config['bot_token']:
-    module_enable['bot'] = True
-if 'db_name' in config and config['db_name']:
-    module_enable['db'] = True        
-
-
+    
 
 # MBot
 #如果 config 存在 seesion_name, 则使用
 if module_enable['man_bot'] == True:
     client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
-
+# 数据库连接
 # 使用连接池并启用自动重连
 if module_enable['db'] == True:
     db = PooledPostgresqlDatabase(
@@ -105,6 +96,7 @@ else:
 
 
 # 初始化 Bot 和 Application
+app = FastAPI()
 tgbot = lybot(db)
 tgbot.config = config
 tgbot.logger = logger
@@ -114,7 +106,7 @@ if module_enable['bot'] == True:
     application.add_handler(CommandHandler("set", tgbot.set_command))
     application.add_handler(MessageHandler(filters.TEXT | filters.PHOTO | filters.VIDEO |filters.ATTACHMENT | filters.Document.ALL, tgbot.handle_bot_message))
     # 注册错误处理器
-    application.add_error_handler(tgbot.error_handler)
+    application.add_error_handler(tgbot.error_handler)  # ????
 
 if module_enable['dyer_bot'] == True:
     dyerbot = lybot(db)
@@ -125,11 +117,6 @@ if module_enable['dyer_bot'] == True:
     dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
     # 添加消息处理程序
 
-
-
-
-
-
 # 主运行函数
 async def main():
     # 启动 polling
@@ -137,10 +124,8 @@ async def main():
         await tgbot.set_bot_info(application)
     
     if module_enable['man_bot'] == True:
-
         await tgbot.set_man_bot_info(client)
         
-
     if module_enable['dyer_bot'] == True and module_enable['man_bot'] == True: 
         await dyerbot.set_bot_info(dyer_application)
         await dyerbot.set_man_bot_info(client)
@@ -157,7 +142,6 @@ async def main():
         await dyer_application.start()
         await dyer_application.updater.start_polling()
 
-
     # 确保 setting 和 config 存在
     if not hasattr(tgbot, 'setting'):
         tgbot.setting = {}
@@ -167,9 +151,6 @@ async def main():
     else:
         print("Error: 'config' or 'warehouse_chat_id' is missing")
 
-    
-
-    
     start_time = time.time()
 
     if module_enable['man_bot'] == True:
@@ -196,8 +177,5 @@ async def main():
         async with client.conversation(int(tgbot.config['setting_chat_id'])) as conv:
             await conv.send_message(config_str2, reply_to=int(tgbot.config['setting_thread_id']))
 
-
-
-
-with client:
+with client:    ##with 主要用于 管理需要手动释放资源的对象
     client.loop.run_until_complete(main())
