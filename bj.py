@@ -4,10 +4,8 @@
 import asyncio
 import json
 import time
-from fastapi import FastAPI, Request
-from peewee import PostgresqlDatabase
-from playhouse.pool import PooledPostgresqlDatabase
-from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
+
+from vendor.class_tgbot2 import lybot  # 导入自定义的 LYClass
 import logging
 import os
 from telegram import Update
@@ -38,39 +36,30 @@ if not os.getenv('GITHUB_ACTIONS'):
     load_dotenv()
 
 
-db_port = os.getenv('DB_PORT')
+
+# 启用模块
+module_enable = {
+    'man_bot': bool(os.getenv('API_ID','')),
+    'dyer_bot': bool(os.getenv('DYER_BOT_TOKEN','')),
+    'bot': bool(os.getenv('BOT_TOKEN','')),
+    'db': bool(os.getenv('DB_NAME')),
+}
 
 config = {
-    'api_id': os.getenv('API_ID'),
-    'api_hash': os.getenv('API_HASH'),
-    'phone_number': os.getenv('PHONE_NUMBER'),
-    'session_name': os.getenv('API_ID') + 'session_name',
-    'bot_token': os.getenv('BOT_TOKEN'),
+    'api_id': os.getenv('API_ID',''),
+    'api_hash': os.getenv('API_HASH',''),
+    'phone_number': os.getenv('PHONE_NUMBER',''),
+    'session_name': os.getenv('API_ID','') + 'session_name',
+    'man_bot_id': os.getenv('MAN_BOT_ID',''),
+
+    'bot_token': os.getenv('BOT_TOKEN',''),
     'dyer_bot_token': os.getenv('DYER_BOT_TOKEN',''),
-    'db_name': os.getenv('DB_NAME'),
-    'db_user': os.getenv('DB_USER'),
-    'db_password': os.getenv('DB_PASSWORD'),
-    'db_host': os.getenv('DB_HOST'),
-    'db_port': int(db_port) if db_port and db_port.isdigit() else 5432,
-    'db_sslmode': os.getenv('DB_SSLMODE','require'),
-    'man_bot_id': os.getenv('MAN_BOT_ID'),
+    
+
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID',0)),
     'setting_thread_id': int(os.getenv('SETTING_THREAD_ID',0)),
     'warehouse_chat_id': int(os.getenv('WAREHOUSE_CHAT_ID',0))
 }
-
-
-
-
-
-# 启用模块
-module_enable = {
-    'man_bot': bool(config['api_id']),
-    'dyer_bot': bool(config['dyer_bot_token']),
-    'bot': bool(config['bot_token']),
-    'db': bool(config['db_name']),
-}
-
     
 
 # MBot
@@ -81,24 +70,15 @@ if module_enable['man_bot'] == True:
 # 数据库连接
 # 使用连接池并启用自动重连
 if module_enable['db'] == True:
-    db = PooledPostgresqlDatabase(
-        config['db_name'],
-        user=config['db_user'],
-        password=config['db_password'],
-        host=config['db_host'],
-        port=config['db_port'],
-        sslmode=config['db_sslmode'],
-        max_connections=32,  # 最大连接数
-        stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-    )
+    from database import db
 else:
     db = None
 
 
 # 初始化 Bot 和 Application
-app = FastAPI()
+# app = FastAPI()
 tgbot = lybot(db)
-tgbot.config = config
+tgbot.load_config(config)
 tgbot.logger = logger
 
 if module_enable['bot'] == True:
@@ -156,13 +136,14 @@ async def main():
     if module_enable['man_bot'] == True:
         while True:
             await tgbot.man_bot_loop_group(client)
+
             
             elapsed_time = time.time() - start_time
 
-            if elapsed_time > tgbot.MAX_PROCESS_TIME:
-                break
+            # if elapsed_time > tgbot.MAX_PROCESS_TIME:
+                # break
 
-            await asyncio.sleep(600)
+            await asyncio.sleep(60)
 
             if module_enable['db'] == True:
                 if not db.is_closed():
@@ -179,3 +160,4 @@ async def main():
 
 with client:    ##with 主要用于 管理需要手动释放资源的对象
     client.loop.run_until_complete(main())
+

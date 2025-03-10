@@ -5,7 +5,11 @@ import sys
 import time
 import traceback
 import telegram.error
+from datetime import datetime
 from telethon import events, types, errors
+
+import imagehash
+from PIL import Image as PILImage
 
 
 from telegram.error import BadRequest
@@ -14,10 +18,18 @@ from telegram import InputMediaDocument, InputMediaPhoto, InputMediaVideo, Updat
 
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode, MessageEntityType
-from telethon.errors import WorkerBusyTooLongRetryError
+
+
+from telethon.errors import WorkerBusyTooLongRetryError, PeerIdInvalidError, RPCError
+# from telethon.errors.rpcerrorlist import PeerIdInvalidError
+
+
 from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Channel, MessageMediaWebPage, MessageMediaPhoto, PeerUser, KeyboardButtonUrl, MessageEntityMentionName
 from collections import defaultdict,namedtuple
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
+
+from model.scrap import Scrap
+from model.scrap_progress import ScrapProgress
 
 #密文機器人
 
@@ -548,6 +560,7 @@ class lybot:
                                 return
                             else:
                                 try:
+                                    
                                     # 尝试获取记录
                                     rows = self.FileInfo.select().where(self.FileInfo.file_unique_id == decode_row['file_unique_id'])
                                     dyer_dict = None
@@ -1029,39 +1042,84 @@ class lybot:
                 NEXT_DIALOGS = True
                 continue
 
-            if dialog.unread_count >= 0 and (dialog.is_user):
-                time.sleep(0.5)  # 每次请求之间等待0.5秒
+            if entity.id != 2423760953:
+                continue
+
+            if dialog.unread_count >= 0:
                 
-                # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
-                self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
-
-                async for message in client.iter_messages(entity, min_id=0, limit=10, reverse=True, filter=InputMessagesFilterEmpty()):
+                if dialog.is_user:
+                    time.sleep(0.5)  # 每次请求之间等待0.5秒
                     
-                    # for message in iter_messages:
-            
-                    ## 如果是 media 类型的消息
-                    if message.media and not isinstance(message.media, MessageMediaWebPage):
-                        print(f"Media message: {message}", flush=True)
+                    # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                    self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
-                        time.sleep(3)  # 每次请求之间等待0.5秒
-                        if dialog.is_user:
-                            try:
-                                send_result = await self.send_message_to_dye_vat(client, message)
-                                if send_result:
-                                    await client.delete_messages(entity.id, message.id)
-                                    # print(f"Send result: {send_result}", flush=True)
-                                #await self.forward_media_to_warehouse(client, message)
-                            except Exception as e:
-                                print(f"Error forwarding message: {e}", flush=True)
-                                traceback.print_exc()
-                            finally:
-                                NEXT_MESSAGE = True
+                    async for message in client.iter_messages(entity, min_id=0, limit=10, reverse=True, filter=InputMessagesFilterEmpty()):
+                        
+                        # for message in iter_messages:
+                
+                        ## 如果是 media 类型的消息
+                        if message.media and not isinstance(message.media, MessageMediaWebPage):
+                            # print(f"Media message: {message}", flush=True)
+
+                            time.sleep(3)  # 每次请求之间等待0.5秒
+                            if dialog.is_user:
+                                try:
+                                    send_result = await self.send_message_to_dye_vat(client, message)
+                                    if send_result:
+                                        await client.delete_messages(entity.id, message.id)
+                                        # print(f"Send result: {send_result}", flush=True)
+                                    #await self.forward_media_to_warehouse(client, message)
+                                except Exception as e:
+                                    print(f"Error forwarding message: {e}", flush=True)
+                                    traceback.print_exc()
+                                finally:
+                                    NEXT_MESSAGE = True
+                            else:
+                                continue
                         else:
-                            continue
-                    else:
-                        time.sleep(0.7)  # 每次请求之间等待0.5秒
-                        await client.delete_messages(entity.id, message.id)
-    #self.shellbot(message,client)
+                            time.sleep(0.7)  # 每次请求之间等待0.5秒
+                            await client.delete_messages(entity.id, message.id)
+                else:
+                    if entity.id == 2423760953:
+                        max_message_id = self.get_max_source_message_id(entity.id)
+                        min_id = max_message_id if max_message_id else 1
+                        self.scrap_message_id = min_id
+                        self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
+                        current_message = None
+                       
+                        async for message in client.iter_messages(entity, min_id=min_id, limit=500, reverse=True):
+                            current_message = message
+                            # print(f"Message: {current_message}")
+                            if current_message.peer_id:
+                                await self.handle_message(message)
+                        await self.save_scrap(current_message, None, None)
+
+                        await self.scrap_thumbnail_bot(client)
+                       
+    async def scrap_thumbnail_bot(self,client):
+
+        # 查询条件和排序
+        # query = Scrap.select().where(Scrap.thumb_file_unique_id.is_null()).order_by(fn.Random()).limit(1)
+        query = Scrap.select().where(Scrap.thumb_file_unique_id.is_null()).order_by(fn.Rand()).limit(1)
+
+        # 执行查询
+        scrap_item = query.get()  # 只会返回一条结果
+
+        shell_message = namedtuple("ShellMessage", ["text", "id", "user_id","source_chat_id","source_message_id"])(
+                            text=f"/start {scrap_item.start_key}",
+                            id=0,
+                            user_id=f"{scrap_item.user_id}",
+                            source_chat_id=f"{scrap_item.source_chat_id}",
+                            source_message_id=f"{scrap_item.source_message_id}",
+                        )
+        await self.shellbot(client, shell_message)
+    
+
+    async def get_image_hash(self,image_path):
+        """计算图片的感知哈希值"""
+        img = PILImage.open(image_path)
+        return str(imagehash.phash(img))  # 使用感知哈希值
+
     async def shellbot(self, client, message):
         async with client.conversation("She11PostBot") as conv:
             # 根据bot_username 找到 wp_bot 中对应的 bot_name = bot_username 的字典
@@ -1077,18 +1135,20 @@ class lybot:
                 # print(f"Response: {response}")
             except asyncio.TimeoutError:
                 # 如果超时，发送超时消息
-                await client.send_message(forwarded_message.chat_id, "the bot was timeout", reply_to=message.id)
+                # await client.send_message(forwarded_message.chat_id, "the bot was timeout", reply_to=message.id)
                 print("Response timeout.")
                 return
             print(f"Response: {response}\r\n\r\n")
 
             if response.media:
+                
                 if isinstance(response.media, types.MessageMediaPhoto):
+                   
                     # 处理图片
                     photo = response.media.photo
 
                     # **Step 1: 取得 content1 和 user_name**
-                    content1 = None
+                    content1 = response.text
                     user_name = None
 
                     if "Posted by" in response.text:
@@ -1111,9 +1171,9 @@ class lybot:
                         print("match:", match)
                         if match:
                             user_fullname = match.group(1)  # 取得用户名
-                            print("提取的用户名:", user_fullname)
-                        else:
-                            print("未找到用户名")
+                            # print("提取的用户名:", user_fullname)
+                        # else:
+                            # print("未找到用户名")
 
                        
 
@@ -1144,7 +1204,7 @@ class lybot:
 
                     # **Step 4: 提取 file_size, duration, buy_time**
                     file_size, duration, buy_time = None, None, None
-                    size_match = re.search(r"💾([\d.]+ MB)", response.text)
+                    size_match = re.search(r"💾([\d.]+ (KB|MB|GB))", response.text)
                     duration_match = re.search(r"🕐([\d:]+)", response.text)
                     buy_time_match = re.search(r"🛒(\d+)", response.text)
 
@@ -1155,31 +1215,77 @@ class lybot:
                     if buy_time_match:
                         buy_time = buy_time_match.group(1)  # 提取购买次数
 
+                    # **Tag**
+                    
+
+                    # 输入的字符串
+                   
+                    # 使用正则表达式查找所有的 hashtag
+                    hashtags = re.findall(r'#\S+', response.text)
+
+                    # 输出结果为一个字串
+                    tag_result = ' '.join(hashtags)
+                   
+                    # print(f"{message}")
+                    print(f"4---file_size: {file_size}")
+
+                    
+
+                    photo_path = await client.download_media(photo)
+                    
+                    print(f"5.2---Photo path: {photo_path}\r\n")
+                    # 计算图片的感知哈希值
+                    image_hash = await self.get_image_hash(photo_path)
+                    print(f"Image hash: {image_hash}")
+
                     # **Step 5: 组装 JSON**
                     caption_json = json.dumps({
-                        "content1": content1,
+                        "content": content1,
                         'enc_user_id': enc_user_id,
                         "user_id": message.user_id,
                         "user_fullname": user_fullname,
                         "fee": fee,
                         "bj_file_id": bj_file_id,
-                        "file_size": file_size,
+                        "estimated_file_size": int(self.convert_to_bytes(file_size)),
                         "duration": duration,
-                        "buy_time": buy_time
+                        "number_of_times_sold": buy_time,
+                        "tag": tag_result,
+                        "source_chat_id": message.source_chat_id,
+                        "source_message_id": message.source_message_id,
+                        "thumb_hash": image_hash
                     }, ensure_ascii=False, indent=4)
 
-                    # **Step 6: 发送图片到用户 6941890966**
+                    print("caption_json:", caption_json)
+
+                    # self.scrap_count += 1
+
+                    await self.save_scrap(message, caption_json, response)
+                    
+
+
+
+                    # **Step 7: 发送图片到用户 6941890966**
                     if response.media and isinstance(response.media, types.MessageMediaPhoto):
-                        photo = response.media.photo  # 获取图片
+                        
+                      
+                      
                         await client.send_file(
-                            6941890966,  # 发送到用户 ID
+                            2046650050,  # 发送到用户 ID
                             photo,  # 发送最大尺寸图片
+                            disable_notification=False,  # 禁用通知
+                            parse_mode='html',
                             caption=caption_json  # 发送 JSON 作为 caption
                         )
 
-                        print("成功发送 JSON caption 的图片给用户 6941890966！")
+                 
+                       
+                       
+
+                        print("成功发送 JSON caption 的图片给用户 2046650050")
                     else:
                         print("Received non-media and non-text response")
+
+                   
 
                          
             
@@ -1187,8 +1293,164 @@ class lybot:
                 print("Received non-media and non-text response")
         pass
 
+    def get_max_source_message_id(self, source_chat_id):
+        """查询数据库，获取指定 source_chat_id 的最大 source_message_id"""
+        try:
+            # 查询 scrap_progress 表，获取指定 chat_id 的最大 message_id
+            record = ScrapProgress.select().where(ScrapProgress.chat_id == source_chat_id).order_by(ScrapProgress.update_datetime.desc()).limit(1).get()
+            return record.message_id
+        except Exception as e:
+            self.logger.error(f"Error fetching max source_message_id: {e}")
+            return None  
 
+    async def save_scrap(self, message, caption_json, response):
+        # 查找是否已经存在相应 chat_id 的记录
+
+        # 确保 message 是 Telethon Message 对象
+        if message and hasattr(message, 'peer_id'):
+            chat_id = message.peer_id.channel_id
+        else:
+            return  # 如果没有 channel_id 属性，退出
+
+      
+       
+        record, created = ScrapProgress.get_or_create(
+            chat_id=message.peer_id.channel_id  # 使用 channel_id 作为 chat_id
+        )
+
+        # 更新 message_id 和 caption_json
+        record.message_id = message.id
+        #  record.update_datetime 当前时间
+        record.update_datetime = datetime.now()
+        record.save()
+
+        # if created:
+        #     self.logger.info(f"New record created for chat_id: {message.peer_id.channel_id}")
+        # else:
+        #     self.logger.info(f"Record updated for chat_id: {message.peer_id.channel_id}")
+
+
+    async def handle_message(self, message):
+        """处理收到的消息"""
+        if message.from_id and isinstance(message.from_id, PeerUser):
+            if message.from_id.user_id == 7294369541:
+                await self.process_shellbot_chat_message(message)
+    
+    async def process_shellbot_chat_message(self, message):
+        """处理 ShellBot 消息"""
+        if not message.reply_markup:
+            return
+
+        for row in message.reply_markup.rows:
+            # print(f"Row: {message}")
+            for button in row.buttons:
+                if isinstance(button, KeyboardButtonUrl) and button.text in {'👀查看', '👀邮局查看'}:
+                    
+                    user_id = self.extract_mention_user_id(message)
+                    user_fullname = None
+                    content =  message.text
+                    if "Posted by" in message.text:
+                        # print("response.text:", message.text)
+
+                        parts = message.text.split("Posted by", 1)  # 只分割一次
+                        # content1 = parts[0].replace("\n", "").strip()  # 去掉所有换行符
+                        content = parts[0].replace("__", "").strip()  # 去掉所有换行符
+
+                        # 获取 "Posted by" 之后的文本
+                        after_posted_by = parts[1].strip()
+
+                        # 将after_posted_by 以 /n 分割
+                        after_posted_by_parts = after_posted_by.split("\n")
+                        # print("after_posted_by_parts:", after_posted_by_parts)
+
+
+                        # 提取 Markdown 链接文本内容（去除超链接）
+                        match = re.search(r"\[__(.*?)__\]", after_posted_by_parts[0])
+                       
+                        if match:
+                            user_fullname = match.group(1)  # 取得用户名
+                            # print("提取的用户名:", user_fullname)
+                        else:
+                            user_fullname=None
+                            # print("未找到用户名")
+                        
+
+                    match = re.search(r"(?i)start=([a-zA-Z0-9_]+)", button.url)
+                    if match:
+                        
+                        if message.peer_id.channel_id:
+                            source_chat_id = message.peer_id.channel_id
+                        else:
+                            source_chat_id = 0
+
+                        shell_message = namedtuple("ShellMessage", ["text", "id", "start_key", "user_id","source_chat_id","source_message_id","user_fullname","content"])(
+                            text=f"/start {match.group(1)}",
+                            id=message.id,
+                            start_key=f"{match.group(1)}",
+                            user_id=user_id,
+                            source_chat_id=source_chat_id,
+                            source_message_id=message.id,
+                            user_fullname=user_fullname,
+                            content=content
+                        )
+                        print(f"Shell message: {shell_message}")
+
+                        # 查找是否存在记录
+                        scrap = Scrap.select().where(
+                            (Scrap.start_key == shell_message.start_key) & (Scrap.source_bot_id == message.from_id.user_id)
+                        ).first()
+
+                        if scrap:
+                            # 如果记录存在，则进行更新
+                            scrap.content = shell_message.content
+                            scrap.user_id = shell_message.user_id
+                            scrap.user_fullname = shell_message.user_fullname
+                            scrap.source_chat_id = shell_message.source_chat_id
+                            scrap.source_message_id = shell_message.source_message_id
+                            scrap.save()  # 保存更新
+                            print("Record updated")
+                        else:
+                            # 如果记录不存在，则插入新记录
+                            Scrap.create(
+                                start_key=shell_message.start_key,
+                                source_bot_id=message.from_id.user_id,
+                                content=shell_message.content,
+                                user_id=shell_message.user_id,
+                                user_fullname=shell_message.user_fullname,
+                                source_chat_id=shell_message.source_chat_id,
+                                source_message_id=shell_message.source_message_id,
+                            )
+                            print("Record created")
+
+
+    def extract_mention_user_id(self, message):
+        """提取消息中提及的用户 ID"""
+        if message.entities:
+            for entity in message.entities:
+                if isinstance(entity, MessageEntityMentionName):
+                    return entity.user_id
+        return None
+
+
+
+    def convert_to_bytes(self,size_str):
+        # 定义单位转换字典
+        unit_to_bytes = {
+            'B': 1,
+            'KB': 1024,
+            'MB': 1024 ** 2,
+            'GB': 1024 ** 3,
+            'TB': 1024 ** 4
+        }
+
+        # 匹配数字和单位
+        size, unit = size_str.split()
+
+        # 转换为数字并查找单位对应的字节数
+        size = float(size)
+        bytes_value = size * unit_to_bytes[unit.upper()]
         
+        return bytes_value
 
 
 
@@ -1241,8 +1503,11 @@ class lybot:
                 
                 # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                 self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
+
+                
+
                 # , filter=InputMessagesFilterEmpty()
-                async for message in client.iter_messages(entity, min_id=35964, limit=1, reverse=True):
+                async for message in client.iter_messages(entity, min_id=52692, limit=1, reverse=True):
                     print(f"Message: {message}")
                     # if re.search(r'https?://\S+|www\.\S+', message.text):
                         # print(f"Message contains link: {message.text}", flush=True)
@@ -1256,7 +1521,7 @@ class lybot:
                             for row in message.reply_markup.rows:
                                 for button in row.buttons:
                                     # 判断是否是 KeyboardButtonUrl 类型的按钮，并检查文本是否为 "👀查看"
-                                    if isinstance(button, KeyboardButtonUrl) and button.text == '👀查看':
+                                    if isinstance(button, KeyboardButtonUrl) and (button.text == '👀查看' or button.text == '👀邮局查看' ) :
                                         user_id = None
                                         if message.entities:
                                             for entity in message.entities:
@@ -1358,7 +1623,7 @@ class lybot:
             return json.loads("{}")
 
     # show_caption = yes, no
-    async def send_message_to_dye_vat(self, client, message):
+    async def send_message_to_dye_vat(self, client, message, force_chat_id=None):
         last_message_id = message.id
         # 构建 caption
 
@@ -1371,8 +1636,16 @@ class lybot:
                 captured_str = str(captured_str)
                 if captured_str.startswith('-100'):
                     captured_str = captured_str.replace('-100','')
-                destination_chat_id = int(captured_str)
+                #判断 captured_str 是否为数字
+                if captured_str.isdigit():
+                    destination_chat_id = int(captured_str)
+                else:
+                    destination_chat_id = str(captured_str)
 
+            if force_chat_id !=None:
+                destination_chat_id = force_chat_id
+
+            
 
             if hasattr(message, 'grouped_id') and message.grouped_id:
                 
@@ -1397,7 +1670,7 @@ class lybot:
                     # 处理视频
                     video = message.media.document
                     # await client.send_file(self.setting['warehouse_chat_id'], video, reply_to=message.id, caption=caption_text, parse_mode='html')
-                    
+                    self.logger.info(f"send VIDEO to chat_id: {destination_chat_id}")
                     return await client.send_file(destination_chat_id, video, parse_mode='html')
                     
                     
@@ -1407,11 +1680,13 @@ class lybot:
                     # 处理文档
                     document = message.media.document
                     # await client.send_file(self.setting['warehouse_chat_id'], document, reply_to=message.id, caption=caption_text, parse_mode='html')
+                    self.logger.info(f"send DOCUMENT to chat_id: {destination_chat_id}")
                     return await client.send_file(destination_chat_id, document, parse_mode='html')
                   
             elif isinstance(message.media, types.MessageMediaPhoto):
                 # 处理图片
                 photo = message.media.photo
+                self.logger.info(f"send PHOTO to chat_id: {destination_chat_id}")
                 return await client.send_file(destination_chat_id, photo, parse_mode='html')
                 
                
@@ -1419,14 +1694,29 @@ class lybot:
                 print("Received media, but not a document, video, photo, or album.")
         except WorkerBusyTooLongRetryError:
             print(f"WorkerBusyTooLongRetryError encountered. Skipping message {message.id}.")
+
+        except ValueError as e:
+            
+            if ("Cannot find any entity corresponding to" in str(e)) or ("Could not find the input entity for PeerUser" in str(e)):
+                if destination_chat_id == self.setting['warehouse_chat_id']:
+                    self.logger.error(f"WAREHOSE WERE BANNED : {destination_chat_id}")
+                else:
+                    self.logger.error(f"Chat_ID_not_found {destination_chat_id}, will resent to {self.setting['warehouse_chat_id']}")
+                    return await self.send_message_to_dye_vat(client, message, self.setting['warehouse_chat_id'])
+            else:
+                self.logger.error(f"ValueError:{e}")
+        # 处理错误，例如记录日志或通知用户
+        
         except Exception as e:
-            print(f"An error occurred here 1144: {e}")
-            #取得错误的行号
+            # 捕获所有其他异常
+            print(f"(4)An error occurred: {e}")
             exc_type, exc_obj, exc_tb = sys.exc_info()
             line_number = exc_tb.tb_lineno
             print(f"Error at line {line_number}")
             print(f"destination_chat_id: {destination_chat_id}")
             traceback.print_exc()
+
+
         return None
     
         
