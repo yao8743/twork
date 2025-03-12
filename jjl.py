@@ -183,7 +183,7 @@ async def main():
                 break
 
 
-            await asyncio.sleep(50)
+            await asyncio.sleep(10)
 
             if module_enable['db'] == True:
                 if not db.is_closed():

@@ -1094,6 +1094,7 @@ class lybot:
                                 await self.handle_message(message)
                         await self.save_scrap(current_message, None, None)
 
+
                         await self.scrap_thumbnail_bot(client)
                        
     async def scrap_thumbnail_bot(self,client):
