@@ -1044,6 +1044,8 @@ class lybot:
 
             if entity.id != 2423760953:
                 continue
+          
+
 
             if dialog.unread_count >= 0:
                 
@@ -1053,14 +1055,13 @@ class lybot:
                     # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                     self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
 
-                    async for message in client.iter_messages(entity, min_id=0, limit=10, reverse=True, filter=InputMessagesFilterEmpty()):
+                    async for message in client.iter_messages(entity, min_id=0, limit=1, reverse=True, filter=InputMessagesFilterEmpty()):
                         
                         # for message in iter_messages:
                 
                         ## 如果是 media 类型的消息
                         if message.media and not isinstance(message.media, MessageMediaWebPage):
                             # print(f"Media message: {message}", flush=True)
-
                             time.sleep(3)  # 每次请求之间等待0.5秒
                             if dialog.is_user:
                                 try:
@@ -1080,6 +1081,7 @@ class lybot:
                             time.sleep(0.7)  # 每次请求之间等待0.5秒
                             await client.delete_messages(entity.id, message.id)
                 else:
+                    pass
                     if entity.id == 2423760953:
                         max_message_id = self.get_max_source_message_id(entity.id)
                         min_id = max_message_id if max_message_id else 1
@@ -1095,7 +1097,7 @@ class lybot:
                         await self.save_scrap(current_message, None, None)
 
 
-                        await self.scrap_thumbnail_bot(client)
+                        # await self.scrap_thumbnail_bot(client)
                        
     async def scrap_thumbnail_bot(self,client):
 
@@ -1172,13 +1174,6 @@ class lybot:
                         print("match:", match)
                         if match:
                             user_fullname = match.group(1)  # 取得用户名
-                            # print("提取的用户名:", user_fullname)
-                        # else:
-                            # print("未找到用户名")
-
-                       
-
-
                        
 
                     # **Step 2: 取得 enc_user_id**
@@ -1267,29 +1262,16 @@ class lybot:
 
                     # **Step 7: 发送图片到用户 6941890966**
                     if response.media and isinstance(response.media, types.MessageMediaPhoto):
-                        
-                      
-                      
                         await client.send_file(
-                            2046650050,  # 发送到用户 ID
+                            2046650050,  # 发送到爬略图
                             photo,  # 发送最大尺寸图片
                             disable_notification=False,  # 禁用通知
                             parse_mode='html',
                             caption=caption_json  # 发送 JSON 作为 caption
                         )
-
-                 
-                       
-                       
-
                         print("成功发送 JSON caption 的图片给用户 2046650050")
                     else:
                         print("Received non-media and non-text response")
-
-                   
-
-                         
-            
             else:
                 print("Received non-media and non-text response")
         pass
@@ -1303,6 +1285,118 @@ class lybot:
         except Exception as e:
             self.logger.error(f"Error fetching max source_message_id: {e}")
             return None  
+
+
+    async def get_caption_from_entity(self, response, client):
+        if response.media:
+            if isinstance(response.media, types.MessageMediaPhoto):
+                # 处理图片
+                photo = response.media.photo
+
+                # **Step 1: 取得 content1 和 user_name**
+                content1 = response.text
+                user_name = None
+                user_fullname = None
+
+                if "Posted by" in response.text:
+                    print("response.text:", response.text)
+
+                    parts = response.text.split("Posted by", 1)  # 只分割一次
+                    # content1 = parts[0].replace("\n", "").strip()  # 去掉所有换行符
+                    content1 = parts[0].replace("__", "").strip()  # 去掉所有换行符
+
+                    # 获取 "Posted by" 之后的文本
+                    after_posted_by = parts[1].strip()
+
+                    # 将after_posted_by 以 /n 分割
+                    after_posted_by_parts = after_posted_by.split("\n")
+                    print("after_posted_by_parts:", after_posted_by_parts)
+
+
+                    # 提取 Markdown 链接文本内容（去除超链接）
+                    match = re.search(r"\[__(.*?)__\]", after_posted_by_parts[0])
+                    print("match:", match)
+                    if match:
+                        user_fullname = match.group(1)  # 取得用户名
+                    
+
+                # **Step 2: 取得 enc_user_id**
+                enc_user_id = None
+                for entity in response.entities or []:
+                    if isinstance(entity, types.MessageEntityTextUrl):
+                        url = entity.url
+                        if url.startswith("https://t.me/She11PostBot?start=up_"):
+                            enc_user_id = url.split("up_")[1]  # 取得 up_ 后的字串
+                            break
+
+                # **Step 3: 取得 fee & bj_file_id**
+                fee = None
+                bj_file_id = None
+                if response.reply_markup:
+                    for row in response.reply_markup.rows:
+                        for button in row.buttons:
+                            if isinstance(button, types.KeyboardButtonCallback) and "💎" in button.text:
+                                fee = button.text.split("💎")[1].strip()  # 获取💎后的数字
+                                callback_data = button.data.decode()
+                                if callback_data.startswith("buy@file@"):
+                                    bj_file_id = callback_data.split("buy@file@")[1]
+                                break
+
+                # **Step 4: 提取 file_size, duration, buy_time**
+                file_size, duration, buy_time = None, None, None
+                size_match = re.search(r"💾([\d.]+ (KB|MB|GB))", response.text)
+                duration_match = re.search(r"🕐([\d:]+)", response.text)
+                buy_time_match = re.search(r"🛒(\d+)", response.text)
+
+                if size_match:
+                    file_size = size_match.group(1)  # 提取 MB 数字
+                if duration_match:
+                    duration = self.convert_duration_to_seconds(duration_match.group(1))
+                if buy_time_match:
+                    buy_time = buy_time_match.group(1)  # 提取购买次数
+
+                # **Tag**
+                
+
+                # 输入的字符串
+                
+                # 使用正则表达式查找所有的 hashtag
+                hashtags = re.findall(r'#\S+', response.text)
+
+                # 输出结果为一个字串
+                tag_result = ' '.join(hashtags)
+                
+                # print(f"{message}")
+                print(f"4---file_size: {file_size}")
+
+                
+
+                photo_path = await client.download_media(photo)
+                
+                print(f"5.2---Photo path: {photo_path}\r\n")
+                # 计算图片的感知哈希值
+                image_hash = await self.get_image_hash(photo_path)
+                print(f"Image hash: {image_hash}")
+
+                # **Step 5: 组装 JSON**
+                caption_json = json.dumps({
+                   
+                    'enc_user_id': enc_user_id,
+                    "fee": fee,
+                    "bj_file_id": bj_file_id,
+                    "estimated_file_size": int(self.convert_to_bytes(file_size)),
+                    "duration": duration,
+                    "number_of_times_sold": buy_time,
+                    "tag": tag_result,
+                    "thumb_hash": image_hash
+                }, ensure_ascii=False, indent=4)
+
+                return caption_json
+
+                # self.scrap_count += 1
+
+            
+       
 
     async def save_scrap(self, message, caption_json, response):
         # 查找是否已经存在相应 chat_id 的记录

@@ -179,11 +179,11 @@ async def main():
             print(f"ok")
             elapsed_time = time.time() - start_time
 
-            if elapsed_time > tgbot.MAX_PROCESS_TIME:
-                break
+            # if elapsed_time > tgbot.MAX_PROCESS_TIME:
+            #     break
 
 
-            await asyncio.sleep(10)
+            await asyncio.sleep(1)
 
             if module_enable['db'] == True:
                 if not db.is_closed():
