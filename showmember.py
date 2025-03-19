@@ -4,12 +4,11 @@
 import asyncio
 import json
 import time
-from peewee import PostgresqlDatabase
+from peewee import PostgresqlDatabase, Model, BigIntegerField, IntegerField
 from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
 import logging
 import os
-import random
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
@@ -88,27 +87,20 @@ if 'db_name' in config and config['db_name']:
 if module_enable['man_bot'] == True:
     client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
-
-# 使用连接池并启用自动重连
-# if module_enable['db'] == True:
-#     db = PooledPostgresqlDatabase(
-#         config['db_name'],
-#         user=config['db_user'],
-#         password=config['db_password'],
-#         host=config['db_host'],
-#         port=config['db_port'],
-#         sslmode=config['db_sslmode'],
-#         max_connections=32,  # 最大连接数
-#         stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-#     )
-# else:
-#     db = None
-
 if module_enable['db'] == True:
     from database import db
 else:
     db = None
 
+
+# 定义模型
+class Pure(Model):
+    user_id = BigIntegerField(primary_key=True)
+    done = IntegerField(default=0)
+
+    class Meta:
+        database = db
+        table_name = 'pure'
 
 
 # 初始化 Bot 和 Application
@@ -183,9 +175,8 @@ async def main():
             # if elapsed_time > tgbot.MAX_PROCESS_TIME:
             #     break
 
-            # 乱数决定休息 60 ~180 秒
-            await asyncio.sleep(random.randint(55, 180))
-     
+
+            await asyncio.sleep(1)
 
             if module_enable['db'] == True:
                 if not db.is_closed():
@@ -200,8 +191,28 @@ async def main():
         async with client.conversation(int(tgbot.config['setting_chat_id'])) as conv:
             await conv.send_message(config_str2, reply_to=int(tgbot.config['setting_thread_id']))
 
+# 你的 session 名称
 
+
+async def get_group_members(group_name_or_id):
+    entity = await client.get_entity(group_identifier)
+    print(f"Group found: {entity.title} (ID: {entity.id})")
+
+
+    async with client:
+        # 获取群成员列表
+        participants = await client.get_participants(group_name_or_id)
+
+        # 遍历输出用户名和 ID
+        for user in participants:
+            new_entry = Pure.create(user_id=user.id, done=0)
+            print(f'User ID: {user.id}, Username: {user.username}, Name: {user.first_name} {user.last_name or ""}')
+
+# 替换为你的群组 username 或 ID
+group_identifier = -1002312531786
 
 
 with client:
-    client.loop.run_until_complete(main())
+    # client.loop.run_until_complete(main())
+    client.loop.run_until_complete(get_group_members(group_identifier))
+

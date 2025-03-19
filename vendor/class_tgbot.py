@@ -1097,7 +1097,7 @@ class lybot:
                         await self.save_scrap(current_message, None, None)
 
 
-                        # await self.scrap_thumbnail_bot(client)
+                        await self.scrap_thumbnail_bot(client)
                        
     async def scrap_thumbnail_bot(self,client):
 
@@ -1153,6 +1153,7 @@ class lybot:
                     # **Step 1: 取得 content1 和 user_name**
                     content1 = response.text
                     user_name = None
+                    user_fullname = None
 
                     if "Posted by" in response.text:
                         print("response.text:", response.text)
