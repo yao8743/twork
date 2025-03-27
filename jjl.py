@@ -171,6 +171,10 @@ async def main():
 
     
 
+
+
+
+
     
     start_time = time.time()
 
@@ -184,7 +188,8 @@ async def main():
             #     break
 
             # 乱数决定休息 60 ~180 秒
-            await asyncio.sleep(random.randint(55, 180))
+            # await asyncio.sleep(random.randint(55, 180))
+            await asyncio.sleep(random.randint(15, 20))
      
 
             if module_enable['db'] == True:
