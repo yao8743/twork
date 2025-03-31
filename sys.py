@@ -1,11 +1,6 @@
-#!/usr/bin/env python
-# pylint: disable=unused-argument
-
 import asyncio
 import json
 import time
-from peewee import PostgresqlDatabase
-from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
 import logging
 import os
@@ -14,6 +9,8 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
 from telethon import TelegramClient, events
+
+from vendor.class_tgbox import TgBox
 
 # Enable logging
 class FlushStreamHandler(logging.StreamHandler):
@@ -88,22 +85,6 @@ if 'db_name' in config and config['db_name']:
 if module_enable['man_bot'] == True:
     client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
-
-# 使用连接池并启用自动重连
-# if module_enable['db'] == True:
-#     db = PooledPostgresqlDatabase(
-#         config['db_name'],
-#         user=config['db_user'],
-#         password=config['db_password'],
-#         host=config['db_host'],
-#         port=config['db_port'],
-#         sslmode=config['db_sslmode'],
-#         max_connections=32,  # 最大连接数
-#         stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-#     )
-# else:
-#     db = None
-
 if module_enable['db'] == True:
     from database import db
 else:
@@ -115,6 +96,8 @@ else:
 tgbot = lybot(db)
 tgbot.config = config
 tgbot.logger = logger
+
+
 
 if module_enable['bot'] == True:
     application = Application.builder().token(config['bot_token']).build()
@@ -170,7 +153,8 @@ async def main():
         print("Error: 'config' or 'warehouse_chat_id' is missing")
 
     
-
+    # 初始化 TgBox 类
+    TgBox.init_class(config, tgbot.setting, logger)
 
 
 
@@ -180,7 +164,9 @@ async def main():
 
     if module_enable['man_bot'] == True:
         while True:
-            await tgbot.man_bot_loop(client)
+            # await tgbot.man_bot_loop(client)
+            await TgBox.man_bot_loop(client)
+
             print(f"---Cycle End \r\n")
             elapsed_time = time.time() - start_time
 
@@ -189,8 +175,8 @@ async def main():
 
             # 乱数决定休息 60 ~180 秒
             # await asyncio.sleep(random.randint(55, 180))
-            # await asyncio.sleep(random.randint(15, 20))
-            await asyncio.sleep(random.randint(6, 9))
+            await asyncio.sleep(random.randint(15, 20))
+            # await asyncio.sleep(random.randint(6, 9))
      
 
             if module_enable['db'] == True:

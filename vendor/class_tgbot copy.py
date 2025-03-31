@@ -8,9 +8,7 @@ import telegram.error
 import os
 import unicodedata
 import random
-from time import sleep
-from peewee import DoesNotExist
-from telethon.errors import ChatForwardsRestrictedError,FloodWaitError
+from telethon.errors import ChatForwardsRestrictedError
 
 import imagehash
 
@@ -1053,9 +1051,6 @@ class lybot:
                 NEXT_DIALOGS = True
                 continue
 
-            # if entity.id !=7361527575:  #Qing01
-            #     continue    
-
             if entity.id != 2210941198:
                 continue
             
@@ -1066,13 +1061,6 @@ class lybot:
                 
                 if dialog.is_user:
                     time.sleep(0.5)  # 每次请求之间等待0.5秒
-
-                    current_message = None
-                    max_message_id = self.get_max_source_message_id(entity.id)
-                    min_id = max_message_id if max_message_id else 1
-                    self.scrap_message_id = min_id
-
-
                     # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
                     self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
                     async for message in client.iter_messages(entity, min_id=0, limit=1, reverse=True, filter=InputMessagesFilterEmpty()):
@@ -1097,41 +1085,22 @@ class lybot:
                                 continue
                         else:
                             time.sleep(0.7)  # 每次请求之间等待0.5秒
-                            try:
-                                match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
-                                if match:
-                                    botname = match.group(1) + match.group(2)  # 直接拼接捕获的组
-                                    print(f"Kick:{botname}")
-                                    await client.send_message(botname, "/start")
-                                    await client.send_message(botname, "[~bot~]")
-                                    
-                                    NEXT_MESSAGE = True
-                            except Exception as e:
-                                print(f"Error kicking bot: {e}", flush=True)
-
-
-                            if message.text == '[~bot~]':
-                                print(f"Skip message")
-                            else:
-                                await client.delete_messages(entity.id, message.id)   
-                        current_message = message
-                        print(f"Message: {current_message}", flush=True)
-                    await self.save_scrap_proress(entity.id, current_message.id)            
+                            await client.delete_messages(entity.id, message.id)
                 else:
                     
-                  
                     if entity.id == 2210941198:
                         max_message_id = self.get_max_source_message_id(entity.id)
                         min_id = max_message_id if max_message_id else 1
                         self.scrap_message_id = min_id
-
+                        
                         self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
                         current_message = None
-
+                       
                         async for message in client.iter_messages(entity, min_id=min_id, limit=500, reverse=True):
                             current_message = message
+                            # print(f"Message: {current_message}")
                             if current_message.peer_id:
-                                await self.handle_message(client, message)
+                                await self.handle_message(client,message)
                         await self.save_scrap(current_message, None, None)
                         await self.scrap_thumbnail_bot(client)
                         # exit()
@@ -1742,17 +1711,6 @@ class lybot:
             record = ScrapProgress.select().where((ScrapProgress.chat_id == source_chat_id) & 
                 (ScrapProgress.api_id == self.config['api_id'])).order_by(ScrapProgress.update_datetime.desc()).limit(1).get()
             return record.message_id
-        except DoesNotExist:
-            # 若无记录，则新增一条记录，默认 message_id 可设为 0
-            new_record = ScrapProgress.create(
-                chat_id=source_chat_id,
-                api_id=self.config['api_id'],
-                message_id=0,
-                update_datetime=datetime.now()
-            )
-            self.logger.info(f"No existing record, created new ScrapProgress for chat_id={source_chat_id}")
-            return new_record.message_id
-    
         except Exception as e:
             self.logger.error(f"Error fetching max source_message_id: {e}")
             return None  
@@ -1867,23 +1825,10 @@ class lybot:
                 # self.scrap_count += 1
 
             
-    async def save_scrap_proress(self, entity_id, message_id):   
-        record, created = ScrapProgress.get_or_create(
-            chat_id=entity_id,  # 使用 channel_id 作为 chat_id
-            api_id=self.config['api_id'],
-        )
-
-        # 更新 message_id 和 caption_json
-        record.message_id = message_id
-        #  record.update_datetime 当前时间
-        record.update_datetime = datetime.now()
-        record.save()
-
+       
 
     async def save_scrap(self, message, caption_json, response):
         # 查找是否已经存在相应 chat_id 的记录
-
-       
 
         # 确保 message 是 Telethon Message 对象
         if message and hasattr(message, 'peer_id'):
@@ -1920,7 +1865,6 @@ class lybot:
         checkText = message.text
        
         if not message.is_reply and (checkText or "").startswith("/hongbao"):
-            return
             # 正则模式：匹配 "/hongbao 数字 数字"
             pattern_hongbao = r"^/hongbao\s+(\d+)\s+(\d+)$"
             match = re.match(pattern_hongbao, checkText)
@@ -1980,23 +1924,16 @@ class lybot:
 
                 now = datetime.now().strftime("%H:%M:%S")
                 message_text = f"{now}\r\n{lowkey_list}\r\n\r\n{thanks_list}\n\r\n https://t.me/c/{chat_id_cleaned}/{message_id_next}"
-                
-                try:
 
-                    sent_message = await client.send_message(
-                        2059873665, 
-                        message_text,
-                        parse_mode="html"
-                        )
-                    sleep(0.7)
-                    await client.delete_messages(2059873665, sent_message.id - 1)
-                    await client.delete_messages(2059873665, sent_message.id - 2)
-                    await client.delete_messages(2059873665, sent_message.id - 3)
-                except FloodWaitError as e:
-                    print(f"FloodWaitError: Waiting for {e.seconds} seconds.")
-                    await asyncio.sleep(e.seconds)
+                sent_message = await client.send_message(
+                    2059873665, 
+                    message_text,
+                    parse_mode="html"
+                    )
 
-                
+                await client.delete_messages(2059873665, sent_message.id - 1)
+                await client.delete_messages(2059873665, sent_message.id - 2)
+                await client.delete_messages(2059873665, sent_message.id - 3)
 
                 print(f"{points} {count}")
             pass
@@ -2160,6 +2097,145 @@ class lybot:
 
         
            
+
+
+
+    async def man_bot_loop_group(self, client):
+        start_time = time.time()
+        media_count = 0
+
+        # 如果 tgbot.setting 不存在，使用空字典作为默认值
+        blacklist = (self.setting or {}).get('blacklist', [])
+
+        NEXT_CYCLE = False
+        async for dialog in client.iter_dialogs():
+
+            NEXT_DIALOGS = False
+            entity = dialog.entity
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue   
+
+            # 打印处理的实体名称（频道或群组的标题）
+            if isinstance(entity, Channel) or isinstance(entity, Chat):
+                entity_title = entity.title
+            elif isinstance(entity, User):
+                entity_title = f'{entity.first_name or ""} {entity.last_name or ""}'.strip()
+            else:
+                entity_title = f'Unknown entity {entity.id}'
+
+            # 设一个黑名单列表，如果 entity.id 在黑名单列表中，则跳过
+            # blacklist = [777000,93372553]
+            blacklist = [777000,
+                         2325062741,    #话题
+                         2252083262,  #广寒宫
+                         93372553,
+                         6976547743,
+                         291481095
+                         ]
+            # 将 9938338 加到 blacklist
+            blacklist.append(int(self.config['setting_chat_id']))
+
+            if entity.id in blacklist:
+                NEXT_DIALOGS = True
+                continue
+
+            if entity.id != 2423760953:
+                continue
+
+            if dialog.unread_count >= 0:
+                time.sleep(0.5)  # 每次请求之间等待0.5秒
+                
+                # print(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n", flush=True)
+                self.logger.info(f">Reading messages from entity {entity.id} {entity_title} - U:{dialog.unread_count} \n")
+
+                
+
+                # , filter=InputMessagesFilterEmpty()
+                async for message in client.iter_messages(entity, min_id=52692, limit=1, reverse=True):
+                    print(f"Message: {message}")
+                    # if re.search(r'https?://\S+|www\.\S+', message.text):
+                        # print(f"Message contains link: {message.text}", flush=True)
+
+                    if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7294369541:
+                        # 检查是否有内联键盘
+
+
+
+                        if message.reply_markup:
+                            for row in message.reply_markup.rows:
+                                for button in row.buttons:
+                                    # 判断是否是 KeyboardButtonUrl 类型的按钮，并检查文本是否为 "👀查看"
+                                    if isinstance(button, KeyboardButtonUrl) and (button.text == '👀查看' or button.text == '👀邮局查看' ) :
+                                        user_id = None
+                                        if message.entities:
+                                            for entity in message.entities:
+                                                if isinstance(entity, MessageEntityMentionName):
+                                                    user_id = entity.user_id  # 返回 user_id
+
+
+                                        # 创建 NamedTuple 代替 dict
+                                        ShellMessage = namedtuple("ShellMessage", ["text", "id", "user_id"])
+
+
+                                        match = re.search(r"(?i)start=([a-zA-Z0-9_]+)", button.url )
+                                        message_text = '/start ' + match.group(1)
+
+                                        # print(f"Message: {message}")
+
+                                        # 创建对象
+                                        shellmessage = ShellMessage(text=message_text, id=message.id, user_id=user_id)
+
+                                        await self.shellbot(client,shellmessage)
+                                        print(f"Message from {message.from_id.user_id} contains a URL button: {button.url}")
+
+                    # if message.from_id and isinstance(message.from_id, PeerUser) and message.from_id.user_id == 7785946202:
+                    #     # 检查是否有内联键盘
+                    #     if message.reply_markup:
+                    #         for row in message.reply_markup.rows:
+                    #             for i, button in enumerate(row.buttons):  # 遍历所有按钮
+                    #                 # 判断是否是 "🧧 抢红包" 按钮
+                    #                 if isinstance(button, KeyboardButtonCallback) and button.text == '🧧 抢红包':
+                    #                     print(f"找到 '🧧 抢红包' 按钮，索引: {i}, 回调数据: {button.data.decode()}")
+
+                    #                     try:
+                    #                         # 优先使用 click() 直接点击按钮
+                    #                         await message.click(i)  
+                    #                         print("抢红包成功！")
+                    #                         break  # 成功后跳出循环，避免重复点击
+
+                    #                     except Exception as e:
+                    #                         print("click() 失败，尝试使用 GetBotCallbackAnswer:", e)
+
+                                          
+
+                    # print(f"message: {message}", flush=True)
+                    # for message in iter_messages:
+            
+                    ## 如果是 media 类型的消息
+                    # if message.media and not isinstance(message.media, MessageMediaWebPage):
+                    #     print(f"Media message: {message}", flush=True)
+
+                    #     time.sleep(1)  # 每次请求之间等待0.5秒
+                    #     if dialog.is_user:
+                    #         try:
+                    #             send_result = await self.send_message_to_dye_vat(client, message)
+                    #             if send_result:
+                    #                 await client.delete_messages(entity.id, message.id)
+                    #                 # print(f"Send result: {send_result}", flush=True)
+                    #             #await self.forward_media_to_warehouse(client, message)
+                    #         except Exception as e:
+                    #             print(f"Error forwarding message: {e}", flush=True)
+                    #             traceback.print_exc()
+                    #         finally:
+                    #             NEXT_MESSAGE = True
+                    #     else:
+                    #         continue
+                    # else:
+                    #     time.sleep(0.7)  # 每次请求之间等待0.5秒
+                    #     await client.delete_messages(entity.id, message.id)                       
+
     def convert_duration_to_seconds(self,duration):
         parts = list(map(int, duration.split(":")))
         return sum(x * 60 ** i for i, x in enumerate(reversed(parts)))
@@ -2198,13 +2274,7 @@ class lybot:
         # 构建 caption
 
         try:
-            #2063167161,
-            # destination_chat_id = self.setting['warehouse_chat_id']
-
-            ids = [2017145941, 2000730581, 1997235289, 2063167161]
-
-            destination_chat_id = random.choice(ids)
-
+            destination_chat_id = self.setting['warehouse_chat_id']
             match = re.search(r'\|_forward_\|\s*@([^\s]+)', message.message, re.IGNORECASE)
             if match:
                 captured_str = match.group(1).strip()  # 捕获到的字符串
