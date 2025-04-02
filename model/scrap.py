@@ -20,6 +20,8 @@ class Scrap(BaseModel):
     duration = IntegerField(null=True)
     number_of_times_sold = IntegerField(null=True)
     tag = CharField(null=True, max_length=100)
+    thumb_hash = CharField(null=True, max_length=64)
+    file_unique_id = CharField(null=True, max_length=50)
 
     class Meta:
         table_name = 'scrap'
