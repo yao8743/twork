@@ -238,8 +238,14 @@ class TgBox:
             else:
                 entity_title = f"Unknown entity {entity.id}"
 
+            if entity.id != 7717423153:
+                continue
+
             # 处理用户对话：实体 ID 为 7361527575
-            if entity.id == 7361527575:
+            if entity.id == 7717423153:
+                
+                pass
+            elif entity.id == 7361527575:
                 await asyncio.sleep(0.5)
                 current_message = None
                 max_message_id = cls.get_max_source_message_id(entity.id)

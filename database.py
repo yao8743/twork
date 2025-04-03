@@ -1,4 +1,5 @@
-from peewee import MySQLDatabase
+from peewee import MySQLDatabase, OperationalError
+from pymysql import err as pymysql_err
 import os
 
 # 检查是否在本地开发环境中运行
@@ -23,9 +24,26 @@ db = MySQLDatabase(
     password=db_config['db_password'],
     host=db_config['db_host'],
     port=db_config['db_port'],
-    charset='utf8mb4'
+    charset='utf8mb4',
+    autorollback=True
 )
 
+def ensure_connection():
+    """
+    检查数据库连接是否正常，如无效则自动重连。
+    """
+    try:
+        if db.is_closed():
+            db.connect()
+        else:
+            db.execute_sql('SELECT 1')
+    except (pymysql_err.InterfaceError, OperationalError):
+        try:
+            db.close()
+        except:
+            pass
+        db.connect()
+
 def initialize_db():
-    db.connect()
+    ensure_connection()
    

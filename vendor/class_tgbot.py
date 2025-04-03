@@ -39,8 +39,14 @@ from collections import defaultdict,namedtuple
 from peewee import PostgresqlDatabase, Model, CharField, BigIntegerField, CompositeKey, fn, AutoField 
 from telethon.tl.functions.messages import GetBotCallbackAnswerRequest
 
+from vendor.class_nonsense import Nonsense
+
+from database import ensure_connection
+
 from model.scrap import Scrap
 from model.scrap_progress import ScrapProgress
+
+
 
 #密文機器人
 
@@ -141,6 +147,9 @@ class lybot:
         self.MediaGroup = MediaGroup
         self.ShowFiles = ShowFiles
         self.User = User
+
+
+
 
     def convert_base(self, value, from_base, to_base):
    
@@ -1121,6 +1130,9 @@ class lybot:
                     
                   
                     if entity.id == 2210941198:
+                        
+                        
+
                         max_message_id = self.get_max_source_message_id(entity.id)
                         min_id = max_message_id if max_message_id else 1
                         self.scrap_message_id = min_id
@@ -1129,6 +1141,15 @@ class lybot:
                         current_message = None
 
                         async for message in client.iter_messages(entity, min_id=min_id, limit=500, reverse=True):
+                            # 如果 message.id 可以被 257 整除
+                            if message.id % 527 == 0:
+                                nonsense_word = Nonsense().generate_greeting()
+                                result_send=await client.send_message(entity.id, f"{nonsense_word}")
+                                # print(f"Message: {nonsense_word}", flush=True)
+                                time.sleep(0.5)
+                                # print(f"Message: {r}", flush=True)
+                               
+                            
                             current_message = message
                             if current_message.peer_id:
                                 await self.handle_message(client, message)
@@ -1140,8 +1161,10 @@ class lybot:
 
         # 查询条件和排序
         # query = Scrap.select().where(Scrap.thumb_file_unique_id.is_null()).order_by(fn.Random()).limit(1)
-        query = Scrap.select().where(Scrap.thumb_hash.is_null()).order_by(fn.Rand()).limit(1)
-        
+        # query = Scrap.select().where((Scrap.thumb_hash.is_null()) & (Scrap.source_bot_id==7294369541) ).order_by(fn.Rand()).limit(1)
+        query = Scrap.select().where((Scrap.thumb_hash.is_null()) ).order_by(fn.Rand()).limit(1)
+        # query = Scrap.select().where((Scrap.thumb_hash.is_null()) ).order_by(id).limit(1)
+        #//7294369541
         try:
             scrap_item = query.get()
         except Scrap.DoesNotExist:
@@ -1521,7 +1544,7 @@ class lybot:
             # print(f"Forwarded message: {forwarded_message}")
             try:
                 # 获取机器人的响应，等待30秒
-                response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=random.randint(10, 19))
+                response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=random.randint(5, 10))
 
                 # print(f"Response: {response}")
             except asyncio.TimeoutError:
@@ -2031,6 +2054,7 @@ class lybot:
                 await self.process_shellbot_chat_message(client,message)
     
     async def process_shellbot_chat_message(self, client,message):
+        ensure_connection()  # ✅ 保证数据库连接活着
         """处理 ShellBot 消息"""
         if not message.reply_markup:
             return

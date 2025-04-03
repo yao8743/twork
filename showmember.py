@@ -209,7 +209,7 @@ async def get_group_members(group_name_or_id):
             print(f'User ID: {user.id}, Username: {user.username}, Name: {user.first_name} {user.last_name or ""}')
 
 # 替换为你的群组 username 或 ID
-group_identifier = -1002312531786
+group_identifier = -1002087275834
 
 
 with client:

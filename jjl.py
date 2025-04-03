@@ -190,7 +190,7 @@ async def main():
             # 乱数决定休息 60 ~180 秒
             # await asyncio.sleep(random.randint(55, 180))
             # await asyncio.sleep(random.randint(15, 20))
-            await asyncio.sleep(random.randint(6, 9))
+            await asyncio.sleep(random.randint(4, 6))
      
 
             if module_enable['db'] == True:

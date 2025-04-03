@@ -10,7 +10,17 @@ from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
 from telethon import TelegramClient, events
 
-from vendor.class_tgbox import TgBox
+
+
+# Telethon 相关导入
+from telethon import types
+from telethon.tl.types import (
+    Channel, Chat, User,
+    MessageMediaWebPage, InputMessagesFilterEmpty,
+    PeerUser, PeerChannel,
+    MessageMediaPhoto, MessageMediaDocument,
+    KeyboardButtonCallback, KeyboardButtonUrl
+)
 
 # Enable logging
 class FlushStreamHandler(logging.StreamHandler):
@@ -117,6 +127,28 @@ if module_enable['dyer_bot'] == True:
 
 # 主运行函数
 async def main():
+
+    async for dialog in client.iter_dialogs():
+        entity = dialog.entity
+
+        if isinstance(entity, (Channel, Chat)):
+            entity_title = entity.title
+        elif isinstance(entity, User):
+            entity_title = f"{entity.first_name or ''} {entity.last_name or ''}".strip()
+        else:
+            entity_title = f"Unknown entity {entity.id}"
+
+        if entity.id != 7717423153:
+            continue
+
+        # 处理用户对话：实体 ID 为 7361527575
+        if entity.id == 7717423153:
+            
+            pass
+
+
+
+
     # 启动 polling
     if module_enable['bot'] == True:
         await tgbot.set_bot_info(application)
