@@ -1,6 +1,6 @@
 
-输入 file_unqiue_id
->>
+# 输入 file_unqiue_id
+>> 从数据库
 
 function get_file_unique_id(file_unqiue_id){
     从数据库找出是否有对应的 file_id
@@ -55,6 +55,7 @@ get_size
 
 # Duration
 get_duration
+
 
 # 展示
 
