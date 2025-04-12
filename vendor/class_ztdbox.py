@@ -77,32 +77,32 @@ class ztdbox:
         GB = 1024 * MB
 
         if size > GB:
-            return "大于1GB"
+            return ">1GB"
         elif size > MB * 500:
-            return "大于500MB"
+            return ">500MB"
         elif size > MB * 300:
-            return "大于300MB"
+            return ">300MB"
         elif size > MB * 100:
-            return "大于100MB"
+            return ">100MB"
         elif size > MB * 50:
-            return "大于50MB"
+            return ">50MB"
         elif size > MB * 10:
-            return "大于10MB"
+            return ">10MB"
         else:
-            return "小于10MB"
+            return "<10MB"
 
     @classmethod
     def get_duration_tag(cls, duration: int) -> str:
         if duration > 60 * 60:
-            return "大于一小时"
+            return "> 1h"
         elif duration > 60 * 30:
-            return "大于半小时"
+            return "> 0.5h"
         elif duration > 60 * 10:
-            return "大于十分钟"
+            return "> 10min"
         elif duration > 60 * 2:
-            return "大于二分钟"
+            return "> 2min"
         else:
-            return "小于二分钟"
+            return "< 2min"
 
     @classmethod
     def format_metadata_message(cls, meta: dict) -> str:
