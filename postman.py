@@ -24,7 +24,7 @@ session_name = f"{api_id}session_name"
 # Load forward targets from .env
 targets_raw = os.getenv('FORWARD_TARGETS', '')
 fallback_chat_ids = [int(x.strip()) for x in targets_raw.split(',') if x.strip().isdigit()]
-
+# print(f"✅ 轉發目標：{fallback_chat_ids}")
 client = TelegramClient(session_name, api_id, api_hash)
 reset_event = asyncio.Event()
 handler_pool = {}
