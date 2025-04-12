@@ -17,7 +17,9 @@ if not os.getenv('GITHUB_ACTIONS'):
 
 api_id = int(os.getenv('API_ID'))
 api_hash = os.getenv('API_HASH')
-session_name = f"{api_id}_session"
+session_name = f"{api_id}session_name"
+
+
 
 # Load forward targets from .env
 targets_raw = os.getenv('FORWARD_TARGETS', '')
