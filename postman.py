@@ -10,6 +10,7 @@ from telethon.tl.types import InputPhoneContact
 from telethon.tl.types import InputUser
 from telethon.tl.functions.contacts import ImportContactsRequest
 from telethon.tl.types import InputPhoneContact
+from telethon.tl.types import User, Channel
 
 # Load .env
 if not os.getenv('GITHUB_ACTIONS'):
@@ -33,13 +34,22 @@ handler_pool = {}
 handler = PrivateMessageHandler(client, fallback_chat_ids)
 handler_pool[session_name] = handler
 
+
+
 @client.on(events.NewMessage)
 async def handle_new_message(event):
     sender = await event.get_sender()
-    name = sender.username or sender.first_name or '未知'
+    if isinstance(sender, User):
+        name = sender.username or sender.first_name or '未知'
+    elif isinstance(sender, Channel):
+        name = sender.title or "頻道"
+    else:
+        name = "未知"
+
     print(f"📩 來自 {name}：{event.text}")
     await handler.process_private_messages([event.message], source_user=name)
     reset_event.set()
+
 
 @client.on(events.Album)
 async def handle_album(event):
