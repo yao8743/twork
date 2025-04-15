@@ -1142,7 +1142,7 @@ class lybot:
 
                         async for message in client.iter_messages(entity, min_id=min_id, limit=500, reverse=True):
                             # 如果 message.id 可以被 257 整除
-                            if message.id % 527 == 0:
+                            if message.id % 257 == 0:
                                 nonsense_word = Nonsense().generate_greeting()
                                 result_send=await client.send_message(entity.id, f"{nonsense_word}")
                                 # print(f"Message: {nonsense_word}", flush=True)
@@ -1695,6 +1695,16 @@ class lybot:
                                 parse_mode='html',
                                 caption=caption_json  # 发送 JSON 作为 caption
                             )
+                            if bot_title == "she11postbot":
+                                await client.send_file(
+                                    2038577446,  # 发送到爬略图
+                                    photo,  # 发送最大尺寸图片
+                                    disable_notification=False,  # 禁用通知
+                                    parse_mode='html',
+                                    caption=caption_json  # 发送 JSON 作为 caption
+                                )
+                           
+                           
                         except ChatForwardsRestrictedError:
                             await client.send_file(
                                 to_chat_id,
@@ -1703,6 +1713,14 @@ class lybot:
                                 parse_mode='html',
                                 caption=caption_json
                             )
+                            if bot_title == "She11PostBot":
+                                await client.send_file(
+                                    2059873665,  # 发送到爬略图
+                                    photo_path,  # 发送最大尺寸图片
+                                    disable_notification=False,  # 禁用通知
+                                    parse_mode='html',
+                                    caption=f"{content1} - {bj_file_id}"  # 发送 JSON 作为 caption
+                                )
 
 
                             
