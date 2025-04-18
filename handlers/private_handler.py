@@ -88,10 +88,12 @@ class PrivateMessageHandler:
                 elif self.fallback_chat_ids:
                     if isinstance(media, (MessageMediaPhoto)):
                         target_chat_id = random.choice(self.fallback_photo_chat_ids)
+                        print(f"🌟 無轉發標記，图改轉發至 chat_id={target_chat_id}")
                     else:
                         target_chat_id = random.choice(self.fallback_chat_ids)
+                        print(f"🌟 無轉發標記，媒體改轉發至 chat_id={target_chat_id}")
 
-                    print(f"🌟 無轉發標記，媒體改轉發至 chat_id={target_chat_id}")
+                    
                 else:
                     print("⚠️ 無 chat_id 可用，跳過訊息")
                     continue
