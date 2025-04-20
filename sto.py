@@ -7,9 +7,8 @@ import os
 import random
 import re
 from datetime import datetime
-from telegram.ext import Application, MessageHandler, CommandHandler, filters
 from telethon import TelegramClient
-from telethon.tl.types import Channel, Chat, User, MessageMediaWebPage
+from telethon.tl.types import MessageMediaWebPage
 from telethon.tl.types import InputMessagesFilterEmpty
 from peewee import DoesNotExist
 
