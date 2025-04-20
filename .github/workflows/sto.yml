@@ -1,4 +1,4 @@
-name: Deploy Postman Telethon
+name: Deploy STO Telethon
 
 on: 
   schedule:
