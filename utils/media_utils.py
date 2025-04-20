@@ -4,6 +4,9 @@ import json
 import os
 from telethon.errors import ChatForwardsRestrictedError
 
+from datetime import datetime
+
+
 async def get_image_hash(image_path: str) -> str:
     img = PILImage.open(image_path)
     return str(imagehash.phash(img))
@@ -30,19 +33,36 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
         print(f"⚠️ 该消息禁止转发，尝试重新发送...{message_id}")
         await fetch_and_send(client, from_chat_id, message_id, to_protect_chat_id, material, caption_json)
 
+
+
 async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material, caption_json: str):
     new_material = []
     message_single = await client.get_messages(from_chat_id, ids=message_id)
 
-    DOWNLOAD_DIR = "./media/"  # 或 "/media"（取决于你的系统权限）
+    DOWNLOAD_DIR = "./media/"
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+    def generate_filename(message, index=None):
+        if message.document and message.document.attributes:
+            for attr in message.document.attributes:
+                if hasattr(attr, "file_name"):
+                    return attr.file_name  # 使用原始文件名
+        base = message.file.unique_id if message.file else f"file_{datetime.now().timestamp()}"
+        suffix = f"_{index}" if index is not None else ""
+        ext = message.file.ext if message.file and message.file.ext else ".bin"
+        return f"{base}{suffix}{ext}"
 
     if isinstance(material, list):
-        for message in material:
+        for idx, message in enumerate(material):
             if message.media:
-                file_path = await message.download_media(file=DOWNLOAD_DIR)
+                filename = generate_filename(message, idx)
+                file_path = os.path.join(DOWNLOAD_DIR, filename)
+                await message.download_media(file=file_path)
                 new_material.append(file_path)
     elif message_single.media:
-        file_path = await message_single.download_media(file=DOWNLOAD_DIR)
+        filename = generate_filename(message_single)
+        file_path = os.path.join(DOWNLOAD_DIR, filename)
+        await message_single.download_media(file=file_path)
         new_material = file_path
 
     if new_material:
