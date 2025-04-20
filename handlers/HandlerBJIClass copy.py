@@ -653,7 +653,7 @@ class HandlerBJIClass:
        
         record, created = ScrapProgress.get_or_create(
             chat_id=message.peer_id.channel_id,  # 使用 channel_id 作为 chat_id
-            api_id=self.extra_data['appid']
+            api_id=self.extra_data['app_id']
         )
 
         # 更新 message_id 和 caption_json

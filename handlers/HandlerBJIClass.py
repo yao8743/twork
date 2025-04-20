@@ -46,7 +46,7 @@ class HandlerBJIClass:
         quote_gen = QuietQuoteGenerator()
 
         if self.message.id % 132 == 0:
-            api_id = self.extra_data['appid']
+            api_id = self.extra_data['app_id']
 
             try:
                 progress = ScrapProgress.select().where(
@@ -287,7 +287,7 @@ class HandlerBJIClass:
                     "thumb_hash": image_hash
                 }, ensure_ascii=False, indent=4)
 
-                save_scrap_progress(self.message, self.extra_data['appid'])
+                save_scrap_progress(self.message, self.extra_data['app_id'])
                 try:
                     await self.client.send_file(
                         self.SHELLBOT_FORWARD_CHAT_ID,

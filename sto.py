@@ -106,7 +106,7 @@ async def process_user_message(client, entity, message):
 
 async def process_group_message(client, entity, message):
 
-    extra_data = {'appid': config['api_id']}
+    extra_data = {'app_id': config['api_id']}
 
     entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
 
