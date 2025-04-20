@@ -77,51 +77,15 @@ jobs:
           }
       continue-on-error: true
 
-    - name: Download artifacts - Session
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      uses: actions/download-artifact@v4
-      with:
-        name: session_name
-        path: .
-        run-id: ${{ steps.get-previous-run-id.outputs.run_id }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
-
-    - name: Decrypt Telethon session file
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      env:
-        API_ID: ${{ secrets.API_ID }}
-        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
-      run: |
-        openssl aes-256-cbc -d -pbkdf2 -in "${{ secrets.API_ID }}session_name.session.enc" -out "${{ secrets.API_ID }}session_name.session" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
-
-
     - name: Run Telethon script
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
-        API_ID: ${{ secrets.API_ID }}
-        API_HASH: ${{ secrets.API_HASH }}
-        PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
 
       run: |
         python lz_main.py
 
-    - name: Encrypt Telethon session file
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      env:
-        API_ID: ${{ secrets.API_ID }}
-        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
-      run: |
-        openssl aes-256-cbc -pbkdf2 -salt -in "${{ secrets.API_ID }}session_name.session" -out "${{ secrets.API_ID }}session_name.session.enc" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
-
-    - name: Upload session_name.enc artifact
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      uses: actions/upload-artifact@v4
-      with:
-        name: session_name
-        path: ${{ secrets.API_ID }}session_name.session.enc
 
     - name: Delete old workflow runs
       if: steps.check-running.outputs.hasOtherRuns == 'false'
