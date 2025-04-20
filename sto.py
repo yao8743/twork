@@ -50,8 +50,16 @@ async def keep_db_alive():
             print(f"数据库连接保持错误: {e}")
 
 async def send_completion_message():
-    async with client.conversation(config['setting_chat_id']) as conv:
-        await conv.send_message('ok', reply_to=config['setting_thread_id'])
+    try:
+        print(f"发送完成消息到 {config['setting_chat_id']} 线程 {config['setting_thread_id']}")
+        if config['setting_chat_id'] == 0 or config['setting_thread_id'] == 0:
+            print("未设置配置线程 ID，无法发送完成消息。")
+            return
+        async with client.conversation(config['setting_chat_id']) as conv:
+            await conv.send_message('ok', reply_to=config['setting_thread_id'])
+    except Exception as e:
+        print("未设置配置线程 ID，无法发送完成消息。")
+        pass
 
 async def get_max_source_message_id(source_chat_id):
     try:
