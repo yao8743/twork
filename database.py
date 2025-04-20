@@ -1,5 +1,5 @@
 from peewee import MySQLDatabase, OperationalError
-from pymysql import err as pymysql_err
+
 import os
 
 # 检查是否在本地开发环境中运行
@@ -37,7 +37,7 @@ def ensure_connection():
             db.connect()
         else:
             db.execute_sql('SELECT 1')
-    except (pymysql_err.InterfaceError, OperationalError):
+    except (OperationalError):
         try:
             db.close()
         except:
