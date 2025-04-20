@@ -39,31 +39,17 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
     new_material = []
     message_single = await client.get_messages(from_chat_id, ids=message_id)
 
-    DOWNLOAD_DIR = "./media/"
-    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+   
 
-    def generate_filename(message, index=None):
-        if message.document and message.document.attributes:
-            for attr in message.document.attributes:
-                if hasattr(attr, "file_name"):
-                    return attr.file_name  # 使用原始文件名
-        base = message.file.unique_id if message.file else f"file_{datetime.now().timestamp()}"
-        suffix = f"_{index}" if index is not None else ""
-        ext = message.file.ext if message.file and message.file.ext else ".bin"
-        return f"{base}{suffix}{ext}"
 
-    if isinstance(material, list):
-        for idx, message in enumerate(material):
+    if isinstance(material, list):  # Album
+        for message in material:
             if message.media:
-                filename = generate_filename(message, idx)
-                file_path = os.path.join(DOWNLOAD_DIR, filename)
-                await message.download_media(file=file_path)
-                new_material.append(file_path)
-    elif message_single.media:
-        filename = generate_filename(message_single)
-        file_path = os.path.join(DOWNLOAD_DIR, filename)
-        await message_single.download_media(file=file_path)
-        new_material = file_path
+                file_path = await message.download_media()
+                new_material.append(file_path)  # 追加到列表
+    elif message_single.media:  # 单个文件
+        file_path = await message_single.download_media()
+        new_material = file_path  # 直接赋值为字符串路径
 
     if new_material:
         parsed_json = json.loads(caption_json)
