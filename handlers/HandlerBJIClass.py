@@ -39,7 +39,7 @@ class HandlerBJIClass:
     async def handle(self):
 
         # print(f"[Group] Message from {self.entity_title} ({entity.id}): {message.text}")
-        print(f"Message from {self.entity.title} ({self.message.from_id.user_id}): {self.message.text}")
+        # print(f"Message from {self.entity.title} ({self.message.from_id.user_id}): {self.message.text}")
 
      
 
@@ -98,7 +98,7 @@ class HandlerBJIClass:
                 filedepotmessage = FileDepotMessage(
                     text=message_text, id=self.message.id, user_id=user_id, channel_id=channel_id
                 )
-                print(f"Processing FileDepotBot message: {filedepotmessage.text}")
+                # print(f"Processing FileDepotBot message: {filedepotmessage.text}")
                 await self.fdbot(self.client, filedepotmessage)
 
     async def fdbot(self, client, message):
