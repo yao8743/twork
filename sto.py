@@ -180,6 +180,9 @@ async def main():
     # await join("7-HhTojcPCYyMjk0")    #Coniguration
     # exit()
     start_time = time.time()
+    # 显示现在时间
+    now = datetime.now()
+    print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}")
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
         await man_bot_loop(client)
