@@ -182,7 +182,7 @@ async def main():
     start_time = time.time()
     # 显示现在时间
     now = datetime.now()
-    print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
         await man_bot_loop(client)

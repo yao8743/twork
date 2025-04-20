@@ -44,8 +44,13 @@ class HandlerBJIClass:
      
 
         quote_gen = QuietQuoteGenerator()
+        
+     
 
-        if self.message.id % 132 == 0:
+
+
+        if self.message.id % 10 == 0:
+            print(f"Message from  ({self.message.id})")
             api_id = self.extra_data['app_id']
 
             try:
@@ -55,7 +60,11 @@ class HandlerBJIClass:
                 ).order_by(ScrapProgress.post_datetime.desc()).get()
 
                 last_post_time = progress.post_datetime
+                print(f"Last: {last_post_time}",flush=True)
+
                 now = datetime.now()
+                print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
+
                 if (now - last_post_time).total_seconds() > 1800:
                     await self.client.send_message(self.entity.id, quote_gen.random_quote())
                     
