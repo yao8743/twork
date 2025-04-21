@@ -67,14 +67,13 @@ class HandlerBJIClass:
 
                 if (now - last_post_time).total_seconds() > 1800:
                     # 取1~10的随机数，若小于4，则发送
-                    random_number = random.randint(1, 10)
-                    if random_number < 4:
-                        # 发送随机语录
-                        print(f"Sending quote to {self.entity.id}",flush=True)
-                        await self.client.send_message(self.entity.id, quote_gen.random_quote())
-                        # ✅ 更新 post_datetime
-                        progress.post_datetime = datetime.now()
-                        progress.save()
+                    
+                    # 发送随机语录
+                    print(f"Sending quote to {self.entity.id}",flush=True)
+                    await self.client.send_message(self.entity.id, quote_gen.random_quote())
+                    # ✅ 更新 post_datetime
+                    progress.post_datetime = datetime.now()
+                    progress.save()
 
             except ScrapProgress.DoesNotExist:
                 # 若不存在记录，可视为初次触发
@@ -117,7 +116,7 @@ class HandlerBJIClass:
                 # 随机选择感谢语
                 
                 random_number = random.randint(1, 10)
-                if random_number < 4:
+                if random_number < 7:
                     
                     await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
 
@@ -159,6 +158,7 @@ class HandlerBJIClass:
                 await self.fdbot(self.client, filedepotmessage)
 
     async def fdbot(self, client, message):
+        ensure_connection()
         async with client.conversation("FileDepotBot") as conv:
             forwarded_message = await conv.send_message(message.text)
             try:

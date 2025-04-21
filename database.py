@@ -25,7 +25,8 @@ db = MySQLDatabase(
     host=db_config['db_host'],
     port=db_config['db_port'],
     charset='utf8mb4',
-    autorollback=True
+    autorollback=True,
+    autoconnect=True
 )
 
 def ensure_connection():
