@@ -68,3 +68,28 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
         print("✅ 重新发送成功！")
     else:
         print("❌ 无法发送，未找到可用媒体")
+
+# utils/media_utils.py
+
+from telethon.tl.types import Message, MessageMediaPhoto, MessageMediaDocument
+
+def generate_media_key(message: Message) -> str:
+    """
+    根据 Telegram Message 中的媒体信息，生成可用于去重或标识的唯一识别码。
+    仅适用于人类账号（user session），不依赖 file_unique_id。
+    """
+    media = message.media
+    if not media:
+        return ""
+
+    # 对 Document 类型媒体（如文件、视频）
+    if isinstance(media, MessageMediaDocument) and media.document:
+        doc = media.document
+        return f"document:{doc.id}_{doc.access_hash}"
+
+    # 对 Photo 类型媒体（如图片）
+    if isinstance(media, MessageMediaPhoto) and media.photo:
+        photo = media.photo
+        return f"photo:{photo.id}_{photo.access_hash}"
+
+    return ""

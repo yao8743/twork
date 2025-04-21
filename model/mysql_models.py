@@ -27,6 +27,17 @@ class Document(BaseModel):
     class Meta:
         table_name = 'document'
 
+class Video(BaseModel):
+    file_unique_id = CharField(primary_key=True)
+    caption = TextField(null=True)
+    file_name = CharField(null=True)
+    kc_id = IntegerField(null=True)
+    kc_status = CharField(null=True)
+
+    class Meta:
+        table_name = 'video'
+
+
 class KeywordContent(BaseModel):
     id = AutoField()
     source_id = CharField()

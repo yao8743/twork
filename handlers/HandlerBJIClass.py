@@ -49,7 +49,7 @@ class HandlerBJIClass:
 
 
 
-        if self.message.id % 100 == 0:
+        if self.message.id % 243 == 0:
             print(f"Message from  ({self.message.id})")
             api_id = self.extra_data['app_id']
 
@@ -85,6 +85,50 @@ class HandlerBJIClass:
                     message_id=self.message.id,
                     post_datetime=datetime.now()
                 )
+
+        checkText = self.message.text
+        if not self.message.is_reply and (checkText or "").startswith("/hongbao"):
+            
+            # 正则模式：匹配 "/hongbao 数字 数字"
+            pattern_hongbao = r"^/hongbao\s+(\d+)\s+(\d+)$"
+            match = re.match(pattern_hongbao, checkText)
+            if match:
+                points = int(match.group(1))  # 积分数
+                count = int(match.group(2))   # 红包个数
+
+                                # 感谢语列表（低调简短）
+                thank_you_messages = [
+                    "多谢老板照顾 🙏",
+                    "感谢好意～",
+                    "收到，谢啦",
+                    "谢谢老板",
+                    "小红包，大人情",
+                    "心领了，谢~",
+                    "感恩不尽",
+                    "谢谢老板",
+                    "收下啦～",
+                    "感谢支持",
+                    "老板万岁 😎"
+                ]
+
+                # 随机选择感谢语
+                
+
+                await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
+
+              
+                progress = ScrapProgress.select().where(
+                    (ScrapProgress.chat_id == self.entity.id) &
+                    (ScrapProgress.api_id == api_id)
+                ).order_by(ScrapProgress.post_datetime.desc()).get()
+                progress.post_datetime = datetime.now()
+                progress.save()
+                
+
+                
+
+                
+            pass
 
 
         pattern = r"https://t\.me/FileDepotBot\?start=([^\s]+)"

@@ -9,7 +9,7 @@ if not os.getenv('GITHUB_ACTIONS'):
 
 from peewee import *
 from model.mysql_models import (
-    DB_MYSQL, Document, KeywordContent, FileTag, Tag, init_mysql
+    DB_MYSQL, Video, Document, KeywordContent, FileTag, Tag, init_mysql
 )
 
 SYNC_TO_POSTGRES = os.getenv('SYNC_TO_POSTGRES', 'false').lower() == 'true'
@@ -169,5 +169,53 @@ def process_documents():
     if SYNC_TO_POSTGRES:
         DB_PG.close()
 
+
+def process_videos():
+    DB_MYSQL.connect()
+    if SYNC_TO_POSTGRES:
+        DB_PG.connect()
+
+    for doc in Video.select().where((Video.kc_status.is_null(True)) | (Video.kc_status != 'updated')).limit(BATCH_LIMIT):
+        if not doc.file_name and not doc.caption:
+            doc.kc_status = 'updated'
+            doc.save()
+            continue
+
+        content = clean_text(f"{doc.file_name or ''}\n{doc.caption or ''}")
+        content_seg = segment_text(content)
+        tag_cn_list = fetch_tag_cn_for_file(doc.file_unique_id)
+        if tag_cn_list:
+            content_seg += " " + " ".join(tag_cn_list)
+
+        print(f"Processing {doc.file_unique_id}: {content_seg}")
+
+        if doc.kc_id:
+            try:
+                kw = KeywordContent.get_by_id(doc.kc_id)
+                kw.source_id = doc.file_unique_id
+                kw.content = content
+                kw.content_seg = content_seg
+                kw.save()
+            except KeywordContent.DoesNotExist:
+                kw = KeywordContent.create(
+                    source_id=doc.file_unique_id, type='v', content=content, content_seg=content_seg)
+                doc.kc_id = kw.id
+        else:
+            kw = KeywordContent.create(
+                source_id=doc.file_unique_id, type='v', content=content, content_seg=content_seg)
+            doc.kc_id = kw.id
+
+        doc.kc_status = 'updated'
+        doc.save()
+
+       
+        if SYNC_TO_POSTGRES and kw.id:     
+            sync_to_postgres(kw)
+
+    DB_MYSQL.close()
+    if SYNC_TO_POSTGRES:
+        DB_PG.close()
+
 if __name__ == "__main__":
     process_documents()
+    process_videos()
