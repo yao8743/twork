@@ -39,16 +39,11 @@ class HandlerBJIClass:
     async def handle(self):
 
         # print(f"[Group] Message from {self.entity_title} ({entity.id}): {message.text}")
-        # print(f"Message from {self.entity.title} ({self.message.from_id.user_id}): {self.message.text}")
+        print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}")
 
-     
-
+    
         quote_gen = QuietQuoteGenerator()
         
-     
-
-
-
         if self.message.id % 243 == 0:
             print(f"Message from  ({self.message.id})")
             api_id = self.extra_data['app_id']
