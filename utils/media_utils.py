@@ -5,6 +5,8 @@ import os
 from telethon.errors import ChatForwardsRestrictedError
 
 from datetime import datetime
+from telethon.tl.types import Message, MessageMediaPhoto, MessageMediaDocument
+from typing import Optional, Tuple
 
 
 async def get_image_hash(image_path: str) -> str:
@@ -20,6 +22,10 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
             print(f"📤 发送 Album，共 {len(material)} 个媒体")
         else:
             print("📤 发送单个媒体")
+
+        
+
+
 
         await client.send_file(
             to_chat_id,
@@ -71,25 +77,24 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
 
 # utils/media_utils.py
 
-from telethon.tl.types import Message, MessageMediaPhoto, MessageMediaDocument
 
-def generate_media_key(message: Message) -> str:
+
+def generate_media_key(message: Message) -> Optional[Tuple[str, int, int]]:
     """
-    根据 Telegram Message 中的媒体信息，生成可用于去重或标识的唯一识别码。
-    仅适用于人类账号（user session），不依赖 file_unique_id。
+    提取媒体类型 + media_id + access_hash，返回元组用于数据库字段分离存储。
+    :return: (media_type, media_id, access_hash) 或 None
     """
     media = message.media
     if not media:
-        return ""
+        return None
 
-    # 对 Document 类型媒体（如文件、视频）
     if isinstance(media, MessageMediaDocument) and media.document:
         doc = media.document
-        return f"document:{doc.id}_{doc.access_hash}"
+        return ('document', doc.id, doc.access_hash)
 
-    # 对 Photo 类型媒体（如图片）
     if isinstance(media, MessageMediaPhoto) and media.photo:
         photo = media.photo
-        return f"photo:{photo.id}_{photo.access_hash}"
+        return ('photo', photo.id, photo.access_hash)
 
-    return ""
+    return None
+

@@ -3,6 +3,7 @@ import re
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument, MessageMediaWebPage
 from utils.media_utils import safe_forward_or_send
 from model.scrap_config import ScrapConfig  # ✅ Peewee ORM model
+from model.media_index import MediaIndex  # ✅ Peewee ORM model
 from peewee import DoesNotExist
 from utils.media_utils import generate_media_key
 
@@ -39,6 +40,9 @@ class HandlerPrivateMessageClass:
                     print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
                     return
 
+
+
+
                 await safe_forward_or_send(
                     self.client,
                     self.message.id,
@@ -70,21 +74,46 @@ class HandlerPrivateMessageClass:
                
 
 
+                # media_key = generate_media_key(self.message)
+                # if media_key:
+                #     print(f"📌 媒体唯一识别码: {media_key}")
+                # else:
+                #     print("⚠️ 该消息无媒体或不支持的类型")
+
+                # media_key = generate_media_key(self.message)
+
                 media_key = generate_media_key(self.message)
                 if media_key:
-                    print(f"📌 媒体唯一识别码: {media_key}")
-                else:
-                    print("⚠️ 该消息无媒体或不支持的类型")
+                    media_type, media_id, access_hash = media_key
+                    exists = MediaIndex.select().where(
+                        (MediaIndex.media_type == media_type) &
+                        (MediaIndex.media_id == media_id) &
+                        (MediaIndex.access_hash == access_hash)
+                    ).exists()
+
+                    if not exists:
+                        MediaIndex.create(
+                            media_type=media_type,
+                            media_id=media_id,
+                            access_hash=access_hash
+                        )
+
+                        await safe_forward_or_send(
+                            self.client,
+                            self.message.id,
+                            self.message.chat_id,
+                            target_chat_id,
+                            media,
+                            caption
+                        )
+
+                    else:
+                        print("⚠️ 已接收过该媒体，跳过处理")
 
 
-                await safe_forward_or_send(
-                    self.client,
-                    self.message.id,
-                    self.message.chat_id,
-                    target_chat_id,
-                    media,
-                    caption
-                )
+
+
+
 
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
