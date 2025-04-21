@@ -92,7 +92,7 @@ async def save_scrap_progress(entity_id, message_id):
     record.save()
 
 async def process_user_message(client, entity, message):
-
+   
 
     try:
         match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
@@ -103,23 +103,7 @@ async def process_user_message(client, entity, message):
     except Exception as e:
         print(f"Error kicking bot: {e}")
 
-    extra_data = {'app_id': config['api_id']}
-
-    entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
-
-    # 实现：根据 entity.id 映射到不同处理类
-    class_map = {
-        7777777: HandlerNoAction   # 替换为真实 entity.id 和处理类
-    }
-
-    handler_class = class_map.get(entity.id)
-    if handler_class:
-        handler = handler_class(client, entity, message, extra_data)
-        await handler.handle()
-    else:
-        handler = HandlerNoAction(client, entity, message, extra_data)
-        await handler.handle()
-        # print(f"[Group] Message from {entity_title} ({entity.id}): {message.text}")
+    
        
 
 async def process_group_message(client, entity, message):
