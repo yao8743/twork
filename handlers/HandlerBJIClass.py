@@ -66,12 +66,15 @@ class HandlerBJIClass:
                 print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
 
                 if (now - last_post_time).total_seconds() > 1800:
-                    await self.client.send_message(self.entity.id, quote_gen.random_quote())
-                    
-
-                    # ✅ 更新 post_datetime
-                    progress.post_datetime = datetime.now()
-                    progress.save()
+                    # 取1~10的随机数，若小于4，则发送
+                    random_number = random.randint(1, 10)
+                    if random_number < 4:
+                        # 发送随机语录
+                        print(f"Sending quote to {self.entity.id}",flush=True)
+                        await self.client.send_message(self.entity.id, quote_gen.random_quote())
+                        # ✅ 更新 post_datetime
+                        progress.post_datetime = datetime.now()
+                        progress.save()
 
             except ScrapProgress.DoesNotExist:
                 # 若不存在记录，可视为初次触发
@@ -113,16 +116,17 @@ class HandlerBJIClass:
 
                 # 随机选择感谢语
                 
+                random_number = random.randint(1, 10)
+                if random_number < 4:
+                    
+                    await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
 
-                await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
-
-              
-                progress = ScrapProgress.select().where(
-                    (ScrapProgress.chat_id == self.entity.id) &
-                    (ScrapProgress.api_id == api_id)
-                ).order_by(ScrapProgress.post_datetime.desc()).get()
-                progress.post_datetime = datetime.now()
-                progress.save()
+                    progress = ScrapProgress.select().where(
+                        (ScrapProgress.chat_id == self.entity.id) &
+                        (ScrapProgress.api_id == api_id)
+                    ).order_by(ScrapProgress.post_datetime.desc()).get()
+                    progress.post_datetime = datetime.now()
+                    progress.save()
                 
 
                 
