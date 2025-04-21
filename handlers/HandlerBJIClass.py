@@ -111,17 +111,17 @@ class HandlerBJIClass:
 
                 # 随机选择感谢语
                 
-                random_number = random.randint(1, 10)
-                if random_number < 7:
+                # random_number = random.randint(1, 10)
+                # if random_number < 7:
                     
-                    await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
+                #     await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
 
-                    progress = ScrapProgress.select().where(
-                        (ScrapProgress.chat_id == self.entity.id) &
-                        (ScrapProgress.api_id == api_id)
-                    ).order_by(ScrapProgress.post_datetime.desc()).get()
-                    progress.post_datetime = datetime.now()
-                    progress.save()
+                #     progress = ScrapProgress.select().where(
+                #         (ScrapProgress.chat_id == self.entity.id) &
+                #         (ScrapProgress.api_id == api_id)
+                #     ).order_by(ScrapProgress.post_datetime.desc()).get()
+                #     progress.post_datetime = datetime.now()
+                #     progress.save()
                 
 
                 
