@@ -117,7 +117,7 @@ async def process_user_message(client, entity, message):
         handler = handler_class(client, entity, message, extra_data)
         await handler.handle()
     else:
-        handler = HandlerPrivateMessageClass(client, entity, message, extra_data)
+        handler = HandlerNoAction(client, entity, message, extra_data)
         await handler.handle()
         # print(f"[Group] Message from {entity_title} ({entity.id}): {message.text}")
        

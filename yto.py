@@ -109,15 +109,16 @@ async def save_scrap_progress(entity_id, message_id):
 
 async def process_user_message(client, entity, message):
 
-
+    botname = None
     try:
-        match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
-        if match:
-            botname = match.group(1) + match.group(2)
-            await client.send_message(botname, "/start")
-            await client.send_message(botname, "[~bot~]")
+        if message.text:
+            match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
+            if match:
+                botname = match.group(1) + match.group(2)
+                await client.send_message(botname, "/start")
+                await client.send_message(botname, "[~bot~]")
     except Exception as e:
-        print(f"Error kicking bot: {e}")
+        print(f"Error kicking bot: {e} {botname}", flush=True)
 
     extra_data = {'app_id': config['api_id']}
 
@@ -163,11 +164,25 @@ async def man_bot_loop(client):
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
-                await asyncio.sleep(0.5)
+                
+                current_message = None
+                max_message_id = await get_max_source_message_id(entity.id)
+                min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=0, limit=1, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=1, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
+                    current_message = message
                     await process_user_message(client, entity, message)
+                if current_message:
+                    await save_scrap_progress(entity.id, current_message.id)
+
+                
+                
+                # await asyncio.sleep(0.5)
+                # async for message in client.iter_messages(
+                #     entity, min_id=0, limit=1, reverse=True, filter=InputMessagesFilterEmpty()
+                # ):
+                #     await process_user_message(client, entity, message)
             else:
                 # if entity.id != 2488472597:
                 #     return
