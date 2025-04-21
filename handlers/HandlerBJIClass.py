@@ -39,12 +39,13 @@ class HandlerBJIClass:
     async def handle(self):
 
         # print(f"[Group] Message from {self.entity_title} ({entity.id}): {message.text}")
-        print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}")
+        print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}",flush=True)
 
     
-        quote_gen = QuietQuoteGenerator()
+       
         
         if self.message.id % 243 == 0:
+            quote_gen = QuietQuoteGenerator()
             print(f"Message from  ({self.message.id})")
             api_id = self.extra_data['app_id']
 
@@ -125,8 +126,8 @@ class HandlerBJIClass:
 
                 
 
-                
-            pass
+            return    
+            
 
 
         pattern = r"https://t\.me/FileDepotBot\?start=([^\s]+)"
@@ -135,8 +136,6 @@ class HandlerBJIClass:
         if self.message.from_id and isinstance(self.message.from_id, PeerUser):
             if self.message.from_id.user_id == self.SHELLBOT_USER_ID:
                 await self.process_shellbot_chat_message()
-
-                pass
                 return
 
         if message_text_str:
