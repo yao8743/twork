@@ -28,7 +28,7 @@ async def main():
     dp.include_router(lz_search_highlighted.router)
     await db.connect()
    
-    await dp.start_polling(bot, polling_timeout=1.0)
+    await dp.start_polling(bot, polling_timeout=5.0)
 
 if __name__ == "__main__":
     asyncio.run(main())
