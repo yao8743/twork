@@ -49,7 +49,7 @@ class HandlerBJIClass:
 
 
 
-        if self.message.id % 10 == 0:
+        if self.message.id % 100 == 0:
             print(f"Message from  ({self.message.id})")
             api_id = self.extra_data['app_id']
 
@@ -63,7 +63,7 @@ class HandlerBJIClass:
                 print(f"Last: {last_post_time}",flush=True)
 
                 now = datetime.now()
-                print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
+                print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
 
                 if (now - last_post_time).total_seconds() > 1800:
                     await self.client.send_message(self.entity.id, quote_gen.random_quote())
