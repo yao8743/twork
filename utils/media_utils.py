@@ -9,6 +9,13 @@ from telethon.tl.types import Message, MessageMediaPhoto, MessageMediaDocument
 from typing import Optional, Tuple
 
 
+MAX_CAPTION_LENGTH = 1024
+
+def truncate_caption(caption: str, max_length=MAX_CAPTION_LENGTH) -> str:
+    if len(caption) > max_length:
+        return caption[:max_length - 3] + "..."
+    return caption
+
 async def get_image_hash(image_path: str) -> str:
     img = PILImage.open(image_path)
     return str(imagehash.phash(img))
@@ -24,7 +31,9 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
             print("📤 发送单个媒体")
 
         
-
+        if "desc" in caption_json:
+            caption_json["desc"] = truncate_caption(caption_json["desc"])
+        caption_json = json.dumps(caption_json, ensure_ascii=False, indent=4)
 
 
         await client.send_file(
@@ -38,16 +47,15 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
     except ChatForwardsRestrictedError:
         print(f"⚠️ 该消息禁止转发，尝试重新发送...{message_id}")
         await fetch_and_send(client, from_chat_id, message_id, to_protect_chat_id, material, caption_json)
-
+    except Exception as e:
+        print(f"❌ 转发失败: {e}")
+       
+        return
 
 
 async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material, caption_json: str):
     new_material = []
     message_single = await client.get_messages(from_chat_id, ids=message_id)
-
-   
-
-
     if isinstance(material, list):  # Album
         for message in material:
             if message.media:
@@ -58,6 +66,15 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
         new_material = file_path  # 直接赋值为字符串路径
 
     if new_material:
+
+        try:
+            if not caption_json.strip():
+                raise ValueError("Empty caption_json")
+            parsed_json = json.loads(caption_json)
+        except Exception as e:
+            print(f"❌ 无法解析 caption_json: {e}\n内容是: {caption_json}")
+            return
+
         parsed_json = json.loads(caption_json)
         parsed_json["protect"] = "1"
         if "闪照模式5秒后此消息自动销毁" in parsed_json:

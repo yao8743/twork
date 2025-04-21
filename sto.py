@@ -94,14 +94,16 @@ async def save_scrap_progress(entity_id, message_id):
 async def process_user_message(client, entity, message):
    
 
+    botname = None
     try:
-        match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
-        if match:
-            botname = match.group(1) + match.group(2)
-            await client.send_message(botname, "/start")
-            await client.send_message(botname, "[~bot~]")
+        if message.text:
+            match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
+            if match:
+                botname = match.group(1) + match.group(2)
+                await client.send_message(botname, "/start")
+                await client.send_message(botname, "[~bot~]")
     except Exception as e:
-        print(f"Error kicking bot: {e}")
+        print(f"Error kicking bot: {e} {botname}", flush=True)
 
     
        
