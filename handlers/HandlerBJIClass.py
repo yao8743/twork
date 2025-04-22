@@ -39,8 +39,8 @@ class HandlerBJIClass:
     async def handle(self):
 
         # print(f"[Group] Message from {self.entity_title} ({entity.id}): {message.text}")
-        print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}",flush=True)
-
+        # print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}",flush=True)
+        print(f"Message from ({self.message.id})",flush=True)
     
        
         

@@ -117,6 +117,7 @@ class HandlerPrivateMessageClass:
 
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
+        
 
         # 打印来源
         first_name = getattr(self.entity, "first_name", "") or ""
