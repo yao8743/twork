@@ -71,36 +71,67 @@ class Video(BaseModel):
             (('file_size', 'width', 'height', 'mime_type'), False),
         )
 
+class Sora(BaseModel):
+    file_unique_id = CharField()
+    content = TextField()
+    user_id = IntegerField()
+    source_channel_message_id = BigIntegerField()
+    thumb_file_unique_id = CharField(null=True)
+    thumb_hash = CharField(null=True)
+    file_size = BigIntegerField(null=True)
+    duration = IntegerField(null=True)
+    tag = CharField(null=True)
+    file_type = CharField(null=True)
+    plan_update_timestamp = IntegerField(null=True)
+    stage = CharField(null=True)
+    source_bot_name = CharField()
+    file_id = CharField()
+    thumb_file_id = CharField()
+    shell_bot_name = CharField()
+    shell_file_id = CharField()
+    shell_thumb_file_id = CharField()
+    update_content = IntegerField(default=0)
 
+    class Meta:
+        table_name = 'sora'
 
 
 class SoraContent(BaseModel):  
     id = AutoField()
     source_id = CharField(max_length=100)
-    type = CharField(max_length=10)
+    file_type = CharField(max_length=1)  # 简化做法
+
     content = TextField()
     content_seg = TextField(null=True)
     file_size = BigIntegerField(null=True)
     duration = IntegerField(null=True)
     tag = CharField(max_length=200, null=True)
     thumb_file_unique_id = CharField(max_length=100, null=True)
+    thumb_hash = CharField(max_length=64, null=True)
+    owner_user_id = BigIntegerField(null=True)
+    source_channel_message_id = BigIntegerField(null=True)
+    stage = CharField(max_length=20, null=True)  # 可选改用 ENUM 实现
+    plan_update_timestamp = BigIntegerField(null=True)
+    
 
     class Meta:
         table_name = 'sora_content'
 
 
 class SoraMedia(BaseModel):
-    id = AutoField()
-    content_id = ForeignKeyField(SoraContent, backref='media', on_delete='CASCADE')
+    id = BigAutoField()
+    content_id = ForeignKeyField(SoraContent, backref='medias', column_name='content_id', on_delete='CASCADE')
     source_bot_name = CharField(max_length=30)
     file_id = CharField(max_length=150, null=True)
     thumb_file_id = CharField(max_length=150, null=True)
 
     class Meta:
         table_name = 'sora_media'
+        database = DB_MYSQL
         indexes = (
             (('content_id', 'source_bot_name'), True),  # UNIQUE
         )
+
 
 class FileTag(BaseModel):
     id = AutoField()
