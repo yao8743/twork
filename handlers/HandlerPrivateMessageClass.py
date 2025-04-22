@@ -32,10 +32,10 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 if match:
                     target_chat_id = int(match.group(1))
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
+                    # print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
+                    # print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
                 else:
                     print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
                     return
@@ -57,10 +57,10 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 if match:
                     target_chat_id = int(match.group(1))
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
+                    # print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
+                    # print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
                 else:
                     print("⚠️ 無 chat_id 可用，跳过消息", flush=True)
                     return
@@ -70,17 +70,6 @@ class HandlerPrivateMessageClass:
 
 
                 media = self.message.media.document if isinstance(self.message.media, MessageMediaDocument) else self.message.media.photo
-
-               
-
-
-                # media_key = generate_media_key(self.message)
-                # if media_key:
-                #     print(f"📌 媒体唯一识别码: {media_key}")
-                # else:
-                #     print("⚠️ 该消息无媒体或不支持的类型")
-
-                # media_key = generate_media_key(self.message)
 
                 media_key = generate_media_key(self.message)
                 if media_key:
@@ -109,6 +98,7 @@ class HandlerPrivateMessageClass:
 
                     else:
                         print("⚠️ 已接收过该媒体，跳过处理")
+                        pass
 
 
 
@@ -117,13 +107,16 @@ class HandlerPrivateMessageClass:
 
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
+        else:
+            await self.safe_delete_message()
         
 
         # 打印来源
         first_name = getattr(self.entity, "first_name", "") or ""
         last_name = getattr(self.entity, "last_name", "") or ""
         entity_title = f"{first_name} {last_name}".strip()
-        print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+        # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+        print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.id}")
 
     def get_fallback_chat_ids(self):
         try:

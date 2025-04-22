@@ -43,7 +43,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
             parse_mode='html',
             caption=caption_json
         )
-        print("✅ 成功转发消息！")
+        # print("✅ 成功转发消息！")
     except ChatForwardsRestrictedError:
         print(f"⚠️ 该消息禁止转发，尝试重新发送...{message_id}")
         await fetch_and_send(client, from_chat_id, message_id, to_protect_chat_id, material, caption_json)
