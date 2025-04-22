@@ -71,24 +71,26 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
             if not caption_json.strip():
                 raise ValueError("Empty caption_json")
             parsed_json = json.loads(caption_json)
+            parsed_json["protect"] = "1"
+            
+            if "闪照模式5秒后此消息自动销毁" in parsed_json:
+                parsed_json["flash"] = "1"
+            caption_json2 = json.dumps(parsed_json, ensure_ascii=False, indent=4)
+
+            await client.send_file(
+                to_chat_id,
+                new_material,
+                disable_notification=False,
+                parse_mode='html',
+                caption=caption_json2
+            )
+            print("✅ 重新发送成功！")
         except Exception as e:
             print(f"❌ 无法解析 caption_json: {e}\n内容是: {caption_json}")
             return
 
-        parsed_json = json.loads(caption_json)
-        parsed_json["protect"] = "1"
-        if "闪照模式5秒后此消息自动销毁" in parsed_json:
-            parsed_json["flash"] = "1"
-        caption_json2 = json.dumps(parsed_json, ensure_ascii=False, indent=4)
-
-        await client.send_file(
-            to_chat_id,
-            new_material,
-            disable_notification=False,
-            parse_mode='html',
-            caption=caption_json2
-        )
-        print("✅ 重新发送成功！")
+        
+        
     else:
         print("❌ 无法发送，未找到可用媒体")
 
