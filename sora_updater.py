@@ -9,7 +9,7 @@ if not os.getenv('GITHUB_ACTIONS'):
 
 from peewee import *
 from model.mysql_models import (
-    DB_MYSQL, Video, Document, KeywordContent, FileTag, Tag, init_mysql
+    DB_MYSQL, Video, Document, SoraContent, FileTag, Tag, init_mysql
 )
 
 SYNC_TO_POSTGRES = os.getenv('SYNC_TO_POSTGRES', 'false').lower() == 'true'
@@ -19,7 +19,7 @@ init_mysql()
 
 # 如需 PostgreSQL，再导入并初始化
 if SYNC_TO_POSTGRES:
-    from model.pg_models import DB_PG, KeywordContentPg, init_postgres
+    from model.pg_models import DB_PG, SoraContentPg, init_postgres
     from playhouse.shortcuts import model_to_dict
     init_postgres()
 
@@ -115,12 +115,12 @@ def sync_to_postgres(record):
     # ✅ 强制带入 id，确保主键一致
     with DB_PG.atomic():
         try:
-            existing = KeywordContentPg.get(KeywordContentPg.id == record.id)
+            existing = SoraContentPg.get(SoraContentPg.id == record.id)
             for k, v in model_data.items():
                 setattr(existing, k, v)
             existing.save()
-        except KeywordContentPg.DoesNotExist:
-            KeywordContentPg.create(**model_data)
+        except SoraContentPg.DoesNotExist:
+            SoraContentPg.create(**model_data)
 
 
 def process_documents():
@@ -144,18 +144,24 @@ def process_documents():
 
         if doc.kc_id:
             try:
-                kw = KeywordContent.get_by_id(doc.kc_id)
+                kw = SoraContent.get_by_id(doc.kc_id)
                 kw.source_id = doc.file_unique_id
                 kw.content = content
                 kw.content_seg = content_seg
+                kw.file_size = doc.file_size
                 kw.save()
-            except KeywordContent.DoesNotExist:
-                kw = KeywordContent.create(
-                    source_id=doc.file_unique_id, type='d', content=content, content_seg=content_seg)
+            except SoraContent.DoesNotExist:
+                kw = SoraContent.create(
+                    source_id=doc.file_unique_id, 
+                    type='d', 
+                    content=content, 
+                    content_seg=content_seg,
+                    file_size = doc.file_size
+                    )
                 doc.kc_id = kw.id
         else:
-            kw = KeywordContent.create(
-                source_id=doc.file_unique_id, type='d', content=content, content_seg=content_seg)
+            kw = SoraContent.create(
+                source_id=doc.file_unique_id, type='d', content=content, content_seg=content_seg,file_size = doc.file_size)
             doc.kc_id = kw.id
 
         doc.kc_status = 'updated'
@@ -191,18 +197,32 @@ def process_videos():
 
         if doc.kc_id:
             try:
-                kw = KeywordContent.get_by_id(doc.kc_id)
+                kw = SoraContent.get_by_id(doc.kc_id)
                 kw.source_id = doc.file_unique_id
                 kw.content = content
                 kw.content_seg = content_seg
+                kw.file_size = doc.file_size
+                kw.duration = doc.duration
                 kw.save()
-            except KeywordContent.DoesNotExist:
-                kw = KeywordContent.create(
-                    source_id=doc.file_unique_id, type='v', content=content, content_seg=content_seg)
+            except SoraContent.DoesNotExist:
+                kw = SoraContent.create(
+                    source_id=doc.file_unique_id, 
+                    type='v', 
+                    content=content, 
+                    content_seg=content_seg,
+                    file_size = doc.file_size,
+                    duration = doc.duration
+                    )
                 doc.kc_id = kw.id
         else:
-            kw = KeywordContent.create(
-                source_id=doc.file_unique_id, type='v', content=content, content_seg=content_seg)
+            kw = SoraContent.create(
+                source_id=doc.file_unique_id, 
+                type='v', 
+                content=content, 
+                content_seg=content_seg,
+                file_size = doc.file_size,
+                duration = doc.duration
+                )
             doc.kc_id = kw.id
 
         doc.kc_status = 'updated'

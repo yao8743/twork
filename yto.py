@@ -169,7 +169,7 @@ async def man_bot_loop(client):
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=10, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_user_message(client, entity, message)
@@ -190,7 +190,7 @@ async def man_bot_loop(client):
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=10, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_group_message(client, entity, message)
@@ -222,7 +222,7 @@ async def main():
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
         await man_bot_loop(client)
-        await keep_db_alive()
+        # await keep_db_alive()
         # print("--- Cycle End ---")
         await asyncio.sleep(random.randint(4, 6))
 

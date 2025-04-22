@@ -27,7 +27,7 @@ class DB:
                 '''
                 SELECT id, source_id, type,
                        ts_headline('simple', content, plainto_tsquery('simple', $1)) AS highlighted_content
-                FROM keyword_content
+                FROM sora_content
                 WHERE content_seg_tsv @@ plainto_tsquery('simple', $1)
                   AND id > $2
                 ORDER BY id ASC
@@ -50,7 +50,7 @@ class DB:
             rows = await conn.fetch(
                 '''
                 SELECT id, source_id, type, content
-                FROM keyword_content
+                FROM sora_content
                 WHERE content_seg_tsv @@ plainto_tsquery('simple', $1)
                 AND id > $2
                 ORDER BY id ASC
