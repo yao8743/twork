@@ -32,7 +32,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
 
         
         
-        caption_json = json.dumps(caption_json, ensure_ascii=False, indent=4)
+        # caption_json = json.dumps(caption_json, ensure_ascii=False, indent=4)
 
 
         await client.send_file(
@@ -77,7 +77,7 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
 
             if "闪照模式5秒后此消息自动销毁" in parsed_json:
                 parsed_json["flash"] = "1"
-                
+
             caption_json2 = json.dumps(parsed_json, ensure_ascii=False, indent=4)
 
             await client.send_file(
