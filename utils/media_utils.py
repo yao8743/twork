@@ -31,8 +31,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
             print("📤 发送单个媒体")
 
         
-        if "desc" in caption_json:
-            caption_json["desc"] = truncate_caption(caption_json["desc"])
+        
         caption_json = json.dumps(caption_json, ensure_ascii=False, indent=4)
 
 
@@ -72,9 +71,13 @@ async def fetch_and_send(client, from_chat_id, message_id, to_chat_id, material,
                 raise ValueError("Empty caption_json")
             parsed_json = json.loads(caption_json)
             parsed_json["protect"] = "1"
-            
+            if "desc" in parsed_json:
+                parsed_json["desc"] = truncate_caption(parsed_json["desc"])
+
+
             if "闪照模式5秒后此消息自动销毁" in parsed_json:
                 parsed_json["flash"] = "1"
+                
             caption_json2 = json.dumps(parsed_json, ensure_ascii=False, indent=4)
 
             await client.send_file(
