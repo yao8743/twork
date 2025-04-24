@@ -19,7 +19,10 @@ from handlers.HandlerBJIClass import HandlerBJIClass
 from handlers.HandlerNoAction import HandlerNoAction
 from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
 
-
+from telethon.tl.functions.photos import DeletePhotosRequest
+from telethon.tl.types import InputPhoto
+from telethon.tl.functions.account import UpdateProfileRequest
+from telethon.tl.functions.account import UpdateUsernameRequest
 
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
@@ -92,19 +95,21 @@ async def save_scrap_progress(entity_id, message_id):
     record.save()
 
 async def process_user_message(client, entity, message):
-   
+    # print(f"[User] Message from  ({entity.id}): {message.text}", flush=True)
 
-    botname = None
-    try:
-        if message.text:
-            match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
-            if match:
-                botname = match.group(1) + match.group(2)
-                await client.send_message(botname, "/start")
-                await client.send_message(botname, "[~bot~]")
-    except Exception as e:
-        print(f"Error kicking bot: {e} {botname}", flush=True)
-
+    # botname = None
+    # try:
+    #     if message.text:
+    #         match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
+    #         if match:
+    #             botname = match.group(1) + match.group(2)
+    #             await client.send_message(botname, "/start")
+    #             await client.send_message(botname, "[~bot~]")
+    #     else:
+    #         await safe_delete_message(message)
+    # except Exception as e:
+    #     print(f"Error kicking bot: {e} {botname}", flush=True)
+    pass
     
        
 
@@ -139,13 +144,14 @@ async def man_bot_loop(client):
                 ):
                     await process_user_message(client, entity, message)
             else:
+                
                 # if entity.id != 2488472597:
                 #     return
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=300, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_group_message(client, entity, message)
@@ -163,12 +169,61 @@ async def join(invite_hash):
         else:
             print(f"加入群组失败: {e}")
 
+async def delete_my_profile_photos(client):
+    photos = await client.get_profile_photos('me')
+
+    if not photos:
+        print("你没有设置头像。")
+        return
+
+    input_photos = []
+    for photo in photos:
+        if hasattr(photo, 'id') and hasattr(photo, 'access_hash') and hasattr(photo, 'file_reference'):
+            input_photos.append(InputPhoto(
+                id=photo.id,
+                access_hash=photo.access_hash,
+                file_reference=photo.file_reference
+            ))
+
+    await client(DeletePhotosRequest(id=input_photos))
+    print("头像已删除。")
+
+async def update_my_name(client, first_name, last_name=''):
+    await client(UpdateProfileRequest(first_name=first_name, last_name=last_name))
+    print(f"已更新用户姓名为：{first_name} {last_name}")
+
+async def remove_username(client):
+    try:
+        await client(UpdateUsernameRequest(''))  # 设置空字符串即为移除
+        print("用户名已成功移除。")
+    except Exception as e:
+        print(f"移除失败：{e}")
+
+async def safe_delete_message(message):
+    try:
+        await client.delete_messages(message.chat_id, [message.id], revoke=True)
+        print(f"🧹 成功刪除訊息 {message.id}（雙方）", flush=True)
+    except Exception as e:
+        print(f"⚠️ 刪除訊息失敗 {message.id}：{e}", flush=True)
 
 
 async def main():
     await client.start(config['phone_number'])
-    # await join("xbY8S-04jnEzYWE0")   
+    # await delete_my_profile_photos(client)
+    # await update_my_name(client, "雨江", "")
+    # await remove_username(client)
+    # await client.send_message(2210941198, "太可以了")  # 替换为实际的 bot ID
+    # await join("6-1VMbcX_BgwNDlh")    #布吉岛 
+
     # await join("7-HhTojcPCYyMjk0")    #Coniguration
+    # await join("0pHeNq5WfXAxYjU8")    #SHELLBOT_FORWARD_CHAT_ID
+    # await join("CX9jBUmJ92A4YTQ0")    #FILEDEPOT_FORWARD_CHAT_IDFILEDEPOT_FORWARD_CHAT_ID
+    # await join("xbY8S-04jnEzYWE0")    #PROTECT_FILEDEPOT_FORWARD_CHAT_ID
+   
+    # await client.send_message(2089623619, "章鱼哥还没好吗")  # 替换为实际的 bot ID
+    # await client.send_message(2210941198, "有这种吗")  # 替换为实际的 bot ID
+    
+# ///2089623619
     # exit()
     start_time = time.time()
     # 显示现在时间

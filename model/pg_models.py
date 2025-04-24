@@ -29,7 +29,7 @@ class SoraContentPg(PgBaseModel):
 
     content = TextField()
     content_seg = TextField(null=True)
-    content_seg_tsv = TSVectorField(null=True)  # GENERATED COLUMN
+    # content_seg_tsv = TSVectorField(null=True)  # GENERATED COLUMN
     file_size = BigIntegerField(null=True)
     duration = IntegerField(null=True)
     tag = CharField(max_length=200, null=True)

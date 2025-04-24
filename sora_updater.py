@@ -188,7 +188,7 @@ def process_documents():
             except SoraContent.DoesNotExist:
                 kw = SoraContent.create(
                     source_id=doc.file_unique_id, 
-                    type='d', 
+                    file_type='d', 
                     content=content, 
                     content_seg=content_seg,
                     file_size = doc.file_size
@@ -196,7 +196,7 @@ def process_documents():
                 doc.kc_id = kw.id
         else:
             kw = SoraContent.create(
-                source_id=doc.file_unique_id, type='d', content=content, content_seg=content_seg,file_size = doc.file_size)
+                source_id=doc.file_unique_id, file_type='d', content=content, content_seg=content_seg,file_size = doc.file_size)
             doc.kc_id = kw.id
 
         doc.kc_status = 'updated'
@@ -242,7 +242,7 @@ def process_videos():
             except SoraContent.DoesNotExist:
                 kw = SoraContent.create(
                     source_id=doc.file_unique_id, 
-                    type='v', 
+                    file_type='v', 
                     content=content, 
                     content_seg=content_seg,
                     file_size = doc.file_size,
@@ -252,7 +252,7 @@ def process_videos():
         else:
             kw = SoraContent.create(
                 source_id=doc.file_unique_id, 
-                type='v', 
+                file_type='v', 
                 content=content, 
                 content_seg=content_seg,
                 file_size = doc.file_size,
@@ -358,6 +358,6 @@ def process_sora_update():
 
 
 if __name__ == "__main__":
-    # process_documents()
-    # process_videos()
-    process_sora_update()
+    process_documents()
+    process_videos()
+    # process_sora_update()

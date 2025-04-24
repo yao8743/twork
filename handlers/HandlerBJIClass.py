@@ -12,12 +12,14 @@ from telethon.errors import ChatForwardsRestrictedError
 from model.scrap import Scrap
 from model.scrap_progress import ScrapProgress
 from database import ensure_connection
-from datetime import datetime
+from datetime import datetime,timedelta,timezone
 from utils.media_utils import get_image_hash, safe_forward_or_send, fetch_and_send
 from utils.text_utils import limit_visible_chars
 from utils.convert_utils import convert_duration_to_seconds, convert_to_bytes
 from utils.button_utils import send_fake_callback, fetch_messages_and_load_more
 from services.scrap_service import save_scrap_progress
+from telethon.tl.functions.account import UpdateProfileRequest
+from telethon.errors import UserIdInvalidError
 
 
 class HandlerBJIClass:
@@ -38,16 +40,22 @@ class HandlerBJIClass:
 
     async def handle(self):
 
+        # await self.get_me()
+        # exit()
+
         # print(f"[Group] Message from {self.entity_title} ({entity.id}): {message.text}")
         # print(f"Message from {self.entity.title} ({self.message.id}): {self.message.text}",flush=True)
         print(f"Message from ({self.message.id})",flush=True)
-    
+        api_id = self.extra_data['app_id']
+       
+
+      
        
         
         if self.message.id % 243 == 0:
             quote_gen = QuietQuoteGenerator()
             print(f"Message from  ({self.message.id})")
-            api_id = self.extra_data['app_id']
+            
 
             try:
                 progress = ScrapProgress.select().where(
@@ -60,16 +68,28 @@ class HandlerBJIClass:
 
                 now = datetime.now()
                 print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
-
+                
                 if (now - last_post_time).total_seconds() > 1800:
+                    self.change_firstname()
                     # 取1~10的随机数，若小于4，则发送
                     
                     # 发送随机语录
                     print(f"Sending quote to {self.entity.id}",flush=True)
-                    await self.client.send_message(self.entity.id, quote_gen.random_quote())
+                    sent_message = await self.client.send_message(self.entity.id, quote_gen.generate_greeting())
+                    
                     # ✅ 更新 post_datetime
                     progress.post_datetime = datetime.now()
                     progress.save()
+
+                    
+                    # 等待指定时间（3分钟）
+                    asyncio.create_task(self.delayed_delete(sent_message.id, 180))
+                    
+                   
+
+
+
+                    
 
             except ScrapProgress.DoesNotExist:
                 # 若不存在记录，可视为初次触发
@@ -87,43 +107,58 @@ class HandlerBJIClass:
         checkText = self.message.text
         if not self.message.is_reply and (checkText or "").startswith("/hongbao"):
             
-            # 正则模式：匹配 "/hongbao 数字 数字"
-            pattern_hongbao = r"^/hongbao\s+(\d+)\s+(\d+)$"
-            match = re.match(pattern_hongbao, checkText)
-            if match:
-                points = int(match.group(1))  # 积分数
-                count = int(match.group(2))   # 红包个数
+            # 判断是否是30秒内的消息
+            if datetime.now(timezone.utc) - self.message.date < timedelta(seconds=30):
+                print("✅ 这是一条 30 秒内的红包消息")
 
-                                # 感谢语列表（低调简短）
-                thank_you_messages = [
-                    "多谢老板照顾 🙏",
-                    "感谢好意～",
-                    "收到，谢啦",
-                    "谢谢老板",
-                    "小红包，大人情",
-                    "心领了，谢~",
-                    "感恩不尽",
-                    "谢谢老板",
-                    "收下啦～",
-                    "感谢支持",
-                    "老板万岁 😎"
-                ]
 
-                # 随机选择感谢语
-                
-                # random_number = random.randint(1, 10)
-                # if random_number < 7:
+                # 正则模式：匹配 "/hongbao 数字 数字"
+                pattern_hongbao = r"^/hongbao\s+(\d+)\s+(\d+)$"
+                match = re.match(pattern_hongbao, checkText)
+                if match:
+                    points = int(match.group(1))  # 积分数
+                    count = int(match.group(2))   # 红包个数
+
+                    if(points > 1 and (points/count) > 5):
+                        #大包当抢
+                        
+                        pass
+
+                                    # 感谢语列表（低调简短）
+                    thank_you_messages = [
+                        "多谢老板照顾 🙏",
+                        "感谢好意～",
+                        "收到，谢啦",
+                        "谢谢老板",
+                        "小红包，大人情",
+                        "心领了，谢~",
+                        "感恩不尽",
+                        "谢谢老板",
+                        "收下啦～",
+                        "感谢支持",
+                        "老板万岁 😎"
+                    ]
+
+                    # 随机选择感谢语
+
                     
-                #     await self.client.send_message(self.entity.id, random.shuffle(thank_you_messages))
+                    random_number = random.randint(1, 10)
+                    if random_number < 7:
+                        await self.change_firstname()
+                        # print(f"Sending thank you message to {random.choice(thank_you_messages)}",flush=True)
+                        sent_hb_message = await self.client.send_message(self.entity.id, random.choice(thank_you_messages))
 
-                #     progress = ScrapProgress.select().where(
-                #         (ScrapProgress.chat_id == self.entity.id) &
-                #         (ScrapProgress.api_id == api_id)
-                #     ).order_by(ScrapProgress.post_datetime.desc()).get()
-                #     progress.post_datetime = datetime.now()
-                #     progress.save()
-                
-
+                        progress = ScrapProgress.select().where(
+                            (ScrapProgress.chat_id == self.entity.id) &
+                            (ScrapProgress.api_id == api_id)
+                        ).order_by(ScrapProgress.post_datetime.desc()).get()
+                        progress.post_datetime = datetime.now()
+                        progress.save()
+                    
+                        asyncio.create_task(self.delayed_delete(sent_hb_message.id, 180))
+            else:
+                print("💥 这是一条 30 秒前的红包消息")
+                   
                 
 
             return    
@@ -150,6 +185,11 @@ class HandlerBJIClass:
                 )
                 # print(f"Processing FileDepotBot message: {filedepotmessage.text}")
                 await self.fdbot(self.client, filedepotmessage)
+
+
+    async def delayed_delete(self,  message_id, delay_sec):
+        await asyncio.sleep(delay_sec)
+        await self.client.delete_messages(self.entity.id, message_id)
 
     async def fdbot(self, client, message):
         ensure_connection()
@@ -279,7 +319,7 @@ class HandlerBJIClass:
                 user_fullname = None
                 if "Posted by" in response.text:
                     parts = response.text.split("Posted by", 1)
-                    content1 = limit_visible_chars(parts[0].replace("__", "").strip(), 200)
+                    content1 = limit_visible_chars(parts[0].replace("__", "").strip(), 180)
                     after_posted_by = parts[1].strip().split("\n")[0]
                     match = re.search(r"\[__(.*?)__\]", after_posted_by)
                     if match:
@@ -355,3 +395,39 @@ class HandlerBJIClass:
                         parse_mode='html',
                         caption=caption_json
                     )
+                except UserIdInvalidError as e:
+                    print(f"⚠️ 无法发送，UserIdInvalidError: {e}")
+                    exit()
+                    # 可选：你可以尝试 fallback 发送到另一个 chat_id，或忽略
+                except Exception as e:
+                    print(f"❌ 其他未知错误: {e}")
+                    exit()
+                    
+
+    async def get_me(self):
+        async with self.client.conversation("She11PostBot") as conv:
+            forwarded_message = await conv.send_message("/me")
+            try:
+                response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=10)
+            except asyncio.TimeoutError:
+                print("Response timeout.")
+                return
+            print(f"Response: {response}")
+
+    async def change_firstname(self):
+        name_dict = {
+            1: "Owen",
+            2: "Paruto🎈",
+            3: "JJa🎈",
+            4: "小绿",
+            5: "shelf☀️🍉",
+            6: "向阳",
+            7: "瓜☀️",
+            8: "行歌",
+            9: "奶泡",
+            10: "小嵬"
+        }
+
+        new_name = random.choice(list(name_dict.values()))
+        await self.client(UpdateProfileRequest(first_name=new_name))
+        print(f"已随机设置姓名为：{new_name}")
