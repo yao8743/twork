@@ -175,7 +175,7 @@ def process_documents():
         if tag_cn_list:
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {doc.file_unique_id}: {content_seg}")
+        print(f"Processing {doc.file_unique_id}")
 
         if doc.kc_id:
             try:
