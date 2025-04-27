@@ -19,7 +19,7 @@ def render_results_highlighted(results: list[dict], page: int, total: int, per_p
 
         lines.append(
             f"<b>ID:</b> {r['id']}\n"
-            f"<b>Type:</b> {r['type']}\n"
+            f"<b>Type:</b> {r['file_type']}\n"
             f"<b>Source:</b> {r['source_id']}\n"
             f"<b>内容:</b> {r['highlighted_content']}"
         )
@@ -36,7 +36,7 @@ def render_results_plain(results: list[dict], page: int, total: int, per_page: i
 
         lines.append(
             f"<b>ID:</b> {r['id']}\n"
-            # f"<b>Type:</b> {r['type']}\n"
+            # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
             f"<b>内容:</b> {content}"
         )

@@ -25,7 +25,7 @@ class DB:
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 '''
-                SELECT id, source_id, type,
+                SELECT id, source_id, file_type,
                        ts_headline('simple', content, plainto_tsquery('simple', $1)) AS highlighted_content
                 FROM sora_content
                 WHERE content_seg_tsv @@ plainto_tsquery('simple', $1)
@@ -49,7 +49,7 @@ class DB:
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 '''
-                SELECT id, source_id, type, content
+                SELECT id, source_id, file_type, content
                 FROM sora_content
                 WHERE content_seg_tsv @@ plainto_tsquery('simple', $1)
                 AND id > $2
