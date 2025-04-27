@@ -1,4 +1,4 @@
-name: Deploy LZ
+name: Deploy Sora
 
 on: 
   schedule:
@@ -84,7 +84,7 @@ jobs:
         POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
 
       run: |
-        python sora_upload.py
+        python sora_updater.py
 
 
     - name: Delete old workflow runs
