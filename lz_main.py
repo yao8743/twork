@@ -14,7 +14,7 @@ async def main():
     bot = Bot(
         token=API_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        request_timeout=3.0  # 原本是 10 秒，可降至 3~5 秒
+        request_timeout=10.0  # 原本是 10 秒，可降至 3~5 秒
     )
 
    
@@ -28,7 +28,7 @@ async def main():
     dp.include_router(lz_search_highlighted.router)
     await db.connect()
    
-    await dp.start_polling(bot, polling_timeout=5.0)
+    await dp.start_polling(bot, polling_timeout=10.0)
 
 if __name__ == "__main__":
     asyncio.run(main())
