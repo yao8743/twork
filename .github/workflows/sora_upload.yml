@@ -80,9 +80,13 @@ jobs:
     - name: Run SORA UPDATE
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        
         POSTGRES_DSN: ${{ secrets.POSTGRES_DSN }}
-
+        MYSQL_DB_NAME: ${{ secrets.DB_NAME }}
+        MYSQL_DB_USER: ${{ secrets.DB_USER }}
+        MYSQL_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        MYSQL_DB_HOST: ${{ secrets.DB_HOST }}
+        MYSQL_DB_PORT: ${{ secrets.DB_PORT }}
       run: |
         python sora_updater.py
 
