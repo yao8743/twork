@@ -9,8 +9,7 @@ BOT_MODE = os.getenv("BOT_MODE", "polling").lower()
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST")
 WEBHOOK_PATH = os.getenv("WEBHOOK_PATH")
 WEBAPP_HOST = os.getenv("WEBAPP_HOST")
-WEBAPP_PORT = os.getenv("WEBAPP_PORT")
 
-
+WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", 10000))
 
 

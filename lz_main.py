@@ -8,8 +8,9 @@ from lz_db import db
 from handlers import lz_search_highlighted
 
 async def on_startup(bot: Bot):
-    await bot.set_webhook(f"{WEBHOOK_HOST}{WEBHOOK_PATH}")
-
+    webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+    print(f"🔗 設定 Telegram webhook 為：{webhook_url}")
+    await bot.set_webhook(webhook_url)
 async def main():
 
     bot = Bot(
@@ -25,8 +26,10 @@ async def main():
     dp.startup.register(on_startup)
     await db.connect()
    
+    
 
     if BOT_MODE == "webhook":
+        print(f"🚀 啟動 Webhook 模式於 http://{WEBAPP_HOST}:{WEBAPP_PORT}{WEBHOOK_PATH}")
         await dp.start_webhook(
             webhook_path=WEBHOOK_PATH,
             host=WEBAPP_HOST,
