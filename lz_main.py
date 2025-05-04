@@ -22,18 +22,19 @@ async def main():
     # dp = Dispatcher()
     dp = Dispatcher()
     dp.include_router(lz_search_highlighted.router)
+    dp.startup.register(on_startup)
     await db.connect()
    
 
     if BOT_MODE == "webhook":
         await dp.start_webhook(
-            bot,
             webhook_path=WEBHOOK_PATH,
-            on_startup=on_startup,
             host=WEBAPP_HOST,
-            port=WEBAPP_PORT
+            port=int(WEBAPP_PORT),
+            bot=bot
         )
     else:
+        print("🚀 啟動 Polling 模式")
         await dp.start_polling(bot, polling_timeout=10.0)
 
     
