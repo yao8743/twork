@@ -126,24 +126,24 @@ class HandlerBJIClass:
 
                                     # 感谢语列表（低调简短）
                     thank_you_messages = [
-                        "多谢老板照顾 🙏",
-                        "感谢好意～",
-                        "收到，谢啦",
+                        "多谢老板 🙏",
+                        "感谢老板～",
+                        "谢啦",
                         "谢谢老板",
-                        "小红包，大人情",
-                        "心领了，谢~",
+                        "红包!",
+                        "谢~",
                         "感恩不尽",
                         "谢谢老板",
                         "收下啦～",
-                        "感谢支持",
-                        "老板万岁 😎"
+                        "感谢老板",
+                        "蟹蟹 😎"
                     ]
 
                     # 随机选择感谢语
 
                     
                     random_number = random.randint(1, 10)
-                    if random_number < 7:
+                    if random_number < 7 and count > 5:
                         await self.change_firstname()
                         # print(f"Sending thank you message to {random.choice(thank_you_messages)}",flush=True)
                         sent_hb_message = await self.client.send_message(self.entity.id, random.choice(thank_you_messages))
