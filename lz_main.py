@@ -7,7 +7,8 @@ from lz_config import API_TOKEN,BOT_MODE,WEBHOOK_PATH,WEBAPP_HOST,WEBAPP_PORT,WE
 from lz_db import db
 from handlers import lz_search_highlighted
 
- 
+import aiogram
+print(f"✅ aiogram version: {aiogram.__version__}")
 
 
 async def on_startup(bot: Bot):
