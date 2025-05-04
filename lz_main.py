@@ -10,13 +10,14 @@ from handlers import lz_search_highlighted
 async def on_startup(bot: Bot):
     webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
     print(f"🔗 設定 Telegram webhook 為：{webhook_url}")
+    await bot.delete_webhook(drop_pending_updates=True)  # ✅ 清掉 polling 模式
     await bot.set_webhook(webhook_url)
+
 async def main():
 
     bot = Bot(
         token=API_TOKEN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        request_timeout=10.0  # 原本是 10 秒，可降至 3~5 秒
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
 
    
