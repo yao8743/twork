@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
+from aiogram.enums import ChatType
 from lz_db import db
 from keyboards.lz_paginator import build_pagination_keyboard
 
@@ -18,7 +19,7 @@ def render_results_highlighted(results: list[dict], page: int, total: int, per_p
 
 
         lines.append(
-            f"<b>ID:</b> {r['id']}\n"
+            f"<b>[{r['id']:07d}]></b>\n"
             f"<b>Type:</b> {r['file_type']}\n"
             f"<b>Source:</b> {r['source_id']}\n"
             f"<b>内容:</b> {r['highlighted_content']}"
@@ -30,24 +31,31 @@ def render_results_plain(results: list[dict], page: int, total: int, per_page: i
     lines = [f"<b>📄 第 {page + 1}/{total_pages} 页（共 {total} 项）</b>\n"]
 
     for r in results:
-        content = r["content"]
-        if len(content) > 500:
-            content = content[:500] + "..."
+        content = shorten_content(r["content"])
+       
 
         lines.append(
-            f"<b>ID:</b> {r['id']}\n"
+            f"<b>{r['id']}</b> {content}\n"
             # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
-            f"<b>内容:</b> {content}"
+            # f"<b>内容:</b> {content}"
         )
 
     return "\n\n".join(lines)
 
-
+def shorten_content(text: str, max_length: int = 10) -> str:
+    if not text:
+        return ""
+    return text[:max_length] + "..." if len(text) > max_length else text
 
 
 @router.message(Command("s"))
 async def handle_search(message: Message):
+    if message.chat.type not in {ChatType.GROUP, ChatType.SUPERGROUP}:
+        await message.reply("⚠️ 此指令只能在群組中使用。")
+        return
+
+
     parts = message.text.split(maxsplit=1)
     if len(parts) < 2:
         await message.reply("请输入关键词： /s 正太 钢琴")

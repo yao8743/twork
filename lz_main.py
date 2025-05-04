@@ -39,6 +39,9 @@ async def main():
         SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
         setup_application(app, dp, bot=bot)
 
+        # 提供健康检查
+        app.router.add_get("/", lambda request: web.Response(text="OK"))
+
         # 啟動 aiohttp server
         await web._run_app(app, host=WEBAPP_HOST, port=int(WEBAPP_PORT))
     else:
