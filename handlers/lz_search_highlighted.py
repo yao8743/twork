@@ -41,9 +41,9 @@ def render_results_plain(results: list[dict], page: int, total: int, per_page: i
             # f"<b>内容:</b> {content}"
         )
 
-    return "\n\n".join(lines)
+    return lines
 
-def shorten_content(text: str, max_length: int = 10) -> str:
+def shorten_content(text: str, max_length: int = 20) -> str:
     if not text:
         return ""
     return text[:max_length] + "..." if len(text) > max_length else text
