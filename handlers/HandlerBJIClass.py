@@ -70,7 +70,7 @@ class HandlerBJIClass:
                 print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
                 
                 if (now - last_post_time).total_seconds() > 1800:
-                    await self.change_firstname()
+                    # await self.change_firstname()
                     # 取1~10的随机数，若小于4，则发送
                     
                     # 发送随机语录
@@ -144,7 +144,7 @@ class HandlerBJIClass:
                     
                     random_number = random.randint(1, 10)
                     if random_number < 7 and count > 5:
-                        await self.change_firstname()
+                        # await self.change_firstname()
                         # print(f"Sending thank you message to {random.choice(thank_you_messages)}",flush=True)
                         sent_hb_message = await self.client.send_message(self.entity.id, random.choice(thank_you_messages))
 
