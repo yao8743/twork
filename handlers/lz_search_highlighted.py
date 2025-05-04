@@ -35,13 +35,13 @@ def render_results_plain(results: list[dict], page: int, total: int, per_page: i
        
 
         lines.append(
-            f"<b>{r['id']}</b> {content}\n"
+            f"<b>{r['id']}</b> {content}"
             # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
             # f"<b>内容:</b> {content}"
         )
 
-    return lines
+    return "\n".join(lines)  # ✅ 强制变成纯文字
 
 def shorten_content(text: str, max_length: int = 20) -> str:
     if not text:
