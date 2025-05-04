@@ -7,6 +7,11 @@ from lz_config import API_TOKEN,BOT_MODE,WEBHOOK_PATH,WEBAPP_HOST,WEBAPP_PORT,WE
 from lz_db import db
 from handlers import lz_search_highlighted
 
+ 
+import sys
+print("🔴 Force shutdown.")
+sys.exit("Temp exit.")
+
 async def on_startup(bot: Bot):
     webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
     print(f"🔗 設定 Telegram webhook 為：{webhook_url}")
