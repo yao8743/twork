@@ -23,6 +23,7 @@ session_name = f"{api_id}session_name"
 setting_chat_id=2030683460
 setting_thread_id=181070
 
+
 # Load forward targets from .env
 targets_raw = os.getenv('FORWARD_TARGETS', '')
 fallback_chat_ids = [int(x.strip()) for x in targets_raw.split(',') if x.strip().isdigit()]

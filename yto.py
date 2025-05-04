@@ -95,15 +95,29 @@ async def get_max_source_message_id(source_chat_id):
         print(f"Error fetching max source_message_id: {e}")
         return None
     
+
+
 async def save_scrap_progress(entity_id, message_id):
     key = (entity_id, config['api_id'])
-    record, _ = ScrapProgress.get_or_create(
+    record = ScrapProgress.get_or_none(
         chat_id=entity_id,
         api_id=config['api_id'],
     )
-    record.message_id = message_id
-    record.update_datetime = datetime.now()
-    record.save()
+
+    if record is None:
+        # 不存在时新增
+        ScrapProgress.create(
+            chat_id=entity_id,
+            api_id=config['api_id'],
+            message_id=message_id,
+            update_datetime=datetime.now()
+        )
+    elif message_id > record.message_id:
+        # 存在且 message_id 更大时才更新
+        record.message_id = message_id
+        record.update_datetime = datetime.now()
+        record.save()
+
 
     local_scrap_progress[key] = message_id  # ✅ 同步更新缓存
 
