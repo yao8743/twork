@@ -8,9 +8,7 @@ from lz_db import db
 from handlers import lz_search_highlighted
 
  
-import sys
-print("🔴 Force shutdown.")
-sys.exit("Temp exit.")
+
 
 async def on_startup(bot: Bot):
     webhook_url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
