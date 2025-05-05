@@ -10,7 +10,7 @@ from aiogram.filters import Command  # ✅ v3 filter 写法
 
 from lz_config import API_TOKEN, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
 from lz_db import db
-from handlers import lz_search_highlighted,lz_photo_parser
+from handlers import lz_search_highlighted
 
 import aiogram
 print(f"✅ aiogram version: {aiogram.__version__}")
@@ -41,8 +41,8 @@ async def main():
 
     dp = Dispatcher()
     dp.include_router(lz_search_highlighted.router)
-    dp.include_router(lz_photo_parser.router)  # ✅ 注册你的新功能模块
-    
+    # dp.include_router(lz_photo_parser.router)  # ✅ 注册你的新功能模块
+
     await db.connect()
 
     # ✅ Telegram /ping 指令（aiogram v3 正确写法）
