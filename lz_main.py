@@ -10,7 +10,7 @@ from aiogram.filters import Command  # ✅ v3 filter 写法
 
 from lz_config import API_TOKEN, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
 from lz_db import db
-from handlers import lz_search_highlighted
+from handlers import lz_search_highlighted,lz_photo_parser
 
 import aiogram
 print(f"✅ aiogram version: {aiogram.__version__}")
@@ -23,7 +23,7 @@ async def on_startup(bot: Bot):
     print(f"🔗 設定 Telegram webhook 為：{webhook_url}")
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(webhook_url)
-    await db.connect()
+    
     global cold_start_flag
     cold_start_flag = False  # 启动完成，解除冷启动
 
@@ -41,7 +41,9 @@ async def main():
 
     dp = Dispatcher()
     dp.include_router(lz_search_highlighted.router)
-    dp.startup.register(on_startup)
+    dp.include_router(lz_photo_parser.router)  # ✅ 注册你的新功能模块
+    
+    await db.connect()
 
     # ✅ Telegram /ping 指令（aiogram v3 正确写法）
     @dp.message(Command(commands=["ping", "status"]))
@@ -50,6 +52,7 @@ async def main():
         await message.reply(f"✅ Bot 已运行 {uptime} 秒，目前状态良好。")
 
     if BOT_MODE == "webhook":
+        dp.startup.register(on_startup)
         print("🚀 啟動 Webhook 模式")
 
         app = web.Application()
