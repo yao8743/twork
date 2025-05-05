@@ -12,8 +12,10 @@ from model.mysql_models import (
     DB_MYSQL, Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
 )
 
+from model.scrap import Scrap
+
 SYNC_TO_POSTGRES = os.getenv('SYNC_TO_POSTGRES', 'false').lower() == 'true'
-BATCH_LIMIT = None
+BATCH_LIMIT = 10
 # 初始化 MySQL（必须先执行）
 init_mysql()
 
@@ -29,6 +31,14 @@ SYNONYM = {
     "萤幕": "显示器",
     "笔电": "笔记本",
 }
+
+def clean_bj_text(original_string):
+    target_strings = ["💾"]
+    for target in target_strings:
+        pos = original_string.find(target)
+        if pos != -1:
+            original_string = original_string[:pos]
+    return original_string
 
 def clean_text(original_string):
     target_strings = ["- Advertisement - No Guarantee", "- 广告 - 无担保"]
@@ -271,6 +281,163 @@ def process_videos():
     if SYNC_TO_POSTGRES:
         DB_PG.close()
 
+def parse_bj_tag_for_file(tag_str):
+    tag_cn_list = []
+    if tag_str:
+       # 将 tag_str 按空白符号分割
+        tag_list = tag_str.split()
+        for tag in tag_list:
+            # 移除 tag 前的 #
+            tag = tag.lstrip('#')
+            
+            tag_mapping = {
+                "白种人": "白人",
+                "黑种人": "黑人",
+                "露脸": "有露脸",
+                "遮挡": "带了面罩",
+                "未露脸": "没有露脸",
+                "无毛": "高年级_小五",
+                "中毛": "少年_高中",
+                "黑森林": "少年_高中",
+                "幼儿": "低年级_小二",
+                "小学": "低年级_小二",
+                "初中": "初毛",
+                "高中": "少年_高中",
+                "合法": "少年_高中",
+                "清水": "没有裸体",
+                "写真": "正太主题汇整",
+                "动画": "卡通动漫",
+                "母子": "正太与阿姨",
+                "肛交": "爆菊",
+                "口交": "口交",
+                "足交": "恋足",
+                "自撸": "撸管",
+                "射精": "射精",
+                "展示": "正太独秀",
+                "摸": "手交",
+                "偷拍": "偷拍",
+                "胖太": "胖太",
+                "TK挠痒": "瘙痒",
+                "SP打屁股": "打屁股",
+                "恋物": "恋物",
+                "猎奇重口": "猎奇",
+                "医学类": "医学",
+                "霸凌": "霸凌",
+                "监视": "监视器",
+                "直播录屏": "直播",
+                "冰淇淋": "冰淇淋",
+                "奶黄包": "奶黄包",
+                "眼镜哥": "眼镜哥系列",
+                "西边的风":"西边的风",
+                "日本全方位":"日本全方位",
+                "小孩不笨":"小孩不笨",  #
+                "网调大神":"网调大神",  #
+                "猫系列":"猫系列",  
+                "雨花石":"雨花石系列",  
+                "早点睡觉caodidi":"Caodidi系列",
+                "BB嵬":"BB嵬",
+                "we出品":"WE系列",
+                "堂山天草":"堂山",
+                "么么哒视频":"么么哒视频", #
+                "么么哒举牌原创":"么么哒举牌原创", #
+                "小6童模":"小六摄影",
+                "ledi二维码":"二维码系列"
+            }
+
+            # 替换标签
+            tag = tag_mapping.get(tag, tag)  # 如果 tag 不在映射中，就保留原值
+            tag_cn_list.append(tag)
+
+    return tag_cn_list
+
+
+def process_scrap():
+    DB_MYSQL.connect()
+    if SYNC_TO_POSTGRES:
+        DB_PG.connect()
+
+    for scrap in Scrap.select().where(((Scrap.kc_status.is_null(True)) | (Scrap.kc_status != 'updated')) & (Scrap.tag !='') ).limit(BATCH_LIMIT):
+        if not scrap.content:
+            scrap.kc_status = 'updated'
+            scrap.save()
+            continue
+        content = clean_bj_text(f"{scrap.content or ''}")
+        content = clean_text(f"{content or ''}")
+        content_seg = segment_text(content)
+        
+        tag_seg = ''
+        if scrap.tag:
+            tag_cn_list = parse_bj_tag_for_file(scrap.tag)
+            tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
+           
+            content_seg += " " + " ".join(tag_cn_list)
+
+        print(f"Processing {scrap.id}: {content_seg}")
+
+        # 🧱 集中所有字段
+        record_data = {
+            'source_id': scrap.id,
+            'file_type': 's',
+            'content': content,
+            'content_seg': content_seg,
+            'tag': tag_seg,
+            'file_size': scrap.estimated_file_size,
+            'duration': scrap.duration,
+            'thumb_file_unique_id': scrap.thumb_file_unique_id,
+            'thumb_hash': scrap.thumb_hash
+        }
+
+        media_data = [
+            {
+                'source_bot_name': scrap.thumb_bot,
+                'file_id': None,
+                'thumb_file_id': scrap.thumb_file_id
+            }
+        ]
+
+
+        if scrap.kc_id:
+            try:
+                kw = SoraContent.get_by_id(scrap.kc_id)
+                for key, value in record_data.items():
+                    setattr(kw, key, value)
+                kw.save()
+            except SoraContent.DoesNotExist:
+                kw = SoraContent.create(**record_data)
+                scrap.kc_id = kw.id
+        else:
+            kw = SoraContent.create(**record_data)
+            scrap.kc_id = kw.id
+
+        scrap.kc_status = 'updated'
+        scrap.save()
+
+        if media_data:
+            for media in media_data:
+                existing = SoraMedia.select().where(
+                    (SoraMedia.content_id == scrap.kc_id) &
+                    (SoraMedia.source_bot_name == media["source_bot_name"])
+                ).first()
+
+                if existing:
+                    existing.file_id = media["file_id"]
+                    existing.thumb_file_id = media["thumb_file_id"]
+                    existing.save()
+                    print(f"  🔄 更新 MySQL sora_media [{media['source_bot_name']}]")
+                else:
+                    SoraMedia.create(content_id=scrap.kc_id, **media)
+                    print(f"  ✅ 新增 MySQL sora_media [{media['source_bot_name']}]")
+
+
+       
+        if SYNC_TO_POSTGRES and kw.id:     
+            sync_to_postgres(kw)
+            sync_media_to_postgres(scrap.kc_id, media_data)
+            print("🚀 同步到 PostgreSQL 完成")
+
+    DB_MYSQL.close()
+    if SYNC_TO_POSTGRES:
+        DB_PG.close()
 
 
 
@@ -361,3 +528,4 @@ if __name__ == "__main__":
     process_documents()
     process_videos()
     # process_sora_update()
+    process_scrap()
