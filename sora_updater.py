@@ -524,6 +524,7 @@ def process_sora_update():
         DB_PG.close()
 
 
+
 if __name__ == "__main__":
     process_documents()
     process_videos()
