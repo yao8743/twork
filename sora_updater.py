@@ -356,7 +356,7 @@ def process_scrap():
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
-    for scrap in Scrap.select().where(((Scrap.kc_status.is_null(True)) | (Scrap.kc_status != 'updated'))  ).limit(BATCH_LIMIT):
+    for scrap in Scrap.select().where(((Scrap.kc_status.is_null(True)) | (Scrap.kc_status != 'updated')) & (Scrap.thumb_file_unique_id != '')  ).limit(BATCH_LIMIT):
         if not scrap.content:
             scrap.kc_status = 'updated'
             scrap.save()
