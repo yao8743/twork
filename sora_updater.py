@@ -15,7 +15,7 @@ from model.mysql_models import (
 from model.scrap import Scrap
 
 SYNC_TO_POSTGRES = os.getenv('SYNC_TO_POSTGRES', 'false').lower() == 'true'
-BATCH_LIMIT = 10
+BATCH_LIMIT = None
 # 初始化 MySQL（必须先执行）
 init_mysql()
 
