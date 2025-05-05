@@ -2,6 +2,7 @@
 import asyncpg
 from lz_config import POSTGRES_DSN
 from lz_memory_cache import MemoryCache
+from datetime import datetime
 
 class DB:
     def __init__(self):
@@ -61,6 +62,25 @@ class DB:
             result = [dict(r) for r in rows]
             self.cache.set(cache_key, result, ttl=60)
             return result
+
+
+    async def upsert_file_extension(self,
+        file_type: str,
+        file_unique_id: str,
+        file_id: str,
+        bot: str,
+        user_id: str = None
+    ):
+        async with self.pool.acquire() as conn:
+            await conn.execute("""
+                INSERT INTO file_extension (
+                    file_type, file_unique_id, file_id, bot, user_id, create_time
+                ) VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (file_unique_id, bot)
+                DO UPDATE SET
+                    file_id = EXCLUDED.file_id,
+                    create_time = EXCLUDED.create_time
+            """, file_type, file_unique_id, file_id, bot, user_id, datetime.utcnow())
 
 
 
