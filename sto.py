@@ -184,7 +184,7 @@ async def man_bot_loop(client):
 
                 if current_message:
                     last_message_id = await save_scrap_progress(entity.id, current_message.id)
-    return last_message_id
+                    return last_message_id
 
 async def join(invite_hash):
     from telethon.tl.functions.messages import ImportChatInviteRequest
