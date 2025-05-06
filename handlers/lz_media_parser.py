@@ -21,7 +21,7 @@ async def handle_photo_message(message: Message):
         await message.reply("⚠️ Caption 不是合法的 JSON。")
         return
 
-    await message.reply(f"✅ 解析成功：{result}")
+    # await message.reply(f"✅ 解析成功：{result}")
 
     largest_photo = message.photo[-1]
     file_id = largest_photo.file_id
