@@ -56,7 +56,7 @@ async def keep_db_alive():
         except Exception as e:
             print(f"数据库连接保持错误: {e}")
 
-async def send_completion_message():
+async def send_completion_message(last_message_id):
     try:
         print(f"发送完成消息到 {config['setting_chat_id']} 线程 {config['setting_thread_id']}")
         if config['setting_chat_id'] == 0 or config['setting_thread_id'] == 0:
@@ -171,6 +171,7 @@ async def man_bot_loop(client):
                     await process_group_message(client, entity, message)
                 if current_message:
                     last_message_id = await save_scrap_progress(entity.id, current_message.id)
+    return last_message_id
 
 async def join(invite_hash):
     from telethon.tl.functions.messages import ImportChatInviteRequest
@@ -245,12 +246,12 @@ async def main():
     print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
-        await man_bot_loop(client)
+        last_message_id = await man_bot_loop(client)
         await keep_db_alive()
         # print("--- Cycle End ---")
         await asyncio.sleep(random.randint(4, 6))
 
-    await send_completion_message()
+    await send_completion_message(last_message_id)
 
 if __name__ == "__main__":
     with client:
