@@ -319,7 +319,7 @@ class HandlerBJIClass:
                 user_fullname = None
                 if "Posted by" in response.text:
                     parts = response.text.split("Posted by", 1)
-                    content1 = limit_visible_chars(parts[0].replace("__", "").strip(), 180)
+                    content1 = limit_visible_chars(parts[0].replace("__", "").strip(), 150)
                     after_posted_by = parts[1].strip().split("\n")[0]
                     match = re.search(r"\[__(.*?)__\]", after_posted_by)
                     if match:

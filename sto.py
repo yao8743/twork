@@ -23,11 +23,12 @@ from telethon.tl.functions.photos import DeletePhotosRequest
 from telethon.tl.types import InputPhoto
 from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.account import UpdateUsernameRequest
+from telethon.errors import ChannelPrivateError
 
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.23239948.env')
+    load_dotenv(dotenv_path='.25254811.env')
 
 # 配置参数
 config = {
@@ -164,11 +165,23 @@ async def man_bot_loop(client):
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
-                async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=300, reverse=True, filter=InputMessagesFilterEmpty()
-                ):
-                    current_message = message
-                    await process_group_message(client, entity, message)
+
+                try:
+                    async for message in client.iter_messages(
+                        entity, min_id=min_id, limit=300, reverse=True, filter=InputMessagesFilterEmpty()
+                    ):
+                        
+                        if message.sticker:
+                            continue
+                        current_message = message
+                        await process_group_message(client, entity, message)
+                except ChannelPrivateError as e:
+                    print(f"目标 entity: {entity} 类型：{type(entity)}")
+                    print(f"❌ 无法访问频道：{e}")
+                except Exception as e:
+                    print(f"{e}", flush=True)
+                    print(f"{message}", flush=True)
+
                 if current_message:
                     last_message_id = await save_scrap_progress(entity.id, current_message.id)
     return last_message_id
