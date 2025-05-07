@@ -21,10 +21,16 @@ from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
 from telethon.errors import ChannelPrivateError
 
 
+from telethon.tl.functions.photos import DeletePhotosRequest
+from telethon.tl.types import InputPhoto
+from telethon.tl.functions.account import UpdateProfileRequest
+from telethon.tl.functions.account import UpdateUsernameRequest
+from telethon.errors import ChannelPrivateError
+
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path='.28817994.env')
 
 # 配置参数
 config = {
@@ -39,11 +45,70 @@ config = {
 # 在模块顶部初始化全局缓存
 local_scrap_progress = {}  # key = (chat_id, api_id), value = message_id
 
+last_message_id = 0
+
 # 初始化 Telegram 客户端
 client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
 # 常量
 MAX_PROCESS_TIME = 20 * 60  # 最大运行时间 20 分钟
+
+
+
+async def join(invite_hash):
+    from telethon.tl.functions.messages import ImportChatInviteRequest
+    try:
+        await client(ImportChatInviteRequest(invite_hash))
+        print("已成功加入群组")
+    except Exception as e:
+        if 'InviteRequestSentError' in str(e):
+            print("加入请求已发送，等待审批")
+        else:
+            print(f"加入群组失败: {e}")
+
+
+async def delete_my_profile_photos(client):
+    photos = await client.get_profile_photos('me')
+
+    if not photos:
+        print("你没有设置头像。")
+        return
+
+    input_photos = []
+    for photo in photos:
+        if hasattr(photo, 'id') and hasattr(photo, 'access_hash') and hasattr(photo, 'file_reference'):
+            input_photos.append(InputPhoto(
+                id=photo.id,
+                access_hash=photo.access_hash,
+                file_reference=photo.file_reference
+            ))
+
+    await client(DeletePhotosRequest(id=input_photos))
+    print("头像已删除。")
+
+async def update_my_name(client, first_name, last_name=''):
+    await client(UpdateProfileRequest(first_name=first_name, last_name=last_name))
+    print(f"已更新用户姓名为：{first_name} {last_name}")
+
+async def update_username(client,username):
+    try:
+        await client(UpdateUsernameRequest(username))  # 设置空字符串即为移除
+        print("用户名已成功变更。")
+    except Exception as e:
+        print(f"变更失败：{e}")
+
+async def safe_delete_message(message):
+    try:
+        await client.delete_messages(message.chat_id, [message.id], revoke=True)
+        print(f"🧹 成功刪除訊息 {message.id}（雙方）", flush=True)
+    except Exception as e:
+        print(f"⚠️ 刪除訊息失敗 {message.id}：{e}", flush=True)
+
+
+
+
+
+
 
 async def keep_db_alive():
     if db.is_closed():
@@ -54,7 +119,7 @@ async def keep_db_alive():
         except Exception as e:
             print(f"数据库连接保持错误: {e}")
 
-async def send_completion_message():
+async def send_completion_message(last_message_id):
     try:
         print(f"发送完成消息到 {config['setting_chat_id']} 线程 {config['setting_thread_id']}")
         if config['setting_chat_id'] == 0 or config['setting_thread_id'] == 0:
@@ -183,7 +248,7 @@ async def man_bot_loop(client):
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=10, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_user_message(client, entity, message)
@@ -226,21 +291,26 @@ async def man_bot_loop(client):
                 if current_message:
                     await save_scrap_progress(entity.id, current_message.id)
 
-async def join(invite_hash):
-    from telethon.tl.functions.messages import ImportChatInviteRequest
-    try:
-        await client(ImportChatInviteRequest(invite_hash))
-        print("已成功加入群组")
-    except Exception as e:
-        if 'InviteRequestSentError' in str(e):
-            print("加入请求已发送，等待审批")
-        else:
-            print(f"加入群组失败: {e}")
+
 
 
 
 async def main():
     await client.start(config['phone_number'])
+    # await update_username(client,"usesrnddzzzame")
+   
+    # await join("wku3XlN8cXQ3Y2E0") #7258-02
+    # await join("gY_fOJ2zWw1mNWE8") #7287-04
+    # await join("nYXaAKUlVcQxM2Y0") #7275-03
+    # await join("kFQen6UaqnMyNTNk") #6659-06
+    # await join("0jEV7qYT1SExY2Fk") #6874-01
+    # await join("5IyT263HC2s4NzJk") #6376-05
+    # await join("8lmqtraagMxjOWE0")  #6737-07
+    # await join("4Swd1bWtgwY0ZDA9")  #5891-08
+    # await join("G5cIphV18ahiNjQ8")  #7338-09
+    
+    # exit()
+
     # await join("xbY8S-04jnEzYWE0")   
     # await join("7-HhTojcPCYyMjk0")    #Coniguration
     # exit()
@@ -253,10 +323,12 @@ async def main():
         await man_bot_loop(client)
         # await keep_db_alive()
         # print("--- Cycle End ---")
-        await asyncio.sleep(random.randint(4, 6))
+        await asyncio.sleep(random.randint(14, 30))
 
     await send_completion_message()
 
 if __name__ == "__main__":
     with client:
         client.loop.run_until_complete(main())
+
+

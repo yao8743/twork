@@ -32,10 +32,10 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 if match:
                     target_chat_id = int(match.group(1))
-                    # print(f"📌 指定转发 chat_id={target_chat_id}")
+                    print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    # print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
+                    print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
                 else:
                     print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
                     return
@@ -57,10 +57,10 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 if match:
                     target_chat_id = int(match.group(1))
-                    # print(f"📌 指定转发 chat_id={target_chat_id}")
+                    print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    # print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
+                    print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
                 else:
                     print("⚠️ 無 chat_id 可用，跳过消息", flush=True)
                     return
