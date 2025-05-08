@@ -17,6 +17,7 @@ class HandlerPrivateMessageClass:
 
     async def handle(self):
         fallback_chat_ids = self.get_fallback_chat_ids()
+        forwared_success = True
 
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
@@ -35,15 +36,15 @@ class HandlerPrivateMessageClass:
                     print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
+                    # print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
                 else:
-                    print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
+                    # print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
                     return
 
 
 
 
-                await safe_forward_or_send(
+                forwared_success = await safe_forward_or_send(
                     self.client,
                     self.message.id,
                     self.message.chat_id,
@@ -60,7 +61,7 @@ class HandlerPrivateMessageClass:
                     print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
-                    print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
+                    # print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
                 else:
                     print("⚠️ 無 chat_id 可用，跳过消息", flush=True)
                     return
@@ -87,7 +88,7 @@ class HandlerPrivateMessageClass:
                             access_hash=access_hash
                         )
 
-                        await safe_forward_or_send(
+                        forwared_success = await safe_forward_or_send(
                             self.client,
                             self.message.id,
                             self.message.chat_id,
@@ -107,7 +108,7 @@ class HandlerPrivateMessageClass:
 
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
-        else:
+        elif forwared_success:
             await self.safe_delete_message()
         
 

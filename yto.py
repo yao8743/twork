@@ -299,15 +299,18 @@ async def main():
     await client.start(config['phone_number'])
     # await update_username(client,"usesrnddzzzame")
    
-    # await join("wku3XlN8cXQ3Y2E0") #7258-02
-    # await join("gY_fOJ2zWw1mNWE8") #7287-04
-    # await join("nYXaAKUlVcQxM2Y0") #7275-03
-    # await join("kFQen6UaqnMyNTNk") #6659-06
-    # await join("0jEV7qYT1SExY2Fk") #6874-01
-    # await join("5IyT263HC2s4NzJk") #6376-05
-    # await join("8lmqtraagMxjOWE0")  #6737-07
-    # await join("4Swd1bWtgwY0ZDA9")  #5891-08
-    # await join("G5cIphV18ahiNjQ8")  #7338-09
+    # await join("wku3XlN8cXQ3Y2E0") #7258-02 2112543793
+    # await join("gY_fOJ2zWw1mNWE8") #7287-04 2108982395
+    # await join("nYXaAKUlVcQxM2Y0") #7275-03 2063167161
+    # await join("kFQen6UaqnMyNTNk") #6659-06   2000730581
+    # await join("0jEV7qYT1SExY2Fk") #6874-01 2017145941
+    # await join("5IyT263HC2s4NzJk") #6376-05 1997235289
+    # await join("8lmqtraagMxjOWE0")  #7350-07 2145325974
+    # await join("4Swd1bWtgwY0ZDA9")  #5891-08 2062860209
+    # await join("G5cIphV18ahiNjQ8")  #7338-09 2015918658
+    # await join("aMxruC7pyacyNjY8")  #7350-07 2145325974
+    # await join("fRCAnbinkG1hYjU0")  #封面备份群
+   
     
     # exit()
 
