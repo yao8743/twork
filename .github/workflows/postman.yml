@@ -1,8 +1,8 @@
-name: Deploy STO Telethon
+name: Deploy Postman
 
 on: 
   schedule:
-    - cron: '*/33 * * * *'  # 每33分钟触发一次
+    - cron: '*/25 * * * *'  # 每33分钟触发一次
   push: 
     branches: 
       - master  # 当推送到 master 分支时触发
