@@ -17,6 +17,8 @@ from database import db
 
 from handlers.HandlerBJIClass import HandlerBJIClass
 from handlers.HandlerNoAction import HandlerNoAction
+from handlers.HandlerRelayClass import HandlerRelayClass
+
 from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
 from telethon.errors import ChannelPrivateError
 
@@ -30,7 +32,7 @@ from telethon.errors import ChannelPrivateError
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.28817994.env')
+    load_dotenv(dotenv_path='.20100034.env')
 
 # 配置参数
 config = {
@@ -201,11 +203,14 @@ async def process_user_message(client, entity, message):
 
     extra_data = {'app_id': config['api_id']}
 
-    entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
+   
 
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
-        777000: HandlerNoAction   # 替换为真实 entity.id 和处理类
+        777000: HandlerNoAction,   # 替换为真实 entity.id 和处理类
+        7419440827: HandlerNoAction,    #萨莱
+        8076535891: HandlerNoAction    #岩仔
+
     }
 
     handler_class = class_map.get(entity.id)
@@ -213,28 +218,35 @@ async def process_user_message(client, entity, message):
         handler = handler_class(client, entity, message, extra_data)
         await handler.handle()
     else:
+        
         handler = HandlerPrivateMessageClass(client, entity, message, extra_data)
+        # handler = HandlerNoAction(client, entity, message, extra_data)
+        handler.delete_after_process = True
         await handler.handle()
         # print(f"[Group] Message from {entity_title} ({entity.id}): {message.text}")
        
 
 async def process_group_message(client, entity, message):
-
+    
     extra_data = {'app_id': config['api_id']}
 
-    entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
+   
 
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
-        2210941198: HandlerBJIClass   # 替换为真实 entity.id 和处理类
+        2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
+        2054963513: HandlerRelayClass
     }
+
+    
+    
 
     handler_class = class_map.get(entity.id)
     if handler_class:
         handler = handler_class(client, entity, message, extra_data)
+        handler.accept_duplicate = True
         await handler.handle()
     else:
-        # print(f"[Group] Message from {entity_title} ({entity.id}): {message.text}")
         pass
 
 async def man_bot_loop(client):
@@ -242,29 +254,29 @@ async def man_bot_loop(client):
         entity = dialog.entity
 
         if dialog.unread_count >= 0:
+            
+            
+
             if dialog.is_user:
                 
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=2, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_user_message(client, entity, message)
+
                 if current_message:
                     await save_scrap_progress(entity.id, current_message.id)
 
                 
+                last_message_id = current_message.id if current_message else 0
                 
-                # await asyncio.sleep(0.5)
-                # async for message in client.iter_messages(
-                #     entity, min_id=0, limit=1, reverse=True, filter=InputMessagesFilterEmpty()
-                # ):
-                #     await process_user_message(client, entity, message)
+                
             else:
-                # if entity.id != 2488472597:
-                #     return
+               
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
@@ -283,14 +295,14 @@ async def man_bot_loop(client):
                     print(f"❌ 无法访问频道：{e}")
                 except Exception as e:
                     print(f"{e}", flush=True)
-                    print(f"{message}", flush=True)
+                    # print(f"{message}", flush=True)
 
 
 
               
                 if current_message:
                     await save_scrap_progress(entity.id, current_message.id)
-
+                    return last_message_id
 
 
 
@@ -310,25 +322,27 @@ async def main():
     # await join("G5cIphV18ahiNjQ8")  #7338-09 2015918658
     # await join("aMxruC7pyacyNjY8")  #7350-07 2145325974
     # await join("fRCAnbinkG1hYjU0")  #封面备份群
+    # await join("6gAolpGeQq8wYmM0")  #封面图中转站
+  
    
     
-    # exit()
+    
 
     # await join("xbY8S-04jnEzYWE0")   
     # await join("7-HhTojcPCYyMjk0")    #Coniguration
-    # exit()
+
     start_time = time.time()
     # 显示现在时间
     now = datetime.now()
     print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
-        await man_bot_loop(client)
+        last_message_id = await man_bot_loop(client)
         # await keep_db_alive()
         # print("--- Cycle End ---")
         await asyncio.sleep(random.randint(14, 30))
 
-    await send_completion_message()
+    await send_completion_message(last_message_id)
 
 if __name__ == "__main__":
     with client:

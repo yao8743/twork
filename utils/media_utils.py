@@ -47,7 +47,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
         # 暂停1秒
         await asyncio.sleep(1)
         # print("✅ 成功转发消息！")
-        return True;
+        return True
     except ChatForwardsRestrictedError:
         print(f"⚠️ 该消息禁止转发，尝试重新发送...{message_id}")
         await fetch_and_send(client, from_chat_id, message_id, to_protect_chat_id, material, caption_json)

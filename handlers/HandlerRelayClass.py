@@ -7,20 +7,26 @@ from model.media_index import MediaIndex  # ✅ Peewee ORM model
 from peewee import DoesNotExist
 from utils.media_utils import generate_media_key
 
-class HandlerPrivateMessageClass:
+class HandlerRelayClass:
     def __init__(self, client, entity, message, extra_data):
         self.client = client
         self.entity = entity
         self.message = message
         self.extra_data = extra_data
-        self.delete_after_process = False
-        self.forward_pattern = re.compile(r'\|_forward_\|\@(\d+)')
+        self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
+        self.accept_duplicate = False
 
     async def handle(self):
-        fallback_chat_ids = self.get_fallback_chat_ids()
+        
         forwared_success = True
 
+        entity_title = getattr(self.entity, 'title', f"Unknown entity {self.entity.id}")
+        print(f"[Group] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
+           
+            
+            
             grouped_id = getattr(self.message, 'grouped_id', None)
 
             if grouped_id:
@@ -51,40 +57,55 @@ class HandlerPrivateMessageClass:
                     caption
                 )
 
-                if(self.delete_after_process and forwared_success):
-                    await self.safe_delete_message()
-
             else:
                 caption = self.message.text or ""
                 match = self.forward_pattern.search(caption)
                 if match:
-                    target_chat_id = int(match.group(1))
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
-                elif fallback_chat_ids:
-                    target_chat_id = random.choice(fallback_chat_ids)
-                    # print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
+                    target_raw = match.group(1)
+                    if target_raw.isdigit():
+                        target_chat_id = int(target_raw)
+                    else:
+                        target_chat_id = target_raw.strip('@')  # 可留可不留 @
+                    print(f"📌 指定转发 x chat_id={target_chat_id}")
                 else:
-                    print("⚠️ 無 chat_id 可用，跳过消息", flush=True)
-                    return
+                    fallback_chat_ids = self.get_fallback_chat_ids()
+                    if fallback_chat_ids:
+                        target_chat_id = random.choice(fallback_chat_ids)
+                        print(f"🌟 無轉發標記，改转发至 x chat_id={target_chat_id}", flush=True)
+                    else:
+                        print("⚠️ 無 x chat_id 可用，跳过消息", flush=True)
+                        return
 
+               
                 media = self.message.media.document if isinstance(self.message.media, MessageMediaDocument) else self.message.media.photo
-
+                
                 media_key = generate_media_key(self.message)
+              
                 if media_key:
+                   
                     media_type, media_id, access_hash = media_key
-                    exists = MediaIndex.select().where(
-                        (MediaIndex.media_type == media_type) &
-                        (MediaIndex.media_id == media_id) &
-                        (MediaIndex.access_hash == access_hash)
-                    ).exists()
+                  
+                    # print(f"🔍 正在查找 FORWARD_TARGETS {self.extra_data['app_id']}", flush=True
+                    exists = False
+                    if not self.accept_duplicate:
+                        exists = MediaIndex.select().where(
+                            (MediaIndex.media_type == media_type) &
+                            (MediaIndex.media_id == media_id) &
+                            (MediaIndex.access_hash == access_hash)
+                        ).exists()
 
-                    if not exists:
-                        MediaIndex.create(
-                            media_type=media_type,
-                            media_id=media_id,
-                            access_hash=access_hash
-                        )
+                    
+                    if not exists or self.accept_duplicate:
+                       
+                        if not exists and not self.accept_duplicate:
+                           
+                            MediaIndex.create(
+                                media_type=media_type,
+                                media_id=media_id,
+                                access_hash=access_hash
+                            )
 
+                       
                         forwared_success = await safe_forward_or_send(
                             self.client,
                             self.message.id,
@@ -93,13 +114,18 @@ class HandlerPrivateMessageClass:
                             media,
                             caption
                         )
+                       
+                        if forwared_success:
+                            await self.safe_delete_message()
 
                     else:
+                        await self.safe_delete_message()
                         print("⚠️ 已接收过该媒体，跳过处理")
+                        
                         pass
 
-                    if(self.delete_after_process and forwared_success):
-                        await self.safe_delete_message()
+                    
+                    
 
 
 
@@ -108,8 +134,7 @@ class HandlerPrivateMessageClass:
 
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
-        else:
-            await self.safe_delete_message()
+        
         
 
         # 打印来源
@@ -134,7 +159,8 @@ class HandlerPrivateMessageClass:
 
     async def safe_delete_message(self):
         try:
-            await self.client.delete_messages(self.message.chat_id, [self.message.id], revoke=True)
+            
             print(f"🧹 成功刪除訊息 {self.message.id}（雙方）", flush=True)
+            await self.client.delete_messages(self.message.chat_id, [self.message.id], revoke=True)
         except Exception as e:
             print(f"⚠️ 刪除訊息失敗 {self.message.id}：{e}", flush=True)
