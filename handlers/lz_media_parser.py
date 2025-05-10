@@ -18,7 +18,8 @@ async def handle_photo_message(message: Message):
     result = parse_caption_json(caption)
 
     if result is False:
-        await message.reply("⚠️ Caption 不是合法的 JSON。")
+        pass
+        # await message.reply("⚠️ Caption 不是合法的 JSON。")
         return
 
     # await message.reply(f"✅ 解析成功：{result}")

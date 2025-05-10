@@ -14,7 +14,7 @@ class HandlerPrivateMessageClass:
         self.message = message
         self.extra_data = extra_data
         self.delete_after_process = False
-        self.forward_pattern = re.compile(r'\|_forward_\|\@(\d+)')
+        self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
 
     async def handle(self):
         fallback_chat_ids = self.get_fallback_chat_ids()
@@ -33,8 +33,12 @@ class HandlerPrivateMessageClass:
                 caption = album[0].message or ""
                 match = self.forward_pattern.search(caption)
                 if match:
-                    target_chat_id = int(match.group(1))
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
+                    target_raw = match.group(1)
+                    if target_raw.isdigit():
+                        target_chat_id = int(target_raw)
+                    else:
+                        target_chat_id = target_raw.strip('@')  # 可留可不留 @
+                    print(f"📌 指定转发 x chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
                     # print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)

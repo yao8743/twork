@@ -6,6 +6,7 @@ from model.scrap_config import ScrapConfig  # ✅ Peewee ORM model
 from model.media_index import MediaIndex  # ✅ Peewee ORM model
 from peewee import DoesNotExist
 from utils.media_utils import generate_media_key
+import json
 
 class HandlerRelayClass:
     def __init__(self, client, entity, message, extra_data):
@@ -16,17 +17,23 @@ class HandlerRelayClass:
         self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
         self.accept_duplicate = False
 
+
+    def parse_caption_json(self,caption: str):
+        try:
+            data = json.loads(caption)
+            return data if isinstance(data, dict) else False
+        except (json.JSONDecodeError, TypeError):
+            return False
+
     async def handle(self):
         
         forwared_success = True
+        target_chat_id = None
 
         entity_title = getattr(self.entity, 'title', f"Unknown entity {self.entity.id}")
         print(f"[Group] Message from {entity_title} ({self.entity.id}): {self.message.text}")
 
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
-           
-            
-            
             grouped_id = getattr(self.message, 'grouped_id', None)
 
             if grouped_id:
@@ -37,16 +44,38 @@ class HandlerRelayClass:
                     return
 
                 caption = album[0].message or ""
-                match = self.forward_pattern.search(caption)
-                if match:
-                    target_chat_id = int(match.group(1))
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
-                elif fallback_chat_ids:
-                    target_chat_id = random.choice(fallback_chat_ids)
-                    # print(f"🌟 無轉發標記，相簿改轉發至 chat_id={target_chat_id}", flush=True)
-                else:
-                    # print("⚠️ 無 chat_id 可用，跳過相簿", flush=True)
-                    return
+
+                if caption != "":
+                    json_result = self.parse_caption_json(caption)
+
+                    if json_result is False:
+                
+                        match = self.forward_pattern.search(caption)
+                        if match:
+                           
+                            target_raw = match.group(1)
+                            if target_raw.isdigit():
+                                target_chat_id = int(target_raw)
+                            else:
+                                target_chat_id = target_raw.strip('@')  # 可留可不留 @
+                            print(f"📌 指定转发 x chat_id={target_chat_id}")
+                        else:
+                            fallback_chat_ids = self.get_fallback_chat_ids()
+                            if fallback_chat_ids:
+                                target_chat_id = random.choice(fallback_chat_ids)
+                                print(f"🌟 相簿無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
+                            else:
+                                print("⚠️ 相簿無 chat_id 可用，跳过相簿", flush=True)
+                                return
+                    else:
+                        target_raw = json_result.get('target_chat_id')
+                        if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
+                            target_chat_id = int(target_raw)
+                        elif isinstance(target_raw, str):
+                            target_chat_id = target_raw.strip('@')  # 去掉 @
+                        else:
+                            print("⚠️ JSON 中未提供有效的 target_chat_id")
+                            return
 
                 forwared_success = await safe_forward_or_send(
                     self.client,
@@ -59,23 +88,36 @@ class HandlerRelayClass:
 
             else:
                 caption = self.message.text or ""
-                match = self.forward_pattern.search(caption)
-                if match:
-                    target_raw = match.group(1)
-                    if target_raw.isdigit():
-                        target_chat_id = int(target_raw)
-                    else:
-                        target_chat_id = target_raw.strip('@')  # 可留可不留 @
-                    print(f"📌 指定转发 x chat_id={target_chat_id}")
-                else:
-                    fallback_chat_ids = self.get_fallback_chat_ids()
-                    if fallback_chat_ids:
-                        target_chat_id = random.choice(fallback_chat_ids)
-                        print(f"🌟 無轉發標記，改转发至 x chat_id={target_chat_id}", flush=True)
-                    else:
-                        print("⚠️ 無 x chat_id 可用，跳过消息", flush=True)
-                        return
 
+                if caption != "":
+                    json_result = self.parse_caption_json(caption)
+
+                    if json_result is False:
+                        match = self.forward_pattern.search(caption)
+                        if match:
+                            target_raw = match.group(1)
+                            if target_raw.isdigit():
+                                target_chat_id = int(target_raw)
+                            else:
+                                target_chat_id = target_raw.strip('@')  # 可留可不留 @
+                            print(f"📌 指定转发 x chat_id={target_chat_id}")
+                        else:
+                            fallback_chat_ids = self.get_fallback_chat_ids()
+                            if fallback_chat_ids:
+                                target_chat_id = random.choice(fallback_chat_ids)
+                                print(f"🌟 無轉發標記，改转发至 x chat_id={target_chat_id}", flush=True)
+                            else:
+                                print("⚠️ 無 x chat_id 可用，跳过消息", flush=True)
+                                return
+                    else:
+                        target_raw = json_result.get('target_chat_id')
+                        if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
+                            target_chat_id = int(target_raw)
+                        elif isinstance(target_raw, str):
+                            target_chat_id = target_raw.strip('@')  # 去掉 @
+                        else:
+                            print("⚠️ JSON 中未提供有效的 target_chat_id")
+                            return
                
                 media = self.message.media.document if isinstance(self.message.media, MessageMediaDocument) else self.message.media.photo
                 

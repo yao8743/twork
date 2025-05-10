@@ -254,16 +254,12 @@ async def man_bot_loop(client):
         entity = dialog.entity
 
         if dialog.unread_count >= 0:
-            
-            
-
             if dialog.is_user:
-                
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=2, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     await process_user_message(client, entity, message)
@@ -283,7 +279,7 @@ async def man_bot_loop(client):
 
                 try:
                     async for message in client.iter_messages(
-                        entity, min_id=min_id, limit=300, reverse=True, filter=InputMessagesFilterEmpty()
+                        entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                     ):
                         
                         if message.sticker:
@@ -323,11 +319,11 @@ async def main():
     # await join("aMxruC7pyacyNjY8")  #7350-07 2145325974
     # await join("fRCAnbinkG1hYjU0")  #封面备份群
     # await join("6gAolpGeQq8wYmM0")  #封面图中转站
-  
-   
-    
-    
 
+
+    # await join("_jwugjGNiYZkYzhk")  #06315-10 2116379337 @shunfeng807
+    # await join("u75m3HtMy0c2MjNk")  #06393-11 2064531407    @shunfeng807
+  
     # await join("xbY8S-04jnEzYWE0")   
     # await join("7-HhTojcPCYyMjk0")    #Coniguration
 

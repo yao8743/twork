@@ -10,26 +10,28 @@ class NewsDatabase:
         if not self.pool:
             self.pool = await asyncpg.create_pool(dsn=self.dsn)
 
-    async def insert_news(self, title, text, file_id=None, file_type=None, button_str=None, bot_name=None, business_type=None):
+    async def insert_news(self, title, text, content_id=None, file_id=None, file_type=None, button_str=None, bot_name=None, business_type=None):
+        print(f"{content_id}")
         async with self.pool.acquire() as conn:
             return await conn.fetchval("""
-                INSERT INTO news_content (title, text, file_id, file_type, button_str, bot_name, business_type)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO news_content (title, text, content_id, file_id, file_type, button_str, bot_name, business_type)
+                VALUES ($1, $2, CAST($3 AS BIGINT), $4, $5, $6, $7, $8)
                 RETURNING id
-            """, title, text, file_id, file_type, button_str, bot_name, business_type)
+            """, title, text, content_id, file_id, file_type, button_str, bot_name, business_type)
 
-    async def update_news_by_id(self, news_id: int, text=None, file_id=None, file_type=None, button_str=None, bot_name=None, business_type=None):
+    async def update_news_by_id(self, news_id: int, text=None, content_id=None, file_id=None, file_type=None, button_str=None, bot_name=None, business_type=None ):
         async with self.pool.acquire() as conn:
             await conn.execute("""
                 UPDATE news_content
                 SET text = $2,
-                    file_id = $3,
-                    file_type = $4,
-                    button_str = $5,
-                    bot_name = $6,
-                    business_type = $7
+                    content_id = CAST($3 AS BIGINT),
+                    file_id = $4,
+                    file_type = $5,
+                    button_str = $6,
+                    bot_name = $7,
+                    business_type = $8
                 WHERE id = $1
-            """, news_id, text, file_id, file_type, button_str, bot_name, business_type)
+            """, news_id, text, content_id, file_id, file_type, button_str, bot_name, business_type)
 
     async def get_active_user_refs(self, business_type: str):
         async with self.pool.acquire() as conn:
