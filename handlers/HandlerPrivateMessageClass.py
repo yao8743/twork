@@ -20,6 +20,13 @@ class HandlerPrivateMessageClass:
         fallback_chat_ids = self.get_fallback_chat_ids()
         forwared_success = True
 
+        # 打印来源
+        first_name = getattr(self.entity, "first_name", "") or ""
+        last_name = getattr(self.entity, "last_name", "") or ""
+        entity_title = f"{first_name} {last_name}".strip()
+        # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+        print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.id}")
+
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
 
@@ -61,8 +68,10 @@ class HandlerPrivateMessageClass:
             else:
                 caption = self.message.text or ""
                 match = self.forward_pattern.search(caption)
+                back_target_chat_id = None
                 if match:
                     target_chat_id = int(match.group(1))
+                    back_target_chat_id = random.choice(fallback_chat_ids)
                     print(f"📌 指定转发 chat_id={target_chat_id}")
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
@@ -83,11 +92,7 @@ class HandlerPrivateMessageClass:
                     ).exists()
 
                     if not exists:
-                        MediaIndex.create(
-                            media_type=media_type,
-                            media_id=media_id,
-                            access_hash=access_hash
-                        )
+                        
 
                         forwared_success = await safe_forward_or_send(
                             self.client,
@@ -96,6 +101,27 @@ class HandlerPrivateMessageClass:
                             target_chat_id,
                             media,
                             caption
+                        )
+
+                        
+
+
+                        if not forwared_success and back_target_chat_id != None:
+                            forwared_success = await safe_forward_or_send(
+                                self.client,
+                                self.message.id,
+                                self.message.chat_id,
+                                back_target_chat_id,
+                                media,
+                                caption
+                            )
+
+
+                        if forwared_success:
+                            MediaIndex.create(
+                            media_type=media_type,
+                            media_id=media_id,
+                            access_hash=access_hash
                         )
 
                     else:
@@ -116,12 +142,8 @@ class HandlerPrivateMessageClass:
             await self.safe_delete_message()
         
 
-        # 打印来源
-        first_name = getattr(self.entity, "first_name", "") or ""
-        last_name = getattr(self.entity, "last_name", "") or ""
-        entity_title = f"{first_name} {last_name}".strip()
-        # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
-        print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.id}")
+       
+        
 
     def get_fallback_chat_ids(self):
         try:

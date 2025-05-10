@@ -161,8 +161,9 @@ class HandlerRelayClass:
                             await self.safe_delete_message()
 
                     else:
-                        await self.safe_delete_message()
+                        
                         print("⚠️ 已接收过该媒体，跳过处理")
+                        await self.safe_delete_message()
                         
                         pass
 
@@ -184,7 +185,7 @@ class HandlerRelayClass:
         last_name = getattr(self.entity, "last_name", "") or ""
         entity_title = f"{first_name} {last_name}".strip()
         # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
-        print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.id}")
+       
 
     def get_fallback_chat_ids(self):
         try:
