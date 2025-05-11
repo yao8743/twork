@@ -34,6 +34,10 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     load_dotenv(dotenv_path='.20100034.env')
 
+
+    
+
+
 # 配置参数
 config = {
     'api_id': os.getenv('API_ID'),

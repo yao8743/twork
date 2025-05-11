@@ -1,5 +1,5 @@
 from peewee import MySQLDatabase, OperationalError
-
+import re
 import os
 
 # 检查是否在本地开发环境中运行
@@ -7,15 +7,29 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     load_dotenv()
 
+MYSQL_DSN = os.getenv('MYSQL_DSN')
+pattern = r"mysql://(.*?):(.*?)@(.*?):(\d+)/(.*)"
+match = re.match(pattern, MYSQL_DSN)
 
-db_config = {
-    'db_name': os.getenv('MYSQL_DB_NAME'),
-    'db_user': os.getenv('MYSQL_DB_USER'),
-    'db_password': os.getenv('MYSQL_DB_PASSWORD'),
-    'db_host': os.getenv('MYSQL_DB_HOST'),
-    'db_sslmode': os.getenv('DB_SSLMODE','require'),
-    'db_port': int(os.getenv('MYSQL_DB_PORT',3306)),
-}
+if match:
+
+    db_config = {
+        'db_name': match.group(5),
+        'db_user': match.group(1),
+        'db_password':  match.group(2),
+        'db_host': match.group(3),
+        'db_sslmode': os.getenv('DB_SSLMODE','require'),
+        'db_port': int(match.group(4)),
+    }
+else:
+    db_config = {
+        'db_name': os.getenv('MYSQL_DB_NAME'),
+        'db_user': os.getenv('MYSQL_DB_USER'),
+        'db_password': os.getenv('MYSQL_DB_PASSWORD'),
+        'db_host': os.getenv('MYSQL_DB_HOST'),
+        'db_sslmode': os.getenv('DB_SSLMODE','require'),
+        'db_port': int(os.getenv('MYSQL_DB_PORT',3306)),
+    }
 
 # 数据库配置
 db = MySQLDatabase(
