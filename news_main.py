@@ -61,7 +61,7 @@ def parse_button_str(button_str: str) -> InlineKeyboardMarkup:
 
 @dp.message(Command("start"))
 async def start_handler(message: Message):
-    await message.answer("🤖 你好，请直接发送图片、影片或文件，并附上 JSON 格式 caption。")
+    await message.answer("🤖 哥哥您好，我是鲁仔")
 
 
 @dp.message(Command("show"))
@@ -96,6 +96,27 @@ async def show_news_handler(message: Message, command: CommandObject):
     else:
         await message.reply("⚠️ 该新闻没有有效的照片或不支持的媒体类型")
 
+@dp.message(Command("push"))
+async def push_news_handler(message: Message, command: CommandObject):
+    try:
+        news_id = int(command.args.strip())
+    except (ValueError, AttributeError):
+        await message.reply("⚠️ 请输入正确的新闻 ID，例如 /push 1")
+        return
+
+    await db.init()
+    record = await db.pool.fetchrow("""
+        SELECT business_type FROM news_content WHERE id = $1
+    """, news_id)
+
+    if not record:
+        await message.reply("⚠️ 未找到指定 ID 的新闻")
+        return
+
+    business_type = record["business_type"] or "news"
+
+    await db.create_send_tasks(news_id, business_type)
+    await message.reply(f"✅ 已将新闻 ID = {news_id} 加入 {business_type} 业务类型的推送任务队列")
 
 
 
@@ -163,7 +184,6 @@ async def receive_media(message: Message):
         await message.reply(f"🔁 已更新新闻 ID = {existing_news_id}")
     else:
         news_id = await db.insert_news(title=news_buffer["title"] or "Untitled", **payload)
-        await db.create_send_tasks(news_id, business_type=news_buffer.get("business_type") or "news")
         await message.reply(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
 
 async def periodic_sender():

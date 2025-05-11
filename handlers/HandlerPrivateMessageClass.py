@@ -70,9 +70,16 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 back_target_chat_id = None
                 if match:
-                    target_chat_id = int(match.group(1))
+                    
+
+                    target_raw = match.group(1)
+                    if target_raw.isdigit():
+                        target_chat_id = int(target_raw)
+                    else:
+                        target_chat_id = target_raw.strip('@')  # 可留可不留 @
                     back_target_chat_id = random.choice(fallback_chat_ids)
-                    print(f"📌 指定转发 chat_id={target_chat_id}")
+                    print(f"📌 指定转发 x chat_id={target_chat_id}")
+
                 elif fallback_chat_ids:
                     target_chat_id = random.choice(fallback_chat_ids)
                     # print(f"🌟 無轉發標記，改转发至 chat_id={target_chat_id}", flush=True)
@@ -131,20 +138,11 @@ class HandlerPrivateMessageClass:
                     if(self.delete_after_process and forwared_success):
                         await self.safe_delete_message()
 
-
-
-
-
-
         elif self.message.text and self.message.text != '[~bot~]':
             await self.safe_delete_message()
         else:
             await self.safe_delete_message()
         
-
-       
-        
-
     def get_fallback_chat_ids(self):
         try:
             # print(f"🔍 正在查找 FORWARD_TARGETS {self.extra_data['app_id']}", flush=True)

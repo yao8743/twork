@@ -307,24 +307,28 @@ async def main():
     await client.start(config['phone_number'])
     # await update_username(client,"usesrnddzzzame")
    
-    # await join("wku3XlN8cXQ3Y2E0") #7258-02 2112543793
-    # await join("gY_fOJ2zWw1mNWE8") #7287-04 2108982395
-    # await join("nYXaAKUlVcQxM2Y0") #7275-03 2063167161
-    # await join("kFQen6UaqnMyNTNk") #6659-06   2000730581
-    # await join("0jEV7qYT1SExY2Fk") #6874-01 2017145941
-    # await join("5IyT263HC2s4NzJk") #6376-05 1997235289
-    # await join("8lmqtraagMxjOWE0")  #7350-07 2145325974
-    # await join("4Swd1bWtgwY0ZDA9")  #5891-08 2062860209
-    # await join("G5cIphV18ahiNjQ8")  #7338-09 2015918658
-    # await join("aMxruC7pyacyNjY8")  #7350-07 2145325974
-    # await join("fRCAnbinkG1hYjU0")  #封面备份群
-    # await join("6gAolpGeQq8wYmM0")  #封面图中转站
-
-
-    # await join("_jwugjGNiYZkYzhk")  #06315-10 2116379337 @shunfeng807
-    # await join("u75m3HtMy0c2MjNk")  #06393-11 2064531407    @shunfeng807
+    # await join("Dya4zqIBXtIxMWZk") #6874-01 2017145941
+    # await join("fTMvarjGSckxZmI8") #7258-02 2091886937 v
+    # await join("aLUZCCIiKhM5ZWNk") #7275-03 2063167161
+    # await join("cr_hRjB_dRtkODdk") #7287-04 2108982395
+    # await join("AeW96FZ9pmZTdk") #6376-05 1997235289
+    # await join("li2wwjC6vEc5Mzdk") #6659-06   2000730581
+    # await join("YfssBV1GmsgzMWQ0")  #7350-07 2145325974
+    # await join("AWkBJsoFUc81MWE1")  #5891-08 2062860209
+    # await join("_nPFKXIaMns1OTQ0")  #7338-09 2015918658
+    # await join("Y7KzLjhksH82ZmM8")  #06315-10 2116379337 @shunfeng807
+    # await join("5vQRdy9O4AxhZWQ8")  #06393-11 2064531407    @shunfeng807
     # await join("JP4ToOui4FcyMzM0")  #6463-12   1843229948
-    # await join("5x2glmHpxRk4YTc0")  #7246-13   2021739085
+    # await join("PsKjngKmHXtlNTM0")  #7246-13   2021739085
+
+    # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883
+    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513
+
+
+    
+    
+    
+    
   
   
     # await join("xbY8S-04jnEzYWE0")   
