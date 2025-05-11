@@ -102,6 +102,7 @@ jobs:
         API_ID: ${{ secrets.API_ID }}
         API_HASH: ${{ secrets.API_HASH }}
         PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
+        MYSQL_DSN: ${{ secrets.MYSQL_DSN }}
         MYSQL_DB_NAME: ${{ secrets.MYSQL_DB_NAME }}
         MYSQL_DB_HOST: ${{ secrets.MYSQL_DB_HOST }}
         MYSQL_DB_PORT: ${{ secrets.MYSQL_DB_PORT }}

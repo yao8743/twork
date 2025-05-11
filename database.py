@@ -5,10 +5,9 @@ import os
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path='.25254811.env')
  
-dsn = os.getenv('MYSQL_DSN', '')
-print(f"MYSQL_DSN value: {dsn}")
+
 
 pattern = r"mysql://(.*?):(.*?)@(.*?):(\d+)/(.*)"
 match = re.match(pattern, os.getenv('MYSQL_DSN',''))
