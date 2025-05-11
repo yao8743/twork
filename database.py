@@ -7,9 +7,9 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     load_dotenv()
 
-MYSQL_DSN = os.getenv('MYSQL_DSN')
+
 pattern = r"mysql://(.*?):(.*?)@(.*?):(\d+)/(.*)"
-match = re.match(pattern, MYSQL_DSN)
+match = re.match(pattern, os.getenv('MYSQL_DSN',''))
 
 if match:
 

@@ -32,11 +32,7 @@ from telethon.errors import ChannelPrivateError
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.20100034.env')
-
-
-    
-
+    load_dotenv(dotenv_path='.25254811.env')
 
 # 配置参数
 config = {
@@ -254,6 +250,7 @@ async def process_group_message(client, entity, message):
         pass
 
 async def man_bot_loop(client):
+    last_message_id = 0  # 提前定义，避免 UnboundLocalError
     async for dialog in client.iter_dialogs():
         entity = dialog.entity
 
