@@ -220,7 +220,7 @@ class HandlerPrivateMessageClass:
             return valid_ids
 
         except DoesNotExist:
-            print("⚠️ scrap_config 中找不到 FORWARD_TARGETS")
+            # print("⚠️ scrap_config 中找不到 FORWARD_TARGETS")
             self._fallback_chat_ids_cache = []
             return []
 
