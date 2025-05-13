@@ -343,8 +343,8 @@ async def process_group_message(entity, message):
             
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
-        # 2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
-        2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
+        2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
+        # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
         2054963513: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        

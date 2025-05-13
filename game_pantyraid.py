@@ -181,13 +181,31 @@ class PantyRaidGame:
         summary_lines.append(notice)
 
         reply_markup = get_winner_keyboard(winner_uid) if winner_uid else None
-        await callback.message.answer("\n".join(summary_lines), reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        # await callback.message.answer("\n".join(summary_lines), reply_markup=reply_markup, parse_mode=ParseMode.HTML)
+        result_msg = await callback.message.answer("\n".join(summary_lines), reply_markup=reply_markup, parse_mode=ParseMode.HTML)
 
+        # 启动领奖超时任务
+        if winner_uid:
+            asyncio.create_task(self.wait_for_reward_timeout(result_msg))
     # def disable_button(self, keyboard: InlineKeyboardMarkup, choice: str) -> InlineKeyboardMarkup:
     #     return InlineKeyboardMarkup(inline_keyboard=[
     #         [InlineKeyboardButton(text=f"{btn.text}（已被选定）", callback_data="disabled") if btn.callback_data == f"panty_{choice}" else btn for btn in row]
     #         for row in keyboard.inline_keyboard
     #     ])
+
+
+    async def wait_for_reward_timeout(self, result_msg: Message):
+        await asyncio.sleep(15)  # 等待 15 秒
+        try:
+            # 取出当前按钮的 callback_data
+            if result_msg.reply_markup and result_msg.reply_markup.inline_keyboard:
+                current_callback_data = result_msg.reply_markup.inline_keyboard[0][0].callback_data
+                if current_callback_data and current_callback_data.startswith("reward_"):
+                    # 按钮还在领奖状态，替换成再来一局
+                    await result_msg.edit_reply_markup(reply_markup=get_restart_keyboard())
+        except Exception as e:
+            print(f"处理领奖超时失败: {e}")
+
 
     def disable_button(self, keyboard: InlineKeyboardMarkup, choice: str) -> InlineKeyboardMarkup:
         new_kb = []
