@@ -205,7 +205,8 @@ async def is_blacklisted(entity_id):
 
         return entity_id in blacklist_entity_ids
     except DoesNotExist:
-        print("⚠️ scrap_config 中找不到 BLACKLIST_IDS")
+        blacklist_entity_ids = set()
+        # print("⚠️ scrap_config 中找不到 BLACKLIST_IDS")
         return False
     except Exception as e:
         print(f"⚠️ 加载黑名单失败: {e}")
