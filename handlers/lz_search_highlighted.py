@@ -5,6 +5,8 @@ from aiogram.enums import ParseMode
 from aiogram.enums import ChatType
 from lz_db import db
 from keyboards.lz_paginator import build_pagination_keyboard
+from utils.aes_crypto import AESCrypto
+from lz_config import AES_KEY
 
 router = Router()
 RESULTS_PER_PAGE = 20
@@ -50,10 +52,12 @@ def render_results_plain(results: list[dict], keyword: str, page: int, total: in
             icon = "🔹"
 
 
-        
+        aes = AESCrypto(AES_KEY)
+        encoded = aes.aes_encode(r['id'])
+
 
         lines.append(
-            f"{icon}<a href='https://t.me/luzai04bot?start={r['id']}'>{content}</a>"
+            f"{icon}<a href='https://t.me/luzai04bot?start=f_{encoded}'>{content}</a>"
             # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
             # f"<b>内容:</b> {content}"
@@ -76,9 +80,9 @@ def shorten_content(text: str, max_length: int = 30) -> str:
 
 @router.message(Command("s"))
 async def handle_search(message: Message):
-    if getattr(message.chat, "type", None) not in {ChatType.GROUP, ChatType.SUPERGROUP}:
-        await message.reply("⚠️ 此指令只能在群組中使用。")
-        return
+    # if getattr(message.chat, "type", None) not in {ChatType.GROUP, ChatType.SUPERGROUP}:
+    #     await message.reply("⚠️ 此指令只能在群組中使用。")
+    #     return
 
 
     parts = message.text.split(maxsplit=1)

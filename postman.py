@@ -8,7 +8,7 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.25254811.env')
+    load_dotenv(dotenv_path='.29614663.env')
 
 
 import random
@@ -215,7 +215,6 @@ async def is_blacklisted(entity_id):
 
 async def get_max_source_message_id(source_chat_id):
     key = (source_chat_id, config['api_id'])
-
     if key in local_scrap_progress:
         return local_scrap_progress[key]
 
@@ -241,7 +240,13 @@ async def get_max_source_message_id(source_chat_id):
     except Exception as e:
         print(f"Error fetching max source_message_id: {e}")
         return None
-    
+
+async def ask_sora_by_id(source_id):
+    '''
+   
+    '''
+
+    pass   
 
         
 async def save_scrap_progress(entity_id, message_id):
@@ -283,6 +288,21 @@ async def process_user_message(entity, message):
         except Exception as e:
                 print(f"Error kicking bot: {e} {botname}", flush=True)
 
+
+        try:
+           
+            match = re.search(r'\|_ask_\|(\d+)@([-\w]+)', message.text, re.IGNORECASE)
+            if match:
+                # sort_content_id = match.group(1)
+                # request_bot_name = match.group(2)
+                await client.send_message('@ztdthumb011bot', message.text)
+                # 删除消息
+                await safe_delete_message(message)
+                
+
+        except Exception as e:
+                print(f"Error kicking bot: {e} {botname}", flush=True)
+
         #  |_join_|QQCyh1N2sMU5ZGQ0
 
         try:
@@ -306,8 +326,6 @@ async def process_user_message(entity, message):
         777000: HandlerNoAction,   # 替换为真实 entity.id 和处理类
         7419440827: HandlerNoAction,    #萨莱
         8076535891: HandlerNoAction    #岩仔
-        
-
     }
 
     handler_class = class_map.get(entity.id)
@@ -451,6 +469,18 @@ async def main():
     print(f'是否是Bot: {me.bot}')
 
 
+    group_identifier = -1002592636499
+    participants = await client.get_participants(group_identifier)
+
+    # 遍历输出用户名和 ID
+    for user in participants:
+        sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
+        print(sql)
+        db.execute_sql(sql)
+        # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
+
+
+    exit()
     # await delete_my_profile_photos(client)
     # await update_username(client,"gunndd8kdhdj")
     # exit()

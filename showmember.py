@@ -34,10 +34,14 @@ logger.addHandler(flush_handler)
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path='.29614663.env')
+   
 
 
-db_port = os.getenv('DB_PORT')
+db_port = os.getenv('MYSQL_DB_PORT')
+
+
+
 
 config = {
     'api_id': os.getenv('API_ID'),
@@ -46,11 +50,11 @@ config = {
     'session_name': os.getenv('API_ID') + 'session_name',
     'bot_token': os.getenv('BOT_TOKEN'),
     'dyer_bot_token': os.getenv('DYER_BOT_TOKEN',''),
-    'db_name': os.getenv('DB_NAME'),
-    'db_user': os.getenv('DB_USER'),
-    'db_password': os.getenv('DB_PASSWORD'),
-    'db_host': os.getenv('DB_HOST'),
-    'db_port': int(db_port) if db_port and db_port.isdigit() else 5432,
+    'db_name': os.getenv('MYSQL_DB_NAME'),
+    'db_user': os.getenv('MYSQL_DB_USER'),
+    'db_password': os.getenv('MYSQL_DB_PASSWORD'),
+    'db_host': os.getenv('MYSQL_DB_HOST'),
+    'db_port': int(db_port) if db_port and db_port.isdigit() else 58736,
     'db_sslmode': os.getenv('DB_SSLMODE','require'),
     'man_bot_id': os.getenv('MAN_BOT_ID'),
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID',0)),
@@ -67,7 +71,7 @@ module_enable = {
     'man_bot': False,
     'dyer_bot': False,
     'bot': False,
-    'db': False,
+    'db': True,
 }
 
 #如果 config 存在 seesion_name, 且有值(非空), 则使用
@@ -88,7 +92,9 @@ if module_enable['man_bot'] == True:
     client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
 
 if module_enable['db'] == True:
+    print(f"db_name: {config['db_name']}")
     from database import db
+    
 else:
     db = None
 
@@ -197,7 +203,13 @@ async def main():
 async def get_group_members(group_name_or_id):
     entity = await client.get_entity(group_identifier)
     print(f"Group found: {entity.title} (ID: {entity.id})")
-
+    if not db.is_closed():
+        try:
+            db.execute_sql('SELECT 1')
+        except Exception as e:
+            print(f"Error keeping pool connection alive: {e}")
+    elif db.is_closed():
+        db.connect()
 
     async with client:
         # 获取群成员列表
@@ -209,7 +221,7 @@ async def get_group_members(group_name_or_id):
             print(f'User ID: {user.id}, Username: {user.username}, Name: {user.first_name} {user.last_name or ""}')
 
 # 替换为你的群组 username 或 ID
-group_identifier = -1002087275834
+group_identifier = -1002592636499
 
 
 with client:
