@@ -284,21 +284,22 @@ async def process_user_message(entity, message):
                 botname = match.group(1) + match.group(2)
                 await client.send_message(botname, "/start")
                 await client.send_message(botname, "[~bot~]")
-
+                return
         except Exception as e:
                 print(f"Error kicking bot: {e} {botname}", flush=True)
 
 
         try:
-           
+            #  |_ask_|4234@vampire666666666
             match = re.search(r'\|_ask_\|(\d+)@([-\w]+)', message.text, re.IGNORECASE)
             if match:
                 # sort_content_id = match.group(1)
                 # request_bot_name = match.group(2)
-                await client.send_message('@ztdthumb011bot', message.text)
+                send_msg = await client.send_message('@ztdthumb011bot', message.text)
                 # 删除消息
+                await safe_delete_message(send_msg)
                 await safe_delete_message(message)
-                
+                return
 
         except Exception as e:
                 print(f"Error kicking bot: {e} {botname}", flush=True)
@@ -312,7 +313,7 @@ async def process_user_message(entity, message):
                 inviteurl = match2.group(1) 
                 print(f"邀请链接: {inviteurl}")
                 await join(inviteurl)    #Coniguration
-                
+                return
         except Exception as e:
                 print(f"Error livite: {e} {inviteurl}", flush=True)
    
@@ -361,8 +362,8 @@ async def process_group_message(entity, message):
             
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
-        2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
-        # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
+        # 2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
+        2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
         2054963513: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        
@@ -426,7 +427,7 @@ async def man_bot_loop():
                 
                 
             else:
-               
+                
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
@@ -469,18 +470,18 @@ async def main():
     print(f'是否是Bot: {me.bot}')
 
 
-    group_identifier = -1002592636499
-    participants = await client.get_participants(group_identifier)
+    # group_identifier = -1002592636499
+    # participants = await client.get_participants(group_identifier)
 
-    # 遍历输出用户名和 ID
-    for user in participants:
-        sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
-        print(sql)
-        db.execute_sql(sql)
-        # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
+    # # 遍历输出用户名和 ID
+    # for user in participants:
+    #     sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
+    #     print(sql)
+    #     db.execute_sql(sql)
+    #     # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
 
 
-    exit()
+    # exit()
     # await delete_my_profile_photos(client)
     # await update_username(client,"gunndd8kdhdj")
     # exit()
