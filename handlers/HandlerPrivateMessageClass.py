@@ -22,7 +22,7 @@ class HandlerPrivateMessageClass:
     async def handle(self):
         fallback_chat_ids = await self.get_fallback_chat_ids()
         forwared_success = True
-
+        is_force_withour_duplicated_vadate = False  # 先设定默认值
         # 打印来源
         first_name = getattr(self.entity, "first_name", "") or ""
         last_name = getattr(self.entity, "last_name", "") or ""
@@ -75,14 +75,29 @@ class HandlerPrivateMessageClass:
                 match = self.forward_pattern.search(caption)
                 back_target_chat_id = None
                 if match:
-                    
-
                     target_raw = match.group(1)
+                    target_raw_orignal = match.group(1)
+                    
+                    # 处理包含 '|' 的情况
+                    if '|' in target_raw_orignal:
+                        parts = target_raw_orignal.split('|')
+                        target_raw = parts[0].strip()
+                        if len(parts) > 1 and parts[1].strip().lower() == 'force':
+                            is_force_withour_duplicated_vadate = True
+                    else:
+                        target_raw = target_raw_orignal.strip()
+
+
+
                     if target_raw.isdigit():
                         target_chat_id = int(target_raw)
                     else:
                         target_chat_id = target_raw.strip('@')  # 可留可不留 @
-                    back_target_chat_id = random.choice(fallback_chat_ids)
+
+                    if fallback_chat_ids:
+                        back_target_chat_id = random.choice(fallback_chat_ids)    
+                    else:
+                        back_target_chat_id = None
                     print(f"📌 指定转发 x chat_id={target_chat_id}")
 
                 elif fallback_chat_ids:
@@ -97,11 +112,14 @@ class HandlerPrivateMessageClass:
                 media_key = generate_media_key(self.message)
                 if media_key:
                     media_type, media_id, access_hash = media_key
-                    exists = MediaIndex.select().where(
-                        (MediaIndex.media_type == media_type) &
-                        (MediaIndex.media_id == media_id) &
-                        (MediaIndex.access_hash == access_hash)
-                    ).exists()
+                    if is_force_withour_duplicated_vadate:
+                        exists = False
+                    elif not is_force_withour_duplicated_vadate:
+                        exists = MediaIndex.select().where(
+                            (MediaIndex.media_type == media_type) &
+                            (MediaIndex.media_id == media_id) &
+                            (MediaIndex.access_hash == access_hash)
+                        ).exists()
 
                     if not exists:
                         

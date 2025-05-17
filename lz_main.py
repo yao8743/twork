@@ -43,6 +43,10 @@ async def main():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
 
+    
+     # ✅ 赋值给 lz_var 让其他模块能引用
+    lz_var.bot = bot
+
     me = await bot.get_me()
     lz_var.bot_username = me.username
     lz_var.bot_id = me.id

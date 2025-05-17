@@ -8,3 +8,6 @@ default_thumb_unique_file_ids: list[str] = [
     "AQADMq0xG4g4QEV-",
     "AQADMa0xG4g4QEV-",
 ]
+bot = None  # 预留 bot 全局变量
+sungfeng: int = 7753111936
+THUMB_ADMIN_CHAT_ID: str = "ztdthumb011bot"

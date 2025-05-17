@@ -74,6 +74,27 @@ def upload_menu_keyboard():
         [InlineKeyboardButton(text="🔙 返回首页", callback_data="go_home")],
     ])
 
+
+# == 启动指令 == # /id 360242
+@router.message(Command("id"))
+async def handle_search_by_id(message: Message, command: Command = Command("id")):
+    args = message.text.split(maxsplit=1)
+    if len(args) > 1:
+        # ✅ 调用并解包返回的三个值
+        ret_content, [file_id, thumb_file_id], [owner_user_id] = await load_sora_content_by_id(int(args[1]))
+
+        # ✅ 检查是否找不到资源（根据返回第一个值）
+        if ret_content.startswith("⚠️"):
+            await message.answer(ret_content, parse_mode="HTML")
+            return
+
+        # ✅ 发送带封面图的消息
+        await message.answer_photo(
+            photo=thumb_file_id,
+            caption=ret_content,
+            parse_mode="HTML"
+        )
+
 # == 启动指令 ==
 @router.message(Command("start"))
 async def handle_start(message: Message, command: Command = Command("start")):
@@ -218,6 +239,14 @@ async def load_sora_content_by_id(content_id: int) -> str:
 
         # ✅ 若 thumb_file_id 为空，则给默认值
         if not thumb_file_id:
+            # 传送消息给 @ztdthumb011bot
+            result_send = await lz_var.bot.send_message(
+                chat_id=lz_var.sungfeng,
+                text=f"|_ask_|{record_id}@{lz_var.bot_username}"
+            )
+
+            print(f"{result_send}")
+            print(f"🔍 发送消息给 @ztdthumb011bot: |_ask_|{record_id}@{lz_var.bot_username}")
 
             # default_thumb_file_id: list[str] | None = None  # Python 3.10+
             if lz_var.default_thumb_file_id:
@@ -226,11 +255,7 @@ async def load_sora_content_by_id(content_id: int) -> str:
               
                 # 这里可以选择是否要从数据库中查找
             else:
-                # default_thumb_unique_file_ids: list[str] = [
-                #    "AQADMK0xG4g4QEV4",
-                #    "AQADMa0xG4g4QEV4",
-                #    "AQADMq0xG4g4QEV4",
-                #]
+              
                 file_id_list = await db.get_file_id_by_file_unique_id(lz_var.default_thumb_unique_file_ids)
                 # 令 lz_var.thumb_file_id = file_id_row
                 if file_id_list:
