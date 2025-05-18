@@ -241,12 +241,7 @@ async def get_max_source_message_id(source_chat_id):
         print(f"Error fetching max source_message_id: {e}")
         return None
 
-async def ask_sora_by_id(source_id):
-    '''
-   
-    '''
 
-    pass   
 
         
 async def save_scrap_progress(entity_id, message_id):
@@ -394,6 +389,9 @@ async def man_bot_loop():
     async for dialog in client.iter_dialogs():
         entity = dialog.entity
 
+        # if entity.id != 5486047924:
+        #     continue
+
         # ✅ 跳过黑名单
         if await is_blacklisted(entity.id):
             print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
@@ -413,7 +411,7 @@ async def man_bot_loop():
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=10, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     
@@ -455,7 +453,7 @@ async def man_bot_loop():
                 if current_message:
                     await save_scrap_progress(entity.id, current_message.id)
                     return last_message_id
-
+    return last_message_id
 
 
 

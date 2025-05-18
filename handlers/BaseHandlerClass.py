@@ -7,11 +7,9 @@ from model.media_index import MediaIndex  # ✅ Peewee ORM model
 from peewee import DoesNotExist
 from utils.media_utils import generate_media_key
 from telethon.errors import ChannelPrivateError
-from handlers.BaseHandlerClass import BaseHandlerClass
-
 import json
 
-class HandlerRelayClass(BaseHandlerClass):
+class BaseHandlerClass:
     def __init__(self, client, entity, message, extra_data):
         self.client = client
         self.entity = entity
@@ -58,7 +56,6 @@ class HandlerRelayClass(BaseHandlerClass):
                         if match:
                            
                             target_raw = match.group(1)
-                            target_raw = target_raw.replace('-100','')
                             if target_raw.isdigit():
                                 target_chat_id = int(target_raw)
                             else:
@@ -74,7 +71,6 @@ class HandlerRelayClass(BaseHandlerClass):
                                 return
                     else:
                         target_raw = json_result.get('target_chat_id')
-                        target_raw = target_raw.replace('-100','')
                         if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
                             target_chat_id = int(target_raw)
                         elif isinstance(target_raw, str):
@@ -193,8 +189,84 @@ class HandlerRelayClass(BaseHandlerClass):
         # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
        
 
+    async def is_still_in_group_by_id(self,chat_id):
+        try:
+            entity = await self.client.get_entity(chat_id)
+            async for _ in self.client.iter_participants(entity, limit=1):
+                return True
+        except ChannelPrivateError:
+            return False
+        except Exception as e:
+            print(f"⚠️ 检查 {chat_id} 失败: {e}")
+            return False
 
+    async def get_fallback_chat_ids(self):
+        if self._fallback_chat_ids_cache is not None:
+            return self._fallback_chat_ids_cache
+
+        try:
+            setting_chat_id = self.extra_data.get('config', {}).get('setting_chat_id')
+            setting_thread_id = self.extra_data.get('config', {}).get('setting_thread_id')
+
+            record = ScrapConfig.get(
+                (ScrapConfig.api_id == self.extra_data['app_id']) &
+                (ScrapConfig.title == 'FORWARD_TARGETS')
+            )
+            raw = record.value or ''
+            original_ids = [int(x.strip()) for x in raw.split(',') if x.strip().isdigit()]
+
+            print(f"检测 FORWARD_TARGETS，共 {len(original_ids)} 个")
+
+            # ✅ 逐个检查，并只保留还在群里的 ID
+            valid_ids = []
+            for chat_id in original_ids:
+                if await self.is_still_in_group_by_id(chat_id):
+                    print(f"✅ 仍在群 {chat_id}")
+                    valid_ids.append(chat_id)
+                else:
+                    
+                   
+                    await self.client.send_message(
+                        entity=setting_chat_id,
+                        message=f"⚠️ {chat_id}",
+                        reply_to=setting_thread_id,
+                        parse_mode='html'
+                    )
+                    print(f"❌ 不在群 {chat_id} 或群已不存在")
+
+            # 若valid_ids 为空，则传信息给设置群
+            if not valid_ids:
+                await self.client.send_message(
+                    entity=setting_chat_id,
+                    message="⚠️ FORWARD_TARGETS 为空",
+                    reply_to=setting_thread_id,
+                    parse_mode='html'
+                )
+                print("⚠️ FORWARD_TARGETS 为空")
+
+
+            # ✅ 检查变化并更新数据库（注意：放在循环外）
+            if set(valid_ids) != set(original_ids):
+                new_value = ','.join(str(chat_id) for chat_id in valid_ids)
+                record.value = new_value
+                record.save()
+                print(f"📝 已更新 ScrapConfig，当前有效群: {new_value}")
+
+            self._fallback_chat_ids_cache = valid_ids  # ✅ 缓存有效的 ID
+           
+            return valid_ids
+
+        except DoesNotExist:
+            print("⚠️ scrap_config 中找不到 FORWARD_TARGETS")
+            self._fallback_chat_ids_cache = []
+            return []
 
 
     
-   
+    async def safe_delete_message(self):
+        try:
+            
+            print(f"🧹 成功刪除訊息D {self.message.id}（雙方）", flush=True)
+            await self.client.delete_messages(self.message.chat_id, [self.message.id], revoke=True)
+        except Exception as e:
+            print(f"⚠️ 刪除訊息失敗D {self.message.id}：{e}", flush=True)
