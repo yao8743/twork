@@ -110,6 +110,7 @@ jobs:
         MYSQL_DB_PASSWORD: ${{ secrets.MYSQL_DB_PASSWORD }}
         SETTING_CHAT_ID: ${{ secrets.SETTING_CHAT_ID }}
         SETTING_THREAD_ID: ${{ secrets.SETTING_THREAD_ID }}
+        CONFIGURATION: ${{ secrets.CONFIGURATION }}
       run: |
         python postman.py
 
