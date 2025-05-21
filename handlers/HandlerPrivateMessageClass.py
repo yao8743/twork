@@ -25,12 +25,7 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
         fallback_chat_ids = await self.get_fallback_chat_ids()
         forwared_success = True
         
-        # 打印来源
-        first_name = getattr(self.entity, "first_name", "") or ""
-        last_name = getattr(self.entity, "last_name", "") or ""
-        entity_title = f"{first_name} {last_name}".strip()
-        # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
-        print(f"\r\n[User] Message from {entity_title} ({self.entity.id}): {self.message.id}")
+       
 
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)

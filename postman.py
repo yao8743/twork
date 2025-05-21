@@ -13,6 +13,7 @@ if not os.getenv('GITHUB_ACTIONS'):
 
 import random
 import re
+import json
 from datetime import datetime
 from telethon import TelegramClient
 from telethon.tl.types import MessageMediaWebPage
@@ -53,8 +54,28 @@ config = {
     'phone_number': os.getenv('PHONE_NUMBER'),
     'session_name': os.getenv('API_ID') + 'session_name',
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID', '0')),
-    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID', '0'))
+    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID', '0')),
+    'setting' : os.getenv('CONFIGURATION', '')
 }
+
+
+
+
+
+# 嘗試載入 JSON 並合併參數
+try:
+    setting_json = json.loads(config['setting'])
+    if isinstance(setting_json, dict):
+        config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
+except Exception as e:
+    print(f"⚠️ 無法解析 CONFIGURATION：{e}")
+        
+print(f"⚠️ 配置參數：{config}")
+   
+
+    
+    
+
 
 
 # 在模块顶部初始化全局缓存
@@ -313,9 +334,19 @@ async def process_user_message(entity, message):
                 print(f"Error livite: {e} {inviteurl}", flush=True)
    
 
+    # # 打印来源
+    # first_name = getattr(entity, "first_name", "") or ""
+    # last_name = getattr(entity, "last_name", "") or ""
+    # entity_title = f"{first_name} {last_name}".strip()
+    # # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+    # print(f"\r\n[User] Message from {entity_title} ({entity.id}): {message.id}")
+
     extra_data = {'app_id': config['api_id'],'config': config}
 
-   
+    # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
+    if config.get('bypass_private_check') == 1:
+        print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+        return
 
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
@@ -358,22 +389,22 @@ async def process_group_message(entity, message):
             
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
-        # 2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
-        2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
+        2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
+        # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
         2054963513: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        
     }
 
    
-
+    # entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
+    # print(f"[Group-X] Message from {entity_title} ({entity.id}): {message.text}")
     
 
     handler_class = class_map.get(entity.id)
     if handler_class:
 
-        entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
-        print(f"[Group-X] Message from {entity_title} ({entity.id}): {message.text}")
+       
 
         handler = handler_class(client, entity, message, extra_data)
         handler.is_duplicate_allowed = True
@@ -404,7 +435,7 @@ async def man_bot_loop():
             last_name = getattr(entity, 'last_name', '') or ''
             entity_title = f"{first_name} {last_name}".strip() or "Unknown"
 
-        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
