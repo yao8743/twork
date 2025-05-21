@@ -395,7 +395,7 @@ async def man_bot_loop():
 
         # ✅ 跳过黑名单
         if await is_blacklisted(entity.id):
-            print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
+            # print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
             continue
 
         entity_title = getattr(entity, 'title', None)
@@ -404,7 +404,7 @@ async def man_bot_loop():
             last_name = getattr(entity, 'last_name', '') or ''
             entity_title = f"{first_name} {last_name}".strip() or "Unknown"
 
-        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
