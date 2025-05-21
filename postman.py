@@ -439,6 +439,13 @@ async def man_bot_loop():
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
+
+                 # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
+                if config.get('bypass_private_check') == 1:
+                    print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+                    return
+
+
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
                 min_id = max_message_id if max_message_id else 1
