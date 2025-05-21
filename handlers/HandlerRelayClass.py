@@ -18,7 +18,7 @@ class HandlerRelayClass(BaseHandlerClass):
         self.message = message
         self.extra_data = extra_data
         self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
-        self.accept_duplicate = False
+        self.is_duplicate_allowed = False
         self._fallback_chat_ids_cache = None  # ✅ 实例缓存
 
 
@@ -135,7 +135,7 @@ class HandlerRelayClass(BaseHandlerClass):
                   
                     # print(f"🔍 正在查找 FORWARD_TARGETS {self.extra_data['app_id']}", flush=True
                     exists = False
-                    if not self.accept_duplicate:
+                    if not self.is_duplicate_allowed:
                         exists = MediaIndex.select().where(
                             (MediaIndex.media_type == media_type) &
                             (MediaIndex.media_id == media_id) &
@@ -143,9 +143,9 @@ class HandlerRelayClass(BaseHandlerClass):
                         ).exists()
 
                     
-                    if not exists or self.accept_duplicate:
+                    if not exists or self.is_duplicate_allowed:
                        
-                        if not exists and not self.accept_duplicate:
+                        if not exists and not self.is_duplicate_allowed:
                            
                             MediaIndex.create(
                                 media_type=media_type,

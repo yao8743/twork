@@ -327,6 +327,7 @@ async def process_user_message(entity, message):
     handler_class = class_map.get(entity.id)
     if handler_class:
         handler = handler_class(client, entity, message, extra_data)
+        handler.is_duplicate_allowed = True
         await handler.handle()
     else:
         
@@ -375,7 +376,7 @@ async def process_group_message(entity, message):
         print(f"[Group-X] Message from {entity_title} ({entity.id}): {message.text}")
 
         handler = handler_class(client, entity, message, extra_data)
-        handler.accept_duplicate = True
+        handler.is_duplicate_allowed = True
         await handler.handle()
 
 
@@ -498,8 +499,8 @@ async def main():
     # await join("JP4ToOui4FcyMzM0")  #6463-12   1843229948
     # await join("PsKjngKmHXtlNTM0")  #7246-13   2021739085 v
 
-    # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883
-    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513
+    # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
+    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
 
 
     # |_join_|3eDZvSPvkVgyNmY0

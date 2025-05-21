@@ -19,11 +19,12 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
         self.delete_after_process = False
         self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
         self._fallback_chat_ids_cache = None  # ✅ 实例缓存
+        self.is_duplicate_allowed = False  # 默认值
 
     async def handle(self):
         fallback_chat_ids = await self.get_fallback_chat_ids()
         forwared_success = True
-        is_force_withour_duplicated_vadate = False  # 先设定默认值
+        
         # 打印来源
         first_name = getattr(self.entity, "first_name", "") or ""
         last_name = getattr(self.entity, "last_name", "") or ""
@@ -86,7 +87,7 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
                         parts = target_raw_orignal.split('|')
                         target_raw = parts[0].strip()
                         if len(parts) > 1 and parts[1].strip().lower() == 'force':
-                            is_force_withour_duplicated_vadate = True
+                            self.is_duplicate_allowed = True
                     else:
                         target_raw = target_raw_orignal.strip()
 
@@ -115,9 +116,9 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
                 media_key = generate_media_key(self.message)
                 if media_key:
                     media_type, media_id, access_hash = media_key
-                    if is_force_withour_duplicated_vadate:
+                    if self.is_duplicate_allowed:
                         exists = False
-                    elif not is_force_withour_duplicated_vadate:
+                    elif not self.is_duplicate_allowed:
                         exists = MediaIndex.select().where(
                             (MediaIndex.media_type == media_type) &
                             (MediaIndex.media_id == media_id) &
