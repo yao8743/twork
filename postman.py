@@ -70,7 +70,7 @@ try:
 except Exception as e:
     print(f"⚠️ 無法解析 CONFIGURATION：{e}")
         
-print(f"⚠️ 配置參數：{config}")
+# print(f"⚠️ 配置參數：{config}")
    
 
     
@@ -345,7 +345,7 @@ async def process_user_message(entity, message):
 
     # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
     if config.get('bypass_private_check') == 1:
-        print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+        # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
         return
 
     # 实现：根据 entity.id 映射到不同处理类
@@ -433,7 +433,9 @@ async def man_bot_loop():
         if not entity_title:
             first_name = getattr(entity, 'first_name', '') or ''
             last_name = getattr(entity, 'last_name', '') or ''
-            entity_title = f"{first_name} {last_name}".strip() or "Unknown"
+            entity_title = f"{first_name} {last_name}".strip() or getattr(entity, 'title', f"Unknown entity {entity.id}")
+
+
 
         print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
