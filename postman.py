@@ -53,8 +53,8 @@ config = {
     'api_hash': os.getenv('API_HASH'),
     'phone_number': os.getenv('PHONE_NUMBER'),
     'session_name': os.getenv('API_ID') + 'session_name',
-    'setting_chat_id': int(os.getenv('SETTING_CHAT_ID', '0')),
-    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID', '0')),
+    'setting_chat_id': int(os.getenv('SETTING_CHAT_ID') or 0),
+    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID' or 0)),
     'setting' : os.getenv('CONFIGURATION', '')
 }
 
