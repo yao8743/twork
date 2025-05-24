@@ -351,8 +351,6 @@ async def process_user_message(entity, message):
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
         777000: HandlerNoAction,   # 替换为真实 entity.id 和处理类
-        7419440827: HandlerNoAction,    #萨莱
-        8076535891: HandlerNoAction    #岩仔
     }
 
     handler_class = class_map.get(entity.id)
