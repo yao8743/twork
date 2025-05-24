@@ -1,4 +1,4 @@
-name: Deploy STO Telethon
+name: Deploy News
 
 on: 
   schedule:
@@ -27,7 +27,7 @@ jobs:
           const { data } = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'sto.yml',  // 使用 sto.yml 作为 workflow_id
+            workflow_id: 'news.yml',  // 使用 news.yml 作为 workflow_id
             status: 'in_progress',
             per_page: 10              // 检查最近10个工作流运行状态
           });
@@ -52,7 +52,7 @@ jobs:
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements_sto.txt
+        pip install -r requirements_news.txt
 
 
        
@@ -66,7 +66,7 @@ jobs:
           const runs = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'sto.yml',  // 使用 sto.yml 作为 workflow_id
+            workflow_id: 'news.yml',  // 使用 news.yml 作为 workflow_id
             per_page: 1,
             status: 'success',
           });
@@ -77,56 +77,16 @@ jobs:
           }
       continue-on-error: true
 
-    - name: Download artifacts - Session
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      uses: actions/download-artifact@v4
-      with:
-        name: session_name
-        path: .
-        run-id: ${{ steps.get-previous-run-id.outputs.run_id }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-      continue-on-error: true
-
-    - name: Decrypt Telethon session file
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      env:
-        API_ID: ${{ secrets.API_ID }}
-        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
-      run: |
-        openssl aes-256-cbc -d -pbkdf2 -in "${{ secrets.API_ID }}session_name.session.enc" -out "${{ secrets.API_ID }}session_name.session" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
-
-
     - name: Run Telethon script
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
-        API_ID: ${{ secrets.API_ID }}
-        API_HASH: ${{ secrets.API_HASH }}
-        PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
-        MYSQL_DB_NAME: ${{ secrets.MYSQL_DB_NAME }}
-        MYSQL_DB_HOST: ${{ secrets.MYSQL_DB_HOST }}
-        MYSQL_DB_PORT: ${{ secrets.MYSQL_DB_PORT }}
-        MYSQL_DB_USER: ${{ secrets.MYSQL_DB_USER }}
-        MYSQL_DB_PASSWORD: ${{ secrets.MYSQL_DB_PASSWORD }}
-        SETTING_CHAT_ID: ${{ secrets.SETTING_CHAT_ID }}
-        SETTING_THREAD_ID: ${{ secrets.SETTING_THREAD_ID }}
+        API_TOKEN: ${{ secrets.API_TOKEN }}
+        DB_DSN: ${{ secrets.DB_DSN }}
+        CONFIGURATION: ${{ secrets.CONFIGURATION }}
       run: |
-        python sto.py
+        python news_main.py
 
-    - name: Encrypt Telethon session file
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      env:
-        API_ID: ${{ secrets.API_ID }}
-        SESSION_PASSWORD: ${{ secrets.SESSION_PASSWORD }}
-      run: |
-        openssl aes-256-cbc -pbkdf2 -salt -in "${{ secrets.API_ID }}session_name.session" -out "${{ secrets.API_ID }}session_name.session.enc" -pass pass:"${{ secrets.SESSION_PASSWORD }}"
-
-    - name: Upload session_name.enc artifact
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      uses: actions/upload-artifact@v4
-      with:
-        name: session_name
-        path: ${{ secrets.API_ID }}session_name.session.enc
-
+   
     - name: Delete old workflow runs
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       uses: actions/github-script@v6
@@ -136,7 +96,7 @@ jobs:
           const runs = await github.rest.actions.listWorkflowRuns({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            workflow_id: 'sto.yml',  // 使用 sto.yml 作为 workflow_id
+            workflow_id: 'news.yml',  // 使用 news.yml 作为 workflow_id
             per_page: 100,  // 获取最多100个运行
           });
 
@@ -159,5 +119,5 @@ jobs:
         curl -X POST \
         -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
         -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${{ github.repository }}/actions/workflows/sto.yml/dispatches \
+        https://api.github.com/repos/${{ github.repository }}/actions/workflows/news.yml/dispatches \
         -d '{"ref":"main"}'

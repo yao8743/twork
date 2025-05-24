@@ -245,6 +245,9 @@ class BaseHandlerClass:
                 print("⚠️ FORWARD_TARGETS 为空")
 
 
+
+
+
             # ✅ 检查变化并更新数据库（注意：放在循环外）
             if set(valid_ids) != set(original_ids):
                 new_value = ','.join(str(chat_id) for chat_id in valid_ids)
