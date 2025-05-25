@@ -1,4 +1,5 @@
 import asyncio
+import os
 import json
 from aiohttp import web
 from aiogram import Bot, Dispatcher
@@ -10,6 +11,7 @@ from aiogram.filters import CommandObject
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiojobs.aiohttp import setup as setup_aiojobs, spawn
+from aiojobs.aiohttp import get_scheduler_from_app
 from news_db import NewsDatabase
 
 from news_config import API_TOKEN, DB_DSN, AES_KEY, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
@@ -278,6 +280,9 @@ async def on_startup(bot: Bot):
 async def health(request):
     return web.Response(text="✅ News bot 运行中")
 
+async def on_shutdown(app):
+    await bot.session.close()
+
 
 async def main():
     await db.init()
@@ -285,36 +290,33 @@ async def main():
         dp.startup.register(on_startup)
         app = web.Application()
         app.router.add_get("/", health)
+
+        # ✅ 初始化 aiojobs（必须在 on_startup 注册前调用）
+        setup_aiojobs(app)
+
+        # ✅ 设置 aiogram webhook
         SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
         setup_application(app, dp, bot=bot)
 
-        # ✅ 添加 aiojobs 任务池支持
-        setup_aiojobs(app)
-
-        # ✅ 启动后台任务 periodic_sender
-        async def on_app_start(app: web.Application):
-            scheduler = app["aiojobs_scheduler"]
-            await spawn(scheduler, periodic_sender())
-            print("🚀 periodic_sender 后台任务已启动")
+        # ✅ 用 spawn(app, coro) 启动任务
+        async def on_app_start(app):
+            await get_scheduler_from_app(app).spawn(periodic_sender())
 
         app.on_startup.append(on_app_start)
+        app.on_shutdown.append(on_shutdown)
 
-        await web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
+        port = int(os.environ.get("PORT", 8080))
+        await web._run_app(app, host="0.0.0.0", port=port)
     else:
         loop = asyncio.get_event_loop()
         loop.create_task(periodic_sender())
+        await dp.start_polling(
+            bot,
+            skip_updates=True,
+            timeout=60,
+            relax=3.0
+        )
 
-
-
-    # skip_updates=True 用于启动时忽略积压的旧消息（可选）
-    # timeout=60     —— 每次长连接等待 60 秒
-    # relax=3.0      —— 请求结束后本地休眠  3 秒
-    await dp.start_polling(
-        bot,
-        skip_updates=True,
-        timeout=60,
-        relax=3.0
-    )
 
 if __name__ == "__main__":
     asyncio.run(main())
