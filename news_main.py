@@ -254,10 +254,11 @@ async def receive_media(message: Message):
     if existing_news_id:
         await db.update_news_by_id(news_id=existing_news_id, **payload)
         await message.reply(f"🔁 已更新新闻 ID = {existing_news_id}")
+        await db.create_send_tasks(existing_news_id, business_type)
     else:
         news_id = await db.insert_news(title=news_buffer["title"] or "Untitled", **payload)
         await message.reply(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
-    await db.create_send_tasks(news_id, business_type)
+        await db.create_send_tasks(news_id, business_type)
 
 async def periodic_sender():
     from news_sender import send_news_batch
