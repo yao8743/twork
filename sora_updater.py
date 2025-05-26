@@ -196,8 +196,7 @@ def process_documents():
             'file_type': 'd',
             'content': content,
             'content_seg': content_seg,
-            'file_size': doc.file_size,
-            'thumb_file_unique_id': doc.thumb_file_unique_id
+            'file_size': doc.file_size
         }
 
         # 使用 get_or_create 保证唯一性，避免 Duplicate
@@ -248,8 +247,7 @@ def process_videos():
             'content': content,
             'content_seg': content_seg,
             'file_size': doc.file_size,
-            'duration': doc.duration,
-            'thumb_file_unique_id': doc.thumb_file_unique_id
+            'duration': doc.duration
         }
 
         kw, created = SoraContent.get_or_create(source_id=doc.file_unique_id, defaults=record_data)
@@ -258,6 +256,10 @@ def process_videos():
             for key, value in record_data.items():
                 setattr(kw, key, value)
             kw.save()
+
+        print(f"  🔄 更新 MySQL sora_content [{kw}]")
+
+        print(kw.__data__)
 
         doc.kc_id = kw.id
         doc.kc_status = 'updated'
