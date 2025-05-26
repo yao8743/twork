@@ -11,4 +11,4 @@ WEBHOOK_PATH = os.getenv("WEBHOOK_PATH")
 WEBAPP_HOST = os.getenv("WEBAPP_HOST")
 WEBAPP_PORT = int(os.getenv("WEBAPP_PORT", 10000))
 
-AES_KEY = b'1234g678901b34567g9012345g78%012'
+AES_KEY = os.getenv("AES_KEY", "")

@@ -18,6 +18,9 @@ class AESCrypto:
         self.key = raw
 
     def aes_encode(self, data: str) -> str:
+        if not isinstance(data, str):
+            data = str(data)
+
         """
         加密字符串，返回 URL-safe Base64（不带=填充）的结果。
         """
