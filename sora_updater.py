@@ -197,6 +197,7 @@ def process_documents():
             'content': content,
             'content_seg': content_seg,
             'file_size': doc.file_size,
+            'thumb_file_unique_id': doc.thumb_file_unique_id
         }
 
         # 使用 get_or_create 保证唯一性，避免 Duplicate
@@ -248,6 +249,7 @@ def process_videos():
             'content_seg': content_seg,
             'file_size': doc.file_size,
             'duration': doc.duration,
+            'thumb_file_unique_id': doc.thumb_file_unique_id
         }
 
         kw, created = SoraContent.get_or_create(source_id=doc.file_unique_id, defaults=record_data)

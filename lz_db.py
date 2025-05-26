@@ -121,24 +121,80 @@ class DB:
         cache_key = f"sora_content_id:{content_id}"
         cached = self.cache.get(cache_key)
         if cached:
-            print(f"Cache hit for {cache_key}")
+            print(f"\r\n\r\nCache hit for {cache_key}")
             return cached
     
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
                 '''
                 SELECT s.id, s.source_id, s.file_type, s.content, s.file_size, s.duration, s.tag,
-                     m.file_id, m.thumb_file_id
+                    s.thumb_file_unique_id,
+                    m.file_id AS m_file_id, m.thumb_file_id AS m_thumb_file_id
                 FROM sora_content s
                 LEFT JOIN sora_media m ON s.id = m.content_id AND m.source_bot_name = $2
                 WHERE s.id = $1
                 ''',
                 content_id, lz_var.bot_username
             )
-            # 只缓存存在的记录
-            if row:
-                self.cache.set(cache_key, row, ttl=3600)  # 例如缓存 1 小时
-            return row
+            
+            if not row:
+                return None  # 未找到内容
+
+            row = dict(row)
+
+            # 先用 m 表资料
+            file_id = row.get("m_file_id")
+            thumb_file_id = row.get("m_thumb_file_id")
+
+            # 若缺其中任一，则尝试用 file_extension 查补
+            if not file_id or not thumb_file_id:
+                extension_rows = await conn.fetch(
+                    '''
+                    SELECT file_unique_id, file_id
+                    FROM file_extension
+                    WHERE file_unique_id = ANY($1::text[])
+                    AND bot = $2
+                    ''',
+                    [row.get("source_id"), row.get("thumb_file_unique_id")],
+                    lz_var.bot_username
+                )
+                ext_map = {r["file_unique_id"]: r["file_id"] for r in extension_rows}
+
+                if not file_id and row.get("source_id") in ext_map:
+                    file_id = ext_map[row["source_id"]]
+
+                if not thumb_file_id and row.get("thumb_file_unique_id") in ext_map:
+                    thumb_file_id = ext_map[row["thumb_file_unique_id"]]
+
+            # 如果两个都有值，就 upsert 写入 sora_media
+            if file_id and thumb_file_id:
+                await conn.execute(
+                    '''
+                    INSERT INTO sora_media (content_id, file_id, thumb_file_id, source_bot_name)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (content_id, source_bot_name)
+                    DO UPDATE SET
+                        file_id = EXCLUDED.file_id,
+                        thumb_file_id = EXCLUDED.thumb_file_id
+                    ''',
+                    content_id, file_id, thumb_file_id, lz_var.bot_username
+                )
+
+            result = {
+                "id": row["id"],
+                "source_id": row["source_id"],
+                "file_type": row["file_type"],
+                "content": row["content"],
+                "file_size": row["file_size"],
+                "duration": row["duration"],
+                "tag": row["tag"],
+                "file_id": file_id,
+                "thumb_file_id": thumb_file_id
+            }
+
+            self.cache.set(cache_key, result, ttl=3600)
+            return result
+
             # 返回 asyncpg Record 或 None
 
 
