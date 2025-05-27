@@ -204,8 +204,12 @@ class BaseHandlerClass:
             return False
 
     async def get_fallback_chat_ids(self):
-        if self._fallback_chat_ids_cache is not None:
-            return self._fallback_chat_ids_cache
+
+        if BaseHandlerClass._fallback_chat_ids_cache is not None:
+            return BaseHandlerClass._fallback_chat_ids_cache
+
+        # if self._fallback_chat_ids_cache is not None:
+        #     return self._fallback_chat_ids_cache
 
         try:
             setting_chat_id = self.extra_data.get('config', {}).get('setting_chat_id')
@@ -224,7 +228,7 @@ class BaseHandlerClass:
             valid_ids = []
             for chat_id in original_ids:
                 if await self.is_still_in_group_by_id(chat_id):
-                    print(f"✅ 仍在群 {chat_id}")
+                    # print(f"  ✅ 仍在群 {chat_id}")
                     valid_ids.append(chat_id)
                 else:
                     
@@ -258,9 +262,10 @@ class BaseHandlerClass:
                 record.save()
                 print(f"📝 已更新 ScrapConfig，当前有效群: {new_value}")
 
-            self._fallback_chat_ids_cache = valid_ids  # ✅ 缓存有效的 ID
+            # self._fallback_chat_ids_cache = valid_ids  # ✅ 缓存有效的 ID
+            BaseHandlerClass._fallback_chat_ids_cache = valid_ids
             print(f"✅ FORWARD_TARGETS 有效群：{self._fallback_chat_ids_cache}")
-            print(f"✅ FORWARD_TARGETS 有效群：{valid_ids}")
+          
             return valid_ids
 
         except DoesNotExist:
