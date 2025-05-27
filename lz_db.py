@@ -148,6 +148,9 @@ class DB:
 
             # 若缺其中任一，则尝试用 file_extension 查补
             if not file_id or not thumb_file_id:
+
+                print(f"\r\n\r\n>>> Fetching file extensions for {row.get('source_id')} and {row.get('thumb_file_unique_id')}")
+
                 extension_rows = await conn.fetch(
                     '''
                     SELECT file_unique_id, file_id
@@ -160,6 +163,12 @@ class DB:
                 )
                 ext_map = {r["file_unique_id"]: r["file_id"] for r in extension_rows}
 
+                print(f"Fetched {len(extension_rows)} file extensions for content_id {content_id}")
+                # 如果 file_id 还没值，尝试用 source_id 和 thumb_file_unique_id 查找
+                print(f"{ext_map}")
+                print(f"{row}")
+               
+
                 if not file_id and row.get("source_id") in ext_map:
                     file_id = ext_map[row["source_id"]]
 
@@ -168,6 +177,7 @@ class DB:
 
             # 如果两个都有值，就 upsert 写入 sora_media
             if file_id and thumb_file_id:
+                print(f"\r\n\r\n>>>Upserting sora_media for content_id {content_id} with file_id {file_id} and thumb_file_id {thumb_file_id}")
                 await conn.execute(
                     '''
                     INSERT INTO sora_media (content_id, file_id, thumb_file_id, source_bot_name)

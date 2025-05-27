@@ -8,7 +8,7 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.20100034.env')
+    load_dotenv(dotenv_path='.28817994.env')
 
 
 import random
@@ -103,7 +103,7 @@ async def join(invite_hash):
         if 'InviteRequestSentError' in str(e):
             print("加入请求已发送，等待审批")
         else:
-            print(f"加入群组失败: {e}")
+            print(f"失败-加入群组: {invite_hash} {e}")
 
 async def leave_group(entity):
     try:
@@ -375,6 +375,8 @@ async def process_group_message(entity, message):
     # 检测是否是 |_init_|
     if message.text == '|_init_|':
         await invite_bot('luzai01bot', entity)  # 替换为实际的 Bot 用户名
+        await invite_bot('luzai01man', entity)  # 替换为实际的 Bot 用户名
+        await invite_bot('luzai03bot', entity)  # 替换为实际的 Bot 用户名
         await invite_bot('has_no_access_bot', entity)  # 替换为实际的 Bot 用户名
         await invite_bot('DeletedAcconutBot', entity)  # 替换为实际的 Bot 用户名
         await invite_bot('freebsd66bot', entity)  # 替换为实际的 Bot 用户名
@@ -520,25 +522,34 @@ async def main():
 
     # exit()
     # await delete_my_profile_photos(client)
-    # await update_username(client,"gunndd8kdhdj")
-    # exit()
-
-    # await join("Dya4zqIBXtIxMWZk") #6874-01 2017145941    - 22329346  / 20100034
-    # await join("fTMvarjGSckxZmI8") #7258-02 2091886937 ok
-    # await join("aLUZCCIiKhM5ZWNk") #7275-03 2063167161    -22329346   / 20100034
-    # await join("cr_hRjB_dRtkODdk") #7287-04 2108982395 - 20100034
-    # await join("AeW96FZ9pmZTdk") #6376-05 1997235289  - 22329346  / 20100034
-    # await join("li2wwjC6vEc5Mzdk") #6659-06   2000730581 - 22329346   / 20100034
-    # await join("YfssBV1GmsgzMWQ0")  #7350-07 2145325974 / 20100034
-    # await join("AWkBJsoFUc81MWE1")  #5891-08 2062860209 / 20100034
-    # await join("_nPFKXIaMns1OTQ0")  #7338-09 2015918658 / 20100034
-    # await join("3eDZvSPvkVgyNmY0")  #06315-10 2047726819 v ok shunfeng807
-    # await join("3eDZvSPvkVgyNmY0")  #06393-11 2003243227 v   @shunfeng807
-    # await join("JP4ToOui4FcyMzM0")  #6463-12   1843229948
-    # await join("PsKjngKmHXtlNTM0")  #7246-13   2021739085 v
-
+    # await update_my_name(client,'Luzai', 'Man')
+    # await update_username(client,"luzai01man")
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
     # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
+
+    
+
+    # await join("Dya4zqIBXtIxMWZk") #6874-01 2017145941    - 22329346  / 20100034 ( Die )
+    # await join("fTMvarjGSckxZmI8") #7258-02 2091886937 ok
+    # await join("") #7275-03 2063167161    -22329346   / 20100034
+    # await join("cr_hRjB_dRtkODdk") #7287-04 2108982395 - 20100034 (Die)
+    # await join("") #6376-05 1997235289  - 22329346  / 20100034
+    # await join("li2wwjC6vEc5Mzdk") #6659-06   2000730581 - 22329346   / 20100034
+    # await join("")  #7350-07 2145325974 / 20100034
+    # await join("")  #5891-08 2062860209 / 20100034 (?)
+    # await join("")  #7338-09 2015918658 / 20100034
+   
+    # await join("3eDZvSPvkVgyNmY0")  #06315-10 2047726819 v ok shunfeng807
+    
+    # await join("")  #06393-11 2003243227 v   @shunfeng807
+    
+    # await join("")  #6463-12   1843229948
+    
+    await join("PsKjngKmHXtlNTM0")  #7246-13   2021739085 v
+    
+    await join("")  #14 (?)
+    await join("")  #6553-15 
+
 
 
     # |_join_|3eDZvSPvkVgyNmY0

@@ -81,7 +81,16 @@ async def handle_search_by_id(message: Message, command: Command = Command("id")
     args = message.text.split(maxsplit=1)
     if len(args) > 1:
         # ✅ 调用并解包返回的三个值
-        ret_content, [file_id, thumb_file_id], [owner_user_id] = await load_sora_content_by_id(int(args[1]))
+        # ret_content, [file_id, thumb_file_id], [owner_user_id] = await load_sora_content_by_id(int(args[1]))
+
+        result = await load_sora_content_by_id(int(args[1]))
+        print("Returned:", result)
+
+        ret_content, file_info, user_info = result
+        file_id = file_info[0] if len(file_info) > 0 else None
+        thumb_file_id = file_info[1] if len(file_info) > 1 else None
+        owner_user_id = user_info[0] if user_info else None
+
 
         # ✅ 检查是否找不到资源（根据返回第一个值）
         if ret_content.startswith("⚠️"):
@@ -247,7 +256,7 @@ async def handle_redeem(callback: CallbackQuery):
 async def load_sora_content_by_id(content_id: int) -> str:
     record = await db.search_sora_content_by_id(content_id)
     if record:
-        print(f"{record}")
+        
          # 取出字段，并做基本安全处理
         record_id = record.get('id', '')
         tag = record.get('tag', '')
@@ -258,6 +267,8 @@ async def load_sora_content_by_id(content_id: int) -> str:
         content = record.get('content', '')
         file_id = record.get('file_id', '')
         thumb_file_id = record.get('thumb_file_id', '')
+
+        print(f"{record}")
 
         print(f"🔍 载入 ID: {record_id}, Source ID: {source_id}, thumb_file_id:{thumb_file_id}, File Type: {file_type}\r\n")
 
