@@ -430,6 +430,7 @@ async def man_bot_loop():
             # print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
             continue
 
+        current_entiry_title = None
         entity_title = getattr(entity, 'title', None)
         if not entity_title:
             first_name = getattr(entity, 'first_name', '') or ''
@@ -438,7 +439,7 @@ async def man_bot_loop():
 
 
 
-        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
@@ -456,7 +457,10 @@ async def man_bot_loop():
                     entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
-                    
+                    if current_entiry_title != entity_title:
+                        print(f"当前消息ID(U): {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                        current_entiry_title = entity_title
+
                     await process_user_message(entity, message)
 
                 if current_message:
@@ -480,6 +484,11 @@ async def man_bot_loop():
                         if message.sticker:
                             continue
                         current_message = message
+                        if current_entiry_title != entity_title:
+                            print(f"当前消息ID(U): {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                            current_entiry_title = entity_title
+
+
                         # print(f"当前消息ID(G): {current_message.id}")
                         await process_group_message(entity, message)
                 except ChannelPrivateError as e:
