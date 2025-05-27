@@ -10,6 +10,9 @@ from telethon.errors import ChannelPrivateError
 import json
 
 class BaseHandlerClass:
+
+    _fallback_chat_ids_cache = None
+
     def __init__(self, client, entity, message, extra_data):
         self.client = client
         self.entity = entity
@@ -17,7 +20,7 @@ class BaseHandlerClass:
         self.extra_data = extra_data
         self.forward_pattern = re.compile(r'\|_forward_\|\@(-?\d+|[a-zA-Z0-9_]+)')
         self.is_duplicate_allowed = False
-        self._fallback_chat_ids_cache = None  # ✅ 实例缓存
+        
 
 
     def parse_caption_json(self,caption: str):
