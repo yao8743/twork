@@ -256,7 +256,8 @@ class BaseHandlerClass:
                 print(f"📝 已更新 ScrapConfig，当前有效群: {new_value}")
 
             self._fallback_chat_ids_cache = valid_ids  # ✅ 缓存有效的 ID
-           
+            print(f"✅ FORWARD_TARGETS 有效群：{self._fallback_chat_ids_cache}")
+            print(f"✅ FORWARD_TARGETS 有效群：{valid_ids}")
             return valid_ids
 
         except DoesNotExist:
