@@ -542,30 +542,31 @@ async def main():
 
     
 
-    # await join("Dya4zqIBXtIxMWZk") #6874-01 2017145941    - 22329346  / 20100034 ( Die )
-    # await join("fTMvarjGSckxZmI8") #7258-02 2091886937 ok
-    # await join("") #7275-03 2063167161    -22329346   / 20100034
-    # await join("cr_hRjB_dRtkODdk") #7287-04 2108982395 - 20100034 (Die)
-    # await join("") #6376-05 1997235289  - 22329346  / 20100034
-    # await join("li2wwjC6vEc5Mzdk") #6659-06   2000730581 - 22329346   / 20100034
-    # await join("")  #7350-07 2145325974 / 20100034
-    # await join("")  #5891-08 2062860209 / 20100034 (?)
-    # await join("")  #7338-09 2015918658 / 20100034
-   
-    # await join("3eDZvSPvkVgyNmY0")  #06315-10 2047726819 v ok shunfeng807
-    
-    # await join("")  #06393-11 2003243227 v   @shunfeng807
-    
-    # await join("")  #6463-12   1843229948
-    
-    # await join("")  #7246-13   2021739085 v
-    
-    # await join("")  #14 (?)
-    # await join("")  #6553-15 
+    #01 DIE 6874    2017145941  await join("") 22329346  / 20100034 ( Die )
+    #02 OK  7258    2091886937  await join("fTMvarjGSckxZmI8") 
+    #03 DIE 7275    2063167161  await join("")                 22329346   / 20100034 ( Die ? )
+    #04 DIE 7287    2108982395  await join("cr_hRjB_dRtkODdk") 20100034 (Die)
+    #05 DIE 6376    1997235289  await join("")                 20100034 ( Die ? )
+    #06 OK  6659    2000730581  await join("li2wwjC6vEc5Mzdk") 22329346   / 20100034
+    #07 DIE 7350    2145325974  await join("")                 20100034
+    #08 DIE 5891    2062860209  await join("")                 20100034 (?)
+    #09 DIE 7338    2015918658  await join("")                 20100034
+    #10 OK  06315   2047726819  await join("QQCyh1N2sMU5ZGQ0") shunfeng807
+    #11 OK  06393   2003243227  await join("3eDZvSPvkVgyNmY0") @shunfeng807
+    #12 OK  #6463   1843229948  await join("MyiRfuLls-U0Zjk0") 
+    #13 DIE 7246    2021739085  await join("")
+    #14 DIE 6234                await join("")
+    #15 OK  6553    2061165152  await join("xCcAV1mgMCs1ZDE8")
 
 
-
+    # 2091886937,2000730581,2047726819,2003243227,1843229948,2061165152
+    # |_join_|fTMvarjGSckxZmI8
+    # |_join_|li2wwjC6vEc5Mzdk
+    # |_join_|QQCyh1N2sMU5ZGQ0
     # |_join_|3eDZvSPvkVgyNmY0
+    # |_join_|MyiRfuLls-U0Zjk0
+    # |_join_|xCcAV1mgMCs1ZDE8
+
 
     
    

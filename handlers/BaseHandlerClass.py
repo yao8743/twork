@@ -264,7 +264,7 @@ class BaseHandlerClass:
 
             # self._fallback_chat_ids_cache = valid_ids  # ✅ 缓存有效的 ID
             BaseHandlerClass._fallback_chat_ids_cache = valid_ids
-            print(f"✅ FORWARD_TARGETS 有效群：{self._fallback_chat_ids_cache}")
+            print(f"✅ FORWARD_TARGETS 有效群：{BaseHandlerClass._fallback_chat_ids_cache}")
           
             return valid_ids
 
