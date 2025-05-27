@@ -458,7 +458,7 @@ async def man_bot_loop():
                 ):
                     current_message = message
                     if current_entiry_title != entity_title:
-                        print(f"[User] {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                        print(f"User: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
                         current_entiry_title = entity_title
 
                     await process_user_message(entity, message)
@@ -485,7 +485,7 @@ async def man_bot_loop():
                             continue
                         current_message = message
                         if current_entiry_title != entity_title:
-                            print(f"[Group] {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                            print(f"Group: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
                             current_entiry_title = entity_title
 
 
@@ -518,6 +518,9 @@ async def main():
     print(f'你的名字: {me.first_name} {me.last_name or ""}')
     print(f'是否是Bot: {me.bot}')
 
+    intbotname = '@Qing001bot'
+    await client.send_message(intbotname, "/start")
+    await client.send_message(intbotname, "[~bot~]")
 
     # group_identifier = -1002592636499
     # participants = await client.get_participants(group_identifier)
@@ -555,10 +558,10 @@ async def main():
     
     # await join("")  #6463-12   1843229948
     
-    await join("PsKjngKmHXtlNTM0")  #7246-13   2021739085 v
+    # await join("")  #7246-13   2021739085 v
     
-    await join("")  #14 (?)
-    await join("")  #6553-15 
+    # await join("")  #14 (?)
+    # await join("")  #6553-15 
 
 
 
