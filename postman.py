@@ -330,6 +330,7 @@ async def process_user_message(entity, message):
                 inviteurl = match2.group(1) 
                 print(f"邀请链接: {inviteurl}")
                 await join(inviteurl)    #Coniguration
+                await safe_delete_message(message)
                 return
         except Exception as e:
                 print(f"Error livite: {e} {inviteurl}", flush=True)
