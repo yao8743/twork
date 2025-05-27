@@ -458,7 +458,7 @@ async def man_bot_loop():
                 ):
                     current_message = message
                     if current_entiry_title != entity_title:
-                        print(f"当前消息ID(U): {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                        print(f"[User] {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
                         current_entiry_title = entity_title
 
                     await process_user_message(entity, message)
@@ -485,7 +485,7 @@ async def man_bot_loop():
                             continue
                         current_message = message
                         if current_entiry_title != entity_title:
-                            print(f"当前消息ID(U): {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                            print(f"[Group] {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
                             current_entiry_title = entity_title
 
 
