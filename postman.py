@@ -300,6 +300,7 @@ async def process_user_message(entity, message):
                 botname = match.group(1) + match.group(2)
                 await client.send_message(botname, "/start")
                 await client.send_message(botname, "[~bot~]")
+                await safe_delete_message(message)
                 return
         except Exception as e:
                 print(f"Error kicking bot: {e} {botname}", flush=True)
