@@ -6,8 +6,16 @@ import os
 # Check if running in a local development environment
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.28817994.env')
+    load_dotenv(dotenv_path='.29614663.env')
     
+api_id = os.getenv('API_ID')
+api_hash = os.getenv('API_HASH')
+phone_number = os.getenv('PHONE_NUMBER')
+
+assert api_id is not None, "❌ 环境变量 API_ID 没有设置！"
+assert api_hash is not None, "❌ 环境变量 API_HASH 没有设置！"
+assert phone_number is not None, "❌ 环境变量 PHONE_NUMBER 没有设置！"
+
 
 # Get values from environment variables
 api_id = os.getenv('API_ID')
