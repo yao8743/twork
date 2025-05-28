@@ -29,6 +29,8 @@ from database import db
 from handlers.HandlerBJIClass import HandlerBJIClass
 from handlers.HandlerBJILiteClass import HandlerBJILiteClass
 from handlers.HandlerNoAction import HandlerNoAction
+from handlers.HandlerNoDelete import HandlernNoDeleteClass
+
 from handlers.HandlerRelayClass import HandlerRelayClass
 
 from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
@@ -353,6 +355,7 @@ async def process_user_message(entity, message):
     # 实现：根据 entity.id 映射到不同处理类
     class_map = {
         777000: HandlerNoAction,   # 替换为真实 entity.id 和处理类
+        7521097665 : HandlernNoDeleteClass,   # 撸仔四号
     }
 
     handler_class = class_map.get(entity.id)
