@@ -146,8 +146,8 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                                 caption
                             )
 
-
-                        if forwared_success:
+                        
+                        if not self.is_duplicate_allowed and  forwared_success:
                             MediaIndex.create(
                             media_type=media_type,
                             media_id=media_id,
