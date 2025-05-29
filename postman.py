@@ -72,7 +72,7 @@ except Exception as e:
         
 # print(f"⚠️ 配置參數：{config}")
    
-
+print(f"{os.getenv('PHONE_NUMBER', '')}")
     
     
 
