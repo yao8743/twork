@@ -115,10 +115,11 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                             (MediaIndex.media_id == media_id) &
                             (MediaIndex.access_hash == access_hash)
                         ).exists()
-
+ 
                     if not exists:
                         if self.message.chat_id == target_chat_id or target_chat_id == "luzai04bot":
-                            await self.safe_delete_message()
+                            # await self.safe_delete_message()
+                            
                             print("⚠️ 目标和源聊天相同，跳过转发")
                             return
                         
