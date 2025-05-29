@@ -24,8 +24,6 @@ from model.scrap_progress import ScrapProgress
 from model.scrap_config import ScrapConfig
 from database import db
 
-
-
 from handlers.HandlerBJIClass import HandlerBJIClass
 from handlers.HandlerBJILiteClass import HandlerBJILiteClass
 from handlers.HandlerNoAction import HandlerNoAction
@@ -43,11 +41,6 @@ from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.account import UpdateUsernameRequest
 from telethon.tl.functions.channels import InviteToChannelRequest, TogglePreHistoryHiddenRequest,LeaveChannelRequest
 from telethon.errors import ChannelPrivateError
-
-
-
-
-
 
 # 配置参数
 config = {
@@ -74,12 +67,6 @@ except Exception as e:
         
 # print(f"⚠️ 配置參數：{config}")
    
-print(f"{os.getenv('PHONE_NUMBER', '')}")
-    
-    
-
-
-
 # 在模块顶部初始化全局缓存
 local_scrap_progress = {}  # key = (chat_id, api_id), value = message_id
 
@@ -154,7 +141,6 @@ async def update_username(client,username):
     except Exception as e:
         print(f"变更失败：{e}")
 
-
 async def invite_bot(bot_username, entity):
 # 获取 Bot 实体
     bot_entity = await client.get_entity(bot_username)
@@ -177,8 +163,6 @@ async def invite_bot(bot_username, entity):
 
     except Exception as e:
         print(f'邀请失败: {e}')
-
-
 
 async def safe_delete_message(message):
     try:
@@ -235,7 +219,6 @@ async def is_blacklisted(entity_id):
         print(f"⚠️ 加载黑名单失败: {e}")
         return False
 
-
 async def get_max_source_message_id(source_chat_id):
     key = (source_chat_id, config['api_id'])
     if key in local_scrap_progress:
@@ -263,9 +246,6 @@ async def get_max_source_message_id(source_chat_id):
     except Exception as e:
         print(f"Error fetching max source_message_id: {e}")
         return None
-
-
-
         
 async def save_scrap_progress(entity_id, message_id):
     key = (entity_id, config['api_id'])
@@ -370,8 +350,6 @@ async def process_user_message(entity, message):
         handler.delete_after_process = True
         await handler.handle()
        
-       
-
 async def process_group_message(entity, message):
     
     extra_data = {'app_id': config['api_id']}
@@ -418,8 +396,6 @@ async def process_group_message(entity, message):
 
     else:
         pass
-
-
 
 async def man_bot_loop():
     last_message_id = 0  # 提前定义，避免 UnboundLocalError
@@ -509,8 +485,6 @@ async def man_bot_loop():
                     await save_scrap_progress(entity.id, current_message.id)
                     return last_message_id
     return last_message_id
-
-
 
 async def main():
     await client.start(config['phone_number'])

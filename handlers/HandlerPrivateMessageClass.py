@@ -25,8 +25,6 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
         fallback_chat_ids = await self.get_fallback_chat_ids()
         forwared_success = True
         
-       
-
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
 

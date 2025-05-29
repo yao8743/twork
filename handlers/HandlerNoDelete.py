@@ -25,8 +25,6 @@ class HandlernNoDeleteClass(BaseHandlerClass):
         fallback_chat_ids = await self.get_fallback_chat_ids()
         forwared_success = True
         
-       
-
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
 
@@ -119,9 +117,12 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                         ).exists()
 
                     if not exists:
+                        if self.message.chat_id == target_chat_id or target_chat_id == "luzai04bot":
+                            await self.safe_delete_message()
+                            print("⚠️ 目标和源聊天相同，跳过转发")
+                            return
                         
                         await wait_for_send_slot(target_chat_id)
-                       
                         forwared_success = await safe_forward_or_send(
                             self.client,
                             self.message.id,
@@ -130,9 +131,6 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                             media,
                             caption
                         )
-
-                        
-
 
                         if not forwared_success and back_target_chat_id != None:
                             await wait_for_send_slot(back_target_chat_id)
@@ -146,13 +144,12 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                                 caption
                             )
 
-                        
                         if not self.is_duplicate_allowed and  forwared_success:
                             MediaIndex.create(
-                            media_type=media_type,
-                            media_id=media_id,
-                            access_hash=access_hash
-                        )
+                                media_type=media_type,
+                                media_id=media_id,
+                                access_hash=access_hash
+                            )
 
                     else:
                         print("⚠️ 已接收过该媒体，跳过处理")
