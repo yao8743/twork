@@ -56,9 +56,15 @@ class HandlerRelayClass(BaseHandlerClass):
                 
                         match = self.forward_pattern.search(caption)
                         if match:
+                            if caption.endswith("|force"):
+                                self.is_duplicate_allowed = True
                            
                             target_raw = match.group(1)
                             target_raw = target_raw.replace('-100','')
+                            
+                           
+
+
                             if target_raw.isdigit():
                                 target_chat_id = int(target_raw)
                             else:
@@ -101,6 +107,8 @@ class HandlerRelayClass(BaseHandlerClass):
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
+                            if caption.endswith("|force"):
+                                self.is_duplicate_allowed = True
                             target_raw = match.group(1)
                             if target_raw.isdigit():
                                 target_chat_id = int(target_raw)

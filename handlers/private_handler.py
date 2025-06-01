@@ -49,6 +49,8 @@ class PrivateMessageHandler:
             caption = messages[0].message or ""
             match = self.forward_pattern.search(caption)
             if match:
+                if caption.endswith("|force"):
+                    self.is_duplicate_allowed = True
                 target_chat_id = int(match.group(1))
             elif self.fallback_chat_ids:
                 target_chat_id = random.choice(self.fallback_chat_ids)
@@ -84,6 +86,8 @@ class PrivateMessageHandler:
             if isinstance(media, (MessageMediaPhoto, MessageMediaDocument)):
                 match = self.forward_pattern.search(caption)
                 if match:
+                    if caption.endswith("|force"):
+                        self.is_duplicate_allowed = True
                     target_chat_id = int(match.group(1))
                 elif self.fallback_chat_ids:
                     if isinstance(media, (MessageMediaPhoto)):

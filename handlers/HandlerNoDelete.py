@@ -38,6 +38,8 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                 caption = album[0].message or ""
                 match = self.forward_pattern.search(caption)
                 if match:
+                    if caption.endswith("|force"):
+                        self.is_duplicate_allowed = True
                     target_raw = match.group(1)
                     target_raw = target_raw.replace('-100','')
                     if target_raw.isdigit():
@@ -69,19 +71,13 @@ class HandlernNoDeleteClass(BaseHandlerClass):
                 match = self.forward_pattern.search(caption)
                 back_target_chat_id = None
                 if match:
+                    if caption.endswith("|force"):
+                        self.is_duplicate_allowed = True
                     # target_raw = match.group(1)
-                    target_raw_orignal = match.group(1)
-                    target_raw_orignal = target_raw_orignal.replace('-100','')
+                    target_raw = match.group(1)
+                    target_raw = target_raw.replace('-100','')
                     
-                    # 处理包含 '|' 的情况
-                    if '|' in target_raw_orignal:
-                        parts = target_raw_orignal.split('|')
-                        target_raw = parts[0].strip()
-                        if len(parts) > 1 and parts[1].strip().lower() == 'force':
-                            self.is_duplicate_allowed = True
-                    else:
-                        target_raw = target_raw_orignal.strip()
-
+                   
 
 
                     if target_raw.isdigit():

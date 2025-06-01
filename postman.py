@@ -491,10 +491,13 @@ async def main():
     await keep_db_alive()
 
     me = await client.get_me()
-    print(f'你的用户名: {me.username}')
-    print(f'你的ID: {me.id}')
-    print(f'你的名字: {me.first_name} {me.last_name or ""}')
-    print(f'是否是Bot: {me.bot}')
+
+       
+    if config.get('is_debug_enabled') == 1:
+        print(f'你的用户名: {me.username}')
+        print(f'你的ID: {me.id}')
+        print(f'你的名字: {me.first_name} {me.last_name or ""}')
+        print(f'是否是Bot: {me.bot}')
 
     intbotname = '@Qing001bot'
     await client.send_message(intbotname, "/start")

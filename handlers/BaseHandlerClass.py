@@ -57,7 +57,10 @@ class BaseHandlerClass:
                 
                         match = self.forward_pattern.search(caption)
                         if match:
-                           
+                             
+                            if caption.endswith("|force"):
+                                self.is_duplicate_allowed = True
+
                             target_raw = match.group(1)
                             if target_raw.isdigit():
                                 target_chat_id = int(target_raw)
@@ -100,6 +103,9 @@ class BaseHandlerClass:
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
+                            if caption.endswith("|force"):
+                                self.is_duplicate_allowed = True
+                        
                             target_raw = match.group(1)
                             if target_raw.isdigit():
                                 target_chat_id = int(target_raw)
@@ -278,7 +284,7 @@ class BaseHandlerClass:
     async def safe_delete_message(self):
         try:
             
-            print(f"🧹 成功刪除訊息D {self.message.id}（雙方）", flush=True)
+            print(f"---🧹 成功刪除訊息D {self.message.id}（雙方）", flush=True)
             await self.client.delete_messages(self.message.chat_id, [self.message.id], revoke=True)
         except Exception as e:
-            print(f"⚠️ 刪除訊息失敗D {self.message.id}：{e}", flush=True)
+            print(f"---⚠️ 刪除訊息失敗D {self.message.id}：{e}", flush=True)
