@@ -57,7 +57,7 @@ def render_results_plain(results: list[dict], keyword: str, page: int, total: in
 
 
         lines.append(
-            f"{icon}<a href='https://t.me/luzai04bot?start=f_{encoded}'>{content}</a>"
+            f"{icon}<a href='https://t.me/luzai08bot?start=f_{encoded}'>{content}</a>"
             # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
             # f"<b>内容:</b> {content}"
