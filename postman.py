@@ -420,7 +420,7 @@ async def man_bot_loop():
 
 
 
-        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
