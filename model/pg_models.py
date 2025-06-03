@@ -67,7 +67,7 @@ class SoraContentPg(PgBaseModel):
     source_id = CharField(max_length=100)
     file_type = CharField(max_length=1)  # 简化做法
 
-    content = TextField()
+    content = TextField(null=True)
     content_seg = TextField(null=True)
     # content_seg_tsv = TSVectorField(null=True)  # GENERATED COLUMN
     file_size = BigIntegerField(null=True)

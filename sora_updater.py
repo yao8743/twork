@@ -180,7 +180,7 @@ def process_documents():
 
         DB_PG.connect()
 
-    print("🚀 开始同步 stage != 'updated' 的 document 到 PostgreSQL...")
+    print("🚀 开始同步 stage != 'updated' 的 document 到 PostgreSQL...",flush=True)
     for doc in Document.select().where((Document.kc_status.is_null(True)) | (Document.kc_status != 'updated')).limit(BATCH_LIMIT):
         if not doc.file_name and not doc.caption:
             doc.kc_status = 'updated'
@@ -515,10 +515,10 @@ def process_sora_update():
 
 def sync_pending_sora_to_postgres():
     if not SYNC_TO_POSTGRES:
-        print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步")
+        print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步",flush=True)
         return
 
-    print("🚀 开始同步 stage = 'pending' 的 sora_content 到 PostgreSQL...")
+    print("🚀 开始同步 stage = 'pending' 的 sora_content 到 PostgreSQL...",flush=True)
     from playhouse.shortcuts import model_to_dict
 
     # DB_MYSQL.connect()
@@ -549,7 +549,7 @@ def sync_pending_sora_to_postgres():
         # ✅ 回写 MySQL：stage = "updated"
         row.stage = "updated"
         row.save()
-        print(f"📝 已更新：source_id{row.source_id} =>MySQL sora_content.stage = 'updated'")
+        print(f"📝 已更新：source_id{row.source_id} =>MySQL sora_content.stage = 'updated'",flush=True)
 
 
     DB_MYSQL.close()
