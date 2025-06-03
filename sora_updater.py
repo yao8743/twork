@@ -541,8 +541,7 @@ def sync_pending_sora_to_postgres():
 
 
 if __name__ == "__main__":
+    process_documents()
+    process_videos()
+    process_scrap()
     sync_pending_sora_to_postgres()  # ✅ 新增的同步逻辑
-    # process_documents()
-    # process_videos()
-   
-    # process_scrap()
