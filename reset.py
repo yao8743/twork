@@ -6,8 +6,11 @@ import os
 # Check if running in a local development environment
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.28817994.env')
+    load_dotenv(dotenv_path='.24530779.env')
     
+
+
+
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 phone_number = os.getenv('PHONE_NUMBER')
