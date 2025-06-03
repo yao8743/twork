@@ -1,7 +1,8 @@
 import os
 from peewee import *
-from playhouse.postgres_ext import PostgresqlExtDatabase, TSVectorField
-import datetime
+from urllib.parse import urlparse, unquote
+# from playhouse.postgres_ext import PostgresqlExtDatabase, TSVectorField
+# import datetime
 # 判断是否启用 PostgreSQL 同步
 
 
@@ -9,13 +10,52 @@ import datetime
 DB_PG = PostgresqlDatabase(None)
 
 def init_postgres():
-    DB_PG.init(
-        os.getenv('PG_DB_NAME'),
-        host=os.getenv('PG_DB_HOST'),
-        port=int(os.getenv('PG_DB_PORT', 5432)),
-        user=os.getenv('PG_DB_USER'),
-        password=os.getenv('PG_DB_PASSWORD')
-    )
+    dsn = os.getenv('POSTGRES_DSN')
+    
+    if dsn:
+# 手动拆解 DSN
+        parsed = urlparse(dsn)
+        # parsed.scheme   -> 'postgresql'
+        # parsed.username -> 'luzai_owner'
+        # parsed.password -> 'npg_yYSew3GW6vLT'
+        # parsed.hostname -> 'ep-still-wildflower-…'
+        # parsed.port     -> 5432
+        # parsed.path     -> '/luzai'
+        db_name = parsed.path.lstrip('/')  # 变成 'luzai'
+        user = unquote(parsed.username or "")
+        pwd = unquote(parsed.password or "")
+        host = parsed.hostname
+        port = parsed.port or 5432
+
+        # 有时 DSN 里会带 query，比如 sslmode=require
+        connect_kwargs = {}
+        if parsed.query:
+            # 比如 parsed.query = 'sslmode=require'
+            for kv in parsed.query.split('&'):
+                k, v = kv.split('=', 1)
+                connect_kwargs[k] = v
+
+        # print(f"[init_postgres] 手动解析 → db={db_name}, user={user}, host={host}, port={port}, extra={connect_kwargs}")
+        DB_PG.init(
+            db_name,
+            user=user,
+            password=pwd,
+            host=host,
+            port=port,
+            **connect_kwargs  # 把 sslmode=require 或其他参数一并传进去
+        )
+        # print(f"[init_postgres] init 完成后，DB_PG.database = {DB_PG.database!r}")
+    else:
+        DB_PG.init(
+            os.getenv('PG_DB_NAME'),
+            host=os.getenv('PG_DB_HOST'),
+            port=int(os.getenv('PG_DB_PORT', 5432)),
+            user=os.getenv('PG_DB_USER'),
+            password=os.getenv('PG_DB_PASSWORD')
+        )
+
+
+   
 
 
 class PgBaseModel(Model):

@@ -31,7 +31,7 @@ else:
             db_config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
     except Exception as e:
         print(f"⚠️ database - 無法解析 CONFIGURATION：{e}")
-    print(f"{db_config}")
+    # print(f"{db_config}")
     # 如果沒有從環境變數或 JSON 中獲取到配置，則使用預設值
 
 # //CONFIGURATION = '{"db_name":"telebot", "db_user":"telebot", "db_password":"GB]RcWbK9EQOxcdv", "db_host":"little2net.i234.me", "db_sslmode":"require", "db_port":58736}'

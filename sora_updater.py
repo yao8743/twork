@@ -11,7 +11,6 @@ from model.mysql_models import (
     DB_MYSQL, Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
 )
 from database import ensure_connection
-
 from model.scrap import Scrap
 
 SYNC_TO_POSTGRES = os.getenv('SYNC_TO_POSTGRES', 'false').lower() == 'true'
@@ -24,6 +23,17 @@ if SYNC_TO_POSTGRES:
     from model.pg_models import DB_PG, SoraContentPg, SoraMediaPg, init_postgres
     from playhouse.shortcuts import model_to_dict
     init_postgres()
+    # try:
+    #     DB_PG.connect()
+    #     print("✔️ DSN 方式下，connect() 成功！")
+    #     cursor = DB_PG.execute_sql("SELECT 1;")
+    #     print("[test query] SELECT 1 返回：", cursor.fetchone()[0])
+    # except Exception as e:
+    #     print("❌ DSN 方式下，connect() 失败：", e)
+    # finally:
+    #     if not DB_PG.is_closed():
+    #         DB_PG.close()
+    #         print("🔒 连接已关闭")
 
 # 同义词字典
 SYNONYM = {
@@ -165,8 +175,12 @@ def process_documents():
     # DB_MYSQL.connect()
     ensure_connection()  # ✅ 推荐写法
     if SYNC_TO_POSTGRES:
+
+
+
         DB_PG.connect()
 
+    print("🚀 开始同步 stage != 'updated' 的 document 到 PostgreSQL...")
     for doc in Document.select().where((Document.kc_status.is_null(True)) | (Document.kc_status != 'updated')).limit(BATCH_LIMIT):
         if not doc.file_name and not doc.caption:
             doc.kc_status = 'updated'
@@ -222,6 +236,7 @@ def process_videos():
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
+    print("🚀 开始同步 stage != 'updated' 的 video 到 PostgreSQL...")
     for doc in Video.select().where((Video.kc_status.is_null(True)) | (Video.kc_status != 'updated')).limit(BATCH_LIMIT):
         if not doc.file_name and not doc.caption:
             doc.kc_status = 'updated'
@@ -343,6 +358,7 @@ def process_scrap():
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
+    print("🚀 开始同步 stage != 'updated' 的 scrap 到 PostgreSQL...")
     for scrap in Scrap.select().where(((Scrap.kc_status.is_null(True)) | (Scrap.kc_status != 'updated')) & (Scrap.thumb_file_unique_id != '')).limit(BATCH_LIMIT):
         if not scrap.content:
             scrap.kc_status = 'updated'
@@ -512,7 +528,7 @@ def sync_pending_sora_to_postgres():
     rows = SoraContent.select().where(SoraContent.stage == "pending").limit(BATCH_LIMIT)
 
     for row in rows:
-        print(f"🔄 同步中：source_id = {row.source_id}")
+        # print(f"🔄 同步中：source_id = {row.source_id}")
 
         model_data = model_to_dict(row, recurse=False)
         # 去除不必要字段
@@ -533,7 +549,7 @@ def sync_pending_sora_to_postgres():
         # ✅ 回写 MySQL：stage = "updated"
         row.stage = "updated"
         row.save()
-        print(f"📝 已更新 MySQL sora_content.stage = 'updated'")
+        print(f"📝 已更新：source_id{row.source_id} =>MySQL sora_content.stage = 'updated'")
 
 
     DB_MYSQL.close()
