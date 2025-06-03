@@ -1,17 +1,21 @@
 import os
 from peewee import *
+# from database import DB_MYSQL  # ✅ 直接引用已初始化好的 db 实例
+from database import DB_MYSQL, ensure_connection  # ✅ 引入共用实例和连接检测函数
 
-DB_MYSQL = MySQLDatabase(None)
+
+# DB_MYSQL = MySQLDatabase(None)
 
 def init_mysql():
-    DB_MYSQL.init(
-        os.getenv('MYSQL_DB_NAME'),
-        host=os.getenv('MYSQL_DB_HOST'),
-        port=int(os.getenv('MYSQL_DB_PORT', 3306)),
-        user=os.getenv('MYSQL_DB_USER'),
-        password=os.getenv('MYSQL_DB_PASSWORD'),
-        charset='utf8mb4'
-    )
+    ensure_connection()  # ✅ 确保连接打开即可
+    # DB_MYSQL.init(
+    #     os.getenv('MYSQL_DB_NAME'),
+    #     host=os.getenv('MYSQL_DB_HOST'),
+    #     port=int(os.getenv('MYSQL_DB_PORT', 3306)),
+    #     user=os.getenv('MYSQL_DB_USER'),
+    #     password=os.getenv('MYSQL_DB_PASSWORD'),
+    #     charset='utf8mb4'
+    # )
 
 class BaseModel(Model):
     class Meta:

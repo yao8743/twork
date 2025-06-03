@@ -23,13 +23,16 @@ if match:
     }
 else:
     db_config = {}
+    setting_config = {}
     # 嘗試載入 JSON 並合併參數
     try:
         setting_json = json.loads(os.getenv('CONFIGURATION', ''))
         if isinstance(setting_json, dict):
             db_config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
     except Exception as e:
-        print(f"⚠️ 無法解析 CONFIGURATION：{e}")
+        print(f"⚠️ database - 無法解析 CONFIGURATION：{e}")
+    print(f"{db_config}")
+    # 如果沒有從環境變數或 JSON 中獲取到配置，則使用預設值
 
 # //CONFIGURATION = '{"db_name":"telebot", "db_user":"telebot", "db_password":"GB]RcWbK9EQOxcdv", "db_host":"little2net.i234.me", "db_sslmode":"require", "db_port":58736}'
 
@@ -41,8 +44,16 @@ else:
         'db_sslmode': db_config.get('db_sslmode', os.getenv('MYSQL_DB_SSLMODE','require')),
         'db_port': int(db_config.get('db_port', int(os.getenv('MYSQL_DB_PORT', 3306)))),
     }
+    
+
+
+
+
+
 
 # 数据库配置
+
+
 db = MySQLDatabase(
     db_config['db_name'],
     user=db_config['db_user'],
@@ -53,6 +64,9 @@ db = MySQLDatabase(
     autorollback=True,
     autoconnect=True
 )
+
+# 供外部模型导入使用
+DB_MYSQL = db
 
 def ensure_connection():
     """

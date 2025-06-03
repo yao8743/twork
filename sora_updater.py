@@ -5,12 +5,12 @@ import jieba
 from dotenv import load_dotenv
 
 if not os.getenv('GITHUB_ACTIONS'):
-    load_dotenv()
-
+    load_dotenv(dotenv_path='.sora.env')
 from peewee import *
 from model.mysql_models import (
     DB_MYSQL, Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
 )
+from database import ensure_connection
 
 from model.scrap import Scrap
 
@@ -135,10 +135,6 @@ def sync_to_postgres(record):
         except SoraContentPg.DoesNotExist:
             SoraContentPg.create(**model_data)
 
-
-
-
-
 def sync_media_to_postgres(content_id, media_rows):
     if not SYNC_TO_POSTGRES:
         return
@@ -165,11 +161,9 @@ def sync_media_to_postgres(content_id, media_rows):
                 print(f"❌ 插入 PostgreSQL sora_media 失败: {e}")
                 print(f"   ➤ 失败内容: {insert_data}")
 
-
-
-
 def process_documents():
-    DB_MYSQL.connect()
+    # DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
@@ -223,7 +217,8 @@ def process_documents():
 
 
 def process_videos():
-    DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
+    # DB_MYSQL.connect()
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
@@ -343,7 +338,8 @@ def parse_bj_tag_for_file(tag_str):
     return tag_cn_list
 
 def process_scrap():
-    DB_MYSQL.connect()
+    # DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
@@ -418,20 +414,18 @@ def process_scrap():
     if SYNC_TO_POSTGRES:
         DB_PG.close()
 
-
-
-
 def process_sora_update():
     import time
-    DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
+    # DB_MYSQL.connect()
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
-    sora_rows = Sora.select().where(Sora.update_content <= 0).limit(BATCH_LIMIT)
-    print(f"📦 正在处理 {len(sora_rows)} 笔 sora 数据...\n")
+    sora_content_rows = SoraContent.select().where(SoraContent.stage=="pending").limit(BATCH_LIMIT)
+    print(f"📦 正在处理 {len(sora_content_rows)} 笔 sora 数据...\n")
 
-    for row in sora_rows:
-        source_id = row.file_unique_id
+    for row in sora_content_rows:
+        source_id = row.source_id
         print(f"🔍 处理 source_id: {source_id}")
 
         content = {
@@ -503,10 +497,52 @@ def process_sora_update():
     if SYNC_TO_POSTGRES:
         DB_PG.close()
 
+def sync_pending_sora_to_postgres():
+    if not SYNC_TO_POSTGRES:
+        print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步")
+        return
+
+    print("🚀 开始同步 stage = 'pending' 的 sora_content 到 PostgreSQL...")
+    from playhouse.shortcuts import model_to_dict
+
+    # DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
+    DB_PG.connect()
+
+    rows = SoraContent.select().where(SoraContent.stage == "pending").limit(BATCH_LIMIT)
+
+    for row in rows:
+        print(f"🔄 同步中：source_id = {row.source_id}")
+
+        model_data = model_to_dict(row, recurse=False)
+        # 去除不必要字段
+        for ignored in ('content_seg_tsv', 'created_at', 'updated_at'):
+            model_data.pop(ignored, None)
+        model_data["id"] = row.id  # 强制使用相同主键
+
+        try:
+            existing = SoraContentPg.get(SoraContentPg.id == row.id)
+            for k, v in model_data.items():
+                setattr(existing, k, v)
+            existing.save()
+            # print(f"✅ 已更新 PostgreSQL sora_content.id = {row.id}")
+        except SoraContentPg.DoesNotExist:
+            SoraContentPg.create(**model_data)
+            # print(f"✅ 已新增 PostgreSQL sora_content.id = {row.id}")
+
+        # ✅ 回写 MySQL：stage = "updated"
+        row.stage = "updated"
+        row.save()
+        print(f"📝 已更新 MySQL sora_content.stage = 'updated'")
+
+
+    DB_MYSQL.close()
+    DB_PG.close()
 
 
 if __name__ == "__main__":
-    process_documents()
-    process_videos()
-    # process_sora_update()
-    process_scrap()
+    sync_pending_sora_to_postgres()  # ✅ 新增的同步逻辑
+    # process_documents()
+    # process_videos()
+   
+    # process_scrap()
