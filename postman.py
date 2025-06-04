@@ -44,15 +44,15 @@ from telethon.errors import ChannelPrivateError
 
 # 配置参数
 config = {
-    'api_id': os.getenv('API_ID'),
-    'api_hash': os.getenv('API_HASH'),
-    'phone_number': os.getenv('PHONE_NUMBER'),
-    'session_name': os.getenv('API_ID') + 'session_name',
+    'api_id': os.getenv('API_ID',''),
+    'api_hash': os.getenv('API_HASH',''),
+    'phone_number': os.getenv('PHONE_NUMBER',''),
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID') or 0),
     'setting_thread_id': int(os.getenv('SETTING_THREAD_ID') or 0),
     'setting' : os.getenv('CONFIGURATION', '')
 }
 
+print(f"⚠️ 配置參數：{config}", flush=True)
 
 
 
@@ -64,7 +64,9 @@ try:
         config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
 except Exception as e:
     print(f"⚠️ 無法解析 CONFIGURATION：{e}")
-        
+
+config['session_name'] = str(config['api_id']) + 'session_name'  # 确保 session_name 正确
+
 # print(f"⚠️ 配置參數：{config}")
    
 # 在模块顶部初始化全局缓存
@@ -419,11 +421,11 @@ async def man_bot_loop():
 
 
 
-        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
-
+                
                  # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
                 if config.get('bypass_private_check') == 1:
                     print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
@@ -494,14 +496,20 @@ async def main():
 
        
     if config.get('is_debug_enabled') == 1:
-        print(f'你的用户名: {me.username}')
+        print(f'你的用户名: {me.username}',flush=True)
         print(f'你的ID: {me.id}')
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
-        print(f'是否是Bot: {me.bot}')
+        print(f'是否是Bot: {me.bot}',flush=True)
 
     intbotname = '@Qing001bot'
     await client.send_message(intbotname, "/start")
     await client.send_message(intbotname, "[~bot~]")
+
+    # await client.send_message('@nezhamowan1', "/start")
+    
+    # exit()
+
+    # await
 
     # group_identifier = -1002592636499
     # participants = await client.get_participants(group_identifier)
@@ -517,27 +525,43 @@ async def main():
     # exit()
     # await delete_my_profile_photos(client)
     # await update_my_name(client,'Luzai', 'Man')
-    # await update_username(client,"luzai01man")
+    # await update_username(client,"luzai02man")
+    # exit()
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
     # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
 
     
 
     #01 DIE 6874    2017145941  await join("") 22329346  / 20100034 ( Die )
-    #02 OK  7258    2091886937  await join("fTMvarjGSckxZmI8") 
+    #02 OK  7258    2091886937  
+    # await join("fTMvarjGSckxZmI8") 
+
     #03 DIE 7275    2063167161  await join("")                 22329346   / 20100034 ( Die ? )
     #04 DIE 7287    2108982395  await join("cr_hRjB_dRtkODdk") 20100034 (Die)
     #05 DIE 6376    1997235289  await join("")                 20100034 ( Die ? )
-    #06 OK  6659    2000730581  await join("li2wwjC6vEc5Mzdk") 22329346   / 20100034
+    #06 OK  6659    2000730581  
+    # await join("li2wwjC6vEc5Mzdk") #22329346   / 20100034
+
     #07 DIE 7350    2145325974  await join("")                 20100034
     #08 DIE 5891    2062860209  await join("")                 20100034 (?)
     #09 DIE 7338    2015918658  await join("")                 20100034
-    #10 OK  06315   2047726819  await join("QQCyh1N2sMU5ZGQ0") shunfeng807
-    #11 OK  06393   2003243227  await join("3eDZvSPvkVgyNmY0") @shunfeng807
-    #12 OK  #6463   1843229948  await join("MyiRfuLls-U0Zjk0") 
-    #13 DIE 7246    2021739085  await join("")
+    
+    #10 OK  06315   2047726819  
+    # await join("QQCyh1N2sMU5ZGQ0") #shunfeng807
+    
+    #11 OK  06393   2003243227  
+    # await join("3eDZvSPvkVgyNmY0") #@shunfeng807
+    
+    #12 OK  #6463   1843229948  
+    # await join("MyiRfuLls-U0Zjk0") 
+
+    #13 DIE 7246    2021739085  
+    # await join("XkHrmdZd-u80M2I0")
+    
     #14 DIE 6234                await join("")
-    #15 OK  6553    2061165152  await join("xCcAV1mgMCs1ZDE8")
+    
+    #15 OK  6553    2061165152  
+    # await join("xCcAV1mgMCs1ZDE8")
 
 
     # 2091886937,2000730581,2047726819,2003243227,1843229948,2061165152
