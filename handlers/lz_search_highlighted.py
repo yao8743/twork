@@ -4,6 +4,7 @@ from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.enums import ChatType
 from lz_db import db
+import lz_var
 from keyboards.lz_paginator import build_pagination_keyboard
 from utils.aes_crypto import AESCrypto
 from lz_config import AES_KEY
@@ -57,7 +58,7 @@ def render_results_plain(results: list[dict], keyword: str, page: int, total: in
 
 
         lines.append(
-            f"{icon}<a href='https://t.me/luzai08bot?start=f_{encoded}'>{content}</a>"
+            f"{icon}<a href='https://t.me/{lz_var.bot_username}?start=f_{encoded}'>{content}</a>"
             # f"<b>Type:</b> {r['file_type']}\n"
             # f"<b>Source:</b> {r['source_id']}\n"
             # f"<b>内容:</b> {content}"

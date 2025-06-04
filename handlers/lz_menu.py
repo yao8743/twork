@@ -2,6 +2,11 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
 from aiogram.utils.text_decorations import markdown_decoration
+
+from aiogram.exceptions import TelegramAPIError, TelegramBadRequest, TelegramForbiddenError
+from aiogram.exceptions import TelegramNotFound, TelegramMigrateToChat, TelegramRetryAfter
+
+
 from utils.aes_crypto import AESCrypto
 from lz_db import db
 from lz_config import AES_KEY
@@ -275,10 +280,22 @@ async def load_sora_content_by_id(content_id: int) -> str:
         # ✅ 若 thumb_file_id 为空，则给默认值
         if not thumb_file_id:
             # 传送消息给 @ztdthumb011bot
-            result_send = await lz_var.bot.send_message(
-                chat_id=lz_var.sungfeng,
-                text=f"|_ask_|{record_id}@{lz_var.bot_username}"
-            )
+            result_send = None
+            try:
+                result_send = await lz_var.bot.send_message(
+                    chat_id=lz_var.sungfeng,
+                    text=f"|_ask_|{record_id}@{lz_var.bot_username}"
+                )
+            except TelegramNotFound as e:
+                print(f"❌ 目标 chat 不存在或无法访问: {e}")
+            except TelegramForbiddenError as e:
+                print(f"❌ 被禁或没权限: {e}")
+            except TelegramBadRequest as e:
+                print(f"⚠️ BadRequest 错误: {e}")
+            except TelegramAPIError as e:
+                print(f"❗ 通用 Telegram 错误: {e}")
+            except Exception as e:
+                print(f"🔥 未知错误: {e}")
 
             print(f"{result_send}")
             print(f"🔍 发送消息给 @ztdthumb011bot: |_ask_|{record_id}@{lz_var.bot_username}")

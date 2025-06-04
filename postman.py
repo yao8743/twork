@@ -8,7 +8,7 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.28817994.env')
+    load_dotenv(dotenv_path='.25254811.env')
 
 
 import random
@@ -16,6 +16,7 @@ import re
 import json
 from datetime import datetime
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from telethon.tl.types import MessageMediaWebPage
 from telethon.tl.types import InputMessagesFilterEmpty
 from peewee import DoesNotExist
@@ -52,7 +53,9 @@ config = {
     'setting' : os.getenv('CONFIGURATION', '')
 }
 
-print(f"⚠️ 配置參數：{config}", flush=True)
+SESSION_STRING  = os.getenv("USER_SESSION_STRING")
+
+# print(f"⚠️ 配置參數：{config}", flush=True)
 
 
 
@@ -78,7 +81,15 @@ last_message_id = 0
 blacklist_entity_ids = set()
 
 # 初始化 Telegram 客户端
-client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+
+
+if SESSION_STRING:
+    client = TelegramClient(StringSession(SESSION_STRING), config['api_id'], config['api_hash'])
+    print("【Telethon】使用 StringSession 登录。",flush=True)
+else:
+    client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+
+
 
 # 常量
 MAX_PROCESS_TIME = 20 * 60  # 最大运行时间 20 分钟
@@ -404,7 +415,7 @@ async def man_bot_loop():
     async for dialog in client.iter_dialogs():
         entity = dialog.entity
 
-        # if entity.id != 5486047924:
+        # if entity.id != 2210941198:
         #     continue
 
         # ✅ 跳过黑名单
@@ -421,14 +432,14 @@ async def man_bot_loop():
 
 
 
-        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+        # print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
                 
                  # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
                 if config.get('bypass_private_check') == 1:
-                    print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+                    # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                     return
 
 
@@ -573,9 +584,10 @@ async def main():
     # |_join_|xCcAV1mgMCs1ZDE8
 
 
-    
    
-    
+   
+    # await join("y6blcEsK-P01MmJl")  # FILEDEPOT_FORWARD_CHAT_ID ,2132486952
+    # exit()
   
   
     # await join("xbY8S-04jnEzYWE0")   
