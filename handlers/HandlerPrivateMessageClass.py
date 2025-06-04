@@ -88,23 +88,6 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
                     target_raw = match.group(1)
                     target_raw = target_raw.replace('-100','')
 
-                    # # 判断是否以 "|force" 结尾
-                    # has_force = caption.endswith("|force")
-                    
-                    # # 处理包含 '|' 的情况
-                   
-                    # if has_force:
-                    #     # print(f"---处理包含 '|' 的转发标记: {caption}")
-                    #     parts = caption.split('|')
-                    #     # print(f"---分割后的部分: {parts}")
-                    #     target_raw = parts[2].strip()
-                    #     if len(parts) > 1 and parts[3].strip().lower() == 'force':
-                    #         # print(f"---强制转发标记: {caption}")
-                    #         self.is_duplicate_allowed = True
-                    # else:
-                    #     target_raw = target_raw_orignal.strip()
-
-
 
                     if target_raw.isdigit():
                         target_chat_id = int(target_raw)
@@ -141,6 +124,13 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
 
                     if not exists:
                         
+                        if self.message.chat_id == target_chat_id or (target_chat_id == "yanzai807bot" and self.message.chat_id == 8076535891) or (target_chat_id == "salai001bot" and self.message.chat_id == 7419440827):
+                            # await self.safe_delete_message()
+                            
+                            print("⚠️ 目标和源聊天相同，跳过转发")
+                            return
+
+
                         await wait_for_send_slot(target_chat_id)
                        
                         forwared_success = await safe_forward_or_send(
