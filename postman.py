@@ -44,14 +44,15 @@ from telethon.errors import ChannelPrivateError
 
 # 配置参数
 config = {
-    'api_id': os.getenv('API_ID'),
-    'api_hash': os.getenv('API_HASH'),
-    'phone_number': os.getenv('PHONE_NUMBER'),
+    'api_id': os.getenv('API_ID',''),
+    'api_hash': os.getenv('API_HASH',''),
+    'phone_number': os.getenv('PHONE_NUMBER',''),
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID') or 0),
     'setting_thread_id': int(os.getenv('SETTING_THREAD_ID') or 0),
     'setting' : os.getenv('CONFIGURATION', '')
 }
 
+print(f"⚠️ 配置參數：{config}", flush=True)
 
 
 
@@ -424,7 +425,7 @@ async def man_bot_loop():
 
         if dialog.unread_count >= 0:
             if dialog.is_user:
-
+                
                  # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
                 if config.get('bypass_private_check') == 1:
                     print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
