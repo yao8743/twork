@@ -111,6 +111,7 @@ jobs:
         SETTING_CHAT_ID: ${{ secrets.SETTING_CHAT_ID }}
         SETTING_THREAD_ID: ${{ secrets.SETTING_THREAD_ID }}
         CONFIGURATION: ${{ secrets.CONFIGURATION }}
+        USER_SESSION_STRING: ${{ secrets.USER_SESSION_STRING }}
       run: |
         python postman.py
 
