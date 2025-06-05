@@ -1,5 +1,6 @@
 bot_username: str = None  # Telegram 机器人 username
 bot_id: int = None        # Telegram 机器人 ID
+man_bot_id: int = None        # Telegram 机器人 ID
 start_time: float = None  # 启动时间戳
 cold_start_flag: bool = True  # 是否处于冷启动
 default_thumb_file_id: list[str] = None  # 但不推荐，类型不完整

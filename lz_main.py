@@ -51,6 +51,12 @@ async def main():
     lz_var.bot_username = me.username
     lz_var.bot_id = me.id
 
+
+
+       
+   
+
+
     dp = Dispatcher()
     dp.include_router(lz_search_highlighted.router)
     dp.include_router(lz_media_parser.router)  # ✅ 注册你的新功能模块
