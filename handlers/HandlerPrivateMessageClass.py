@@ -126,7 +126,7 @@ class HandlerPrivateMessageClass(BaseHandlerClass):
                         
                         if self.message.chat_id == target_chat_id or (target_chat_id == "yanzai807bot" and self.message.chat_id == 8076535891) or (target_chat_id == "salai001bot" and self.message.chat_id == 7419440827):
                             # await self.safe_delete_message()
-                            
+                            await self.safe_delete_message()
                             print("⚠️ 目标和源聊天相同，跳过转发")
                             return
 
