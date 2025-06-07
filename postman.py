@@ -387,7 +387,7 @@ async def process_group_message(entity, message):
     class_map = {
         2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
         # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
-        2054963513: HandlerRelayClass,
+        2134630453: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        
     }
@@ -539,7 +539,7 @@ async def main():
     # await update_username(client,"luzai02man")
     # exit()
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
-    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2054963513  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
+    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2134630453  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
 
     
 
