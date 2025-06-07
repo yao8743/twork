@@ -182,7 +182,7 @@ class HandlerBJIClass:
                             (ScrapProgress.chat_id == self.entity.id) &
                             (ScrapProgress.api_id == api_id)
                         ).order_by(ScrapProgress.post_datetime.desc()).get()
-                        progress.post_datetime = datetime.now()
+                       
                         progress.save()
                     
                         asyncio.create_task(self.delayed_delete(sent_hb_message.id, 180))
