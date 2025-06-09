@@ -114,6 +114,32 @@ async def quit_handler(event):
     else:
         await event.reply("❌ /quit 只能在群组里使用哦～")
 
+
+async def fetch_thread_messages(chat_id, message_thread_id):
+    print(f"\n🔍 正在遍历 chat_id={chat_id} message_thread_id={message_thread_id} 的信息...\n", flush=True)
+    try:
+        async for message in client.iter_messages(chat_id, reverse=True):
+            # 如果是 thread 消息，且 thread id 符合
+            if message.message_thread_id == message_thread_id:
+                sender = None
+                if message.sender_id:
+                    sender = message.sender_id
+                    # 获取 sender 实体（可选，若要拿 username）
+                    try:
+                        sender_entity = await client.get_entity(sender)
+                        sender_name = sender_entity.username or f"{sender_entity.first_name or ''} {sender_entity.last_name or ''}".strip()
+                    except Exception:
+                        sender_name = f"UserID {sender}"
+
+                else:
+                    sender_name = "未知发送者"
+
+                # 打印信息
+                content = message.text or "[非文本消息]"
+                print(f"👤 {sender_name}: {content}", flush=True)
+    except Exception as e:
+        print(f"❌ 遍历消息失败：{e}", flush=True)
+
 async def main():
     print("🔄 正在初始化人型机器人...")
     await db.init_pool()
@@ -124,9 +150,12 @@ async def main():
     print(f'你的ID: {me.id}')
     print(f'你的名字: {me.first_name} {me.last_name or ""}')
     print(f'是否是Bot: {me.bot}', flush=True)
-    await join('+NGmWkvIs4aQ3OTNk')
-
     print("✅ 人型机器人已上线")
+
+# 遍历特定 thread 的消息
+    await fetch_thread_messages(-1002592636499, 613)
+
+
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
