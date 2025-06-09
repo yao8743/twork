@@ -18,7 +18,6 @@ from news_config import API_TOKEN, DB_DSN, AES_KEY, BOT_MODE, WEBHOOK_PATH, WEBH
 
 import time
 
-
 from utils.aes_crypto import AESCrypto
 from utils.base62_converter import Base62Converter
 
