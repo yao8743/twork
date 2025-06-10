@@ -69,7 +69,7 @@ class HandlerBJIClass:
                 now = datetime.now()
                 print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
                 
-                if (now - last_post_time).total_seconds() > 1800:
+                if (now - last_post_time).total_seconds() > 21600:
                     # await self.change_firstname()
                     # 取1~10的随机数，若小于4，则发送
                     
@@ -106,7 +106,7 @@ class HandlerBJIClass:
 
         checkText = self.message.text
         if not self.message.is_reply and (checkText or "").startswith("/hongbao"):
-            
+            pass
             # 判断是否是30秒内的消息
             if datetime.now(timezone.utc) - self.message.date < timedelta(seconds=30):
                 print("✅ 这是一条 30 秒内的红包消息")

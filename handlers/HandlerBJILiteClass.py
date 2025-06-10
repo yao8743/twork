@@ -48,11 +48,7 @@ class HandlerBJILiteClass:
         print(f"Message from ({self.message.id})",flush=True)
         api_id = self.extra_data['app_id']
        
-
-      
-       
-        
-        if self.message.id % 243 == 0:
+        if self.message.id % 273 == 0:
             quote_gen = QuietQuoteGenerator()
             print(f"Message from  ({self.message.id})")
             
@@ -69,7 +65,7 @@ class HandlerBJILiteClass:
                 now = datetime.now()
                 print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}\r\n",flush=True)
                 
-                if (now - last_post_time).total_seconds() > 1800:
+                if (now - last_post_time).total_seconds() > 21600:
                     # await self.change_firstname()
                     # 取1~10的随机数，若小于4，则发送
                     
