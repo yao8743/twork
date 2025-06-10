@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.tl import functions  # ⚠️ 必须加这个
+from telethon.tl.types import Message, MessageService
+from urllib.parse import urlparse, parse_qs
+from telethon.tl.types import KeyboardButtonUrl,KeyboardButtonCallback
 from telethon.tl.functions.channels import InviteToChannelRequest,LeaveChannelRequest
 from worker_db import MySQLManager
 from worker_config import SESSION_STRING, API_ID, API_HASH, SESSION_NAME, PHONE_NUMBER
@@ -115,30 +118,101 @@ async def quit_handler(event):
         await event.reply("❌ /quit 只能在群组里使用哦～")
 
 
+async def get_stone_profiles(message):
+    if message.reply_markup and message.reply_markup.rows:
+        for row in message.reply_markup.rows:
+            for button in row.buttons:
+                if isinstance(button, KeyboardButtonCallback):
+                    # print(f"[Callback] text: {button.text} data: {button.data}")
+
+                    # 先 decode bytes → string
+                    data_str = button.data.decode('utf-8')
+                    # print(f"✅ 解码后的 data: {data_str}")
+
+                    # 拆分出 ui
+                    # 把 data_str 用 ";" 分割成 key=value 对
+                    parts = data_str.split(';')
+                    ui_value = None
+                    for part in parts:
+                        if part.startswith('ui='):
+                            ui_value = part[len('ui='):]
+                            break
+
+                    if ui_value:
+                        # print(f"🎁 提取出的 ui: {ui_value}")
+                        message_id = message.id
+                        chat_id = -100 + message.peer_id.channel_id  # 转成 TG 的 chat_id 格式
+                        reply_to_message_id = None
+                        if message.reply_to and message.reply_to.reply_to_msg_id:
+                            reply_to_message_id = message.reply_to.reply_to_msg_id
+                        return message_id, chat_id, reply_to_message_id, ui_value
+
+
+
+async def get_salai_profiles(message):
+   if message.reply_markup and message.reply_markup.rows:
+        for row in message.reply_markup.rows:
+            for button in row.buttons:
+                if isinstance(button, KeyboardButtonUrl):
+                    if button.text == '👀 看看先':
+                        url = button.url
+                        # 解析 URL
+                        parsed_url = urlparse(url)
+                        query_params = parse_qs(parsed_url.query)
+
+                        # 取得 start 参数
+                        start_param = query_params.get('start', [''])[0]  # 取第一个值
+                        # 用 __ 分割
+                        parts = start_param.split('__')
+
+                        # 过滤空字串
+                        parts = [part for part in parts if part]
+
+                        
+
+                        message_id = message.id
+                        chat_id = -100 + message.peer_id.channel_id  # 转成 TG 的 chat_id 格式
+                        reply_to_message_id = None
+                        if message.reply_to and message.reply_to.reply_to_msg_id:
+                            reply_to_message_id = message.reply_to.reply_to_msg_id
+                        return message_id, chat_id, reply_to_message_id, parts[1]
+                        print(f"📌 消息 ID: {message_id}, Chat ID: {chat_id}, 回复消息 ID: {reply_to_message_id} {parts[1]}", flush=True)
+
+
 async def fetch_thread_messages(chat_id, message_thread_id):
+    await client.send_message("@salai001bot",'/start')
     print(f"\n🔍 正在遍历 chat_id={chat_id} message_thread_id={message_thread_id} 的信息...\n", flush=True)
     try:
-        async for message in client.iter_messages(chat_id, reverse=True):
-            # 如果是 thread 消息，且 thread id 符合
-            if message.message_thread_id == message_thread_id:
-                sender = None
-                if message.sender_id:
-                    sender = message.sender_id
-                    # 获取 sender 实体（可选，若要拿 username）
+
+        # try:
+        #     from_user_entity = await get_user_entity_in_chat(chat_id, 7419440827)
+        # except Exception as e:
+        #     print(f"❌ 无法获取用户实体: {e}")
+        #     return
+
+        try:
+            from_user_entity = await client.get_entity(7419440827)
+        except Exception as e:
+            print(f"❌ 无法获取用户实体: {e}")
+            return
+        
+
+        async for message in client.iter_messages(chat_id, reverse=True, min_id=0, from_user=from_user_entity):
+            # 只处理普通消息
+            
+            if isinstance(message, Message):
+                if message.reply_to and message.reply_to.reply_to_msg_id == message_thread_id:
                     try:
-                        sender_entity = await client.get_entity(sender)
-                        sender_name = sender_entity.username or f"{sender_entity.first_name or ''} {sender_entity.last_name or ''}".strip()
-                    except Exception:
-                        sender_name = f"UserID {sender}"
+                        message_id, chat_id, message_thread_id, file_unique_id = await get_salai_profiles(message)
+                        print(f"📌 消息 ID: {message_id}, Chat ID: {chat_id}, 回复消息 ID: {message_thread_id} {file_unique_id}", flush=True)
+                        await db.upsert_media_sort(chat_id, message_thread_id, message_id, file_unique_id)
+                    except Exception as e:
+                        pass
+               
 
-                else:
-                    sender_name = "未知发送者"
-
-                # 打印信息
-                content = message.text or "[非文本消息]"
-                print(f"👤 {sender_name}: {content}", flush=True)
     except Exception as e:
         print(f"❌ 遍历消息失败：{e}", flush=True)
+
 
 async def main():
     print("🔄 正在初始化人型机器人...")
@@ -152,10 +226,13 @@ async def main():
     print(f'是否是Bot: {me.bot}', flush=True)
     print("✅ 人型机器人已上线")
 
+    # https://t.me/+_jQICVO5VFRjOGVl
+
 # 遍历特定 thread 的消息
-    await fetch_thread_messages(-1002592636499, 613)
+    await fetch_thread_messages(-1001574196454, 3916)
 
-
+    
+    
     await client.run_until_disconnected()
 
 if __name__ == "__main__":

@@ -43,3 +43,29 @@ class MySQLManager:
                     tuple(bot_roots)
                 )
                 return [row['bot_name'] for row in await cur.fetchall()]
+
+    async def upsert_media_sort(self, chat_id, message_thread_id, message_id, file_unique_id):
+        if not self.pool:
+            raise Exception("MySQL pool 未初始化，请先调用 init_pool()")
+
+        async with self.pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                try:
+                    # 直接 INSERT ... ON DUPLICATE KEY UPDATE
+                    await cur.execute(
+                        """
+                        INSERT INTO media_sort
+                        (board_chat_id, board_message_thread_id, board_message_id, source_id)
+                        VALUES (%s, %s, %s, %s)
+                        ON DUPLICATE KEY UPDATE
+                            board_chat_id = VALUES(board_chat_id),
+                            board_message_thread_id = VALUES(board_message_thread_id),
+                            board_message_id = VALUES(board_message_id);
+                        """,
+                        (chat_id, message_thread_id, message_id, file_unique_id)
+                    )
+                    await conn.commit()
+                    print(f"✅ UPSERT media_sort (source_id={file_unique_id}, chat_id={chat_id}, thread_id={message_thread_id}) 完成")
+
+                except Exception as e:
+                    print(f"❌ 操作 media_sort 失败: {e}")

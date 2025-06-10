@@ -53,7 +53,7 @@ class HandlerBJIClass:
       
        
         
-        if self.message.id % 243 == 0:
+        if self.message.id % 513 == 0:
             quote_gen = QuietQuoteGenerator()
             print(f"Message from  ({self.message.id})")
             
@@ -84,7 +84,7 @@ class HandlerBJIClass:
 
                     
                     # 等待指定时间（3分钟）
-                    asyncio.create_task(self.delayed_delete(sent_message.id, 180))
+                    asyncio.create_task(self.delayed_delete(sent_message.id, 30))
                     
                    
 
@@ -120,7 +120,7 @@ class HandlerBJIClass:
                     points = int(match.group(1))  # 积分数
                     count = int(match.group(2))   # 红包个数
 
-                    if(points > 1 and (points/count) > 5):
+                    if(points > 1 and (points/count) > 10):
                         #大包当抢
                         
                         pass
@@ -135,37 +135,37 @@ class HandlerBJIClass:
                         "谢~",
                         "感恩不尽",
                         "谢谢老板",
-                        "收下啦～",
+                        
                         "感谢老板",
                         "蟹蟹 😎"
                         # 新增
-                        "老板大气！",
-                        "这波稳了，谢谢！",
-                        "老板人真好 🫶",
-                        "又被照顾了",
-                        "承蒙厚爱 🙇",
-                        "感激不尽！",
-                        "这就去膜拜 🙏",
-                        "鞠躬！",
-                        "记在心里了",
-                        "老板好人一生平安",
+                        # "老板大气！",
+                        # "这波稳了，谢谢！",
+                        # "老板人真好 🫶",
+                        # "又被照顾了",
+                        # "承蒙厚爱 🙇",
+                        # "感激不尽！",
+                        # "这就去膜拜 🙏",
+                        # "鞠躬！",
+                        # "记在心里了",
+                        # "老板好人一生平安",
                        
-                        "大恩不言谢",
-                        "老板走过，寸草不生",
-                        "收下了，感激涕零",
-                        "哇呜！谢谢！",
-                        "温暖的一笔！",
-                        "我哭死，居然真的发了",
-                        "泪目...谢谢...",
-                        "老板雨露均沾啊",
-                        "这波我吹爆",
-                        "人间值得就是你",
-                        "德不孤必有邻！",
-                        "又是被爱的感觉",
-                        "哇靠谢谢！",
-                        "阿里嘎多～",
-                        "Thx thx！",
-                        "🙌 膜拜大佬"
+                        # "大恩不言谢",
+                        # "老板走过，寸草不生",
+                        
+                        # "哇呜！谢谢！",
+                        # "温暖的一笔！",
+                        # "我哭死，居然真的发了",
+                        # "泪目...谢谢...",
+                        # "老板雨露均沾啊",
+                        # "这波我吹爆",
+                        # "人间值得就是你",
+                        # "德不孤必有邻！",
+                        # "又是被爱的感觉",
+                        # "哇靠谢谢！",
+                        # "阿里嘎多～",
+                        # "Thx thx！",
+                        # "🙌 膜拜大佬"
                         
                        
                     ]
@@ -174,7 +174,7 @@ class HandlerBJIClass:
 
                     
                     random_number = random.randint(1, 10)
-                    if random_number < 7 and count > 5:
+                    if random_number < 8 and count > 5:
                         # await self.change_firstname()
                         # print(f"Sending thank you message to {random.choice(thank_you_messages)}",flush=True)
                         sent_hb_message = await self.client.send_message(self.entity.id, random.choice(thank_you_messages))
