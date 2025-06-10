@@ -23,6 +23,7 @@ from telethon.errors import UserIdInvalidError
 
 
 class HandlerBJIClass:
+    #add ltp120bot
     SHELLBOT_USER_ID = 7294369541
     FILEDEPOT_FORWARD_CHAT_ID = 2132486952
     PROTECT_FILEDEPOT_FORWARD_CHAT_ID = 2094471421
