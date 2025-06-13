@@ -41,6 +41,9 @@ news_buffer = {
     "id": None
 }
 
+lz_var_start_time = time.time()
+lz_var_cold_start_flag = True
+
 crypto = AESCrypto(AES_KEY)
 
 def parse_button_str(button_str: str) -> InlineKeyboardMarkup:
@@ -275,13 +278,28 @@ async def periodic_sender():
 async def on_startup(bot: Bot):
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(f"{WEBHOOK_HOST}{WEBHOOK_PATH}")
+    lz_var_cold_start_flag = False  # 启动完成
 
 async def health(request):
-    return web.Response(text="✅ News bot 运行中")
+    uptime = time.time() - lz_var_start_time
+    if lz_var_cold_start_flag or uptime < 10:
+        return web.Response(text="⏳ Bot 正在唤醒，请稍候...", status=503)
+    return web.Response(text="✅ Bot 正常运行", status=200)
 
 async def on_shutdown(app):
     await bot.session.close()
 
+
+async def keep_alive_ping():
+    url = f"{WEBHOOK_HOST}{WEBHOOK_PATH}" if BOT_MODE == "webhook" else f"{WEBHOOK_HOST}/"
+    while True:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    print(f"🌐 Keep-alive ping {url} status {resp.status}")
+        except Exception as e:
+            print(f"⚠️ Keep-alive ping failed: {e}")
+        await asyncio.sleep(300)  # 每 5 分鐘 ping 一次
 
 async def main():
     await db.init()
@@ -300,6 +318,8 @@ async def main():
         # ✅ 用 spawn(app, coro) 启动任务
         async def on_app_start(app):
             await get_scheduler_from_app(app).spawn(periodic_sender())
+
+        task_keep_alive = asyncio.create_task(keep_alive_ping())
 
         app.on_startup.append(on_app_start)
         app.on_shutdown.append(on_shutdown)
