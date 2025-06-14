@@ -276,9 +276,11 @@ async def periodic_sender():
         await asyncio.sleep(10)
 
 async def on_startup(bot: Bot):
+    lz_var_cold_start_flag = False  # 启动完成
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(f"{WEBHOOK_HOST}{WEBHOOK_PATH}")
-    lz_var_cold_start_flag = False  # 启动完成
+    
+    
 
 async def health(request):
     uptime = time.time() - lz_var_start_time
@@ -335,6 +337,9 @@ async def main():
             timeout=60,
             relax=3.0
         )
+
+
+
 
 
 if __name__ == "__main__":

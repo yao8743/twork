@@ -42,7 +42,7 @@ else:
         'db_password': db_config.get('db_password', os.getenv('MYSQL_DB_PASSWORD')),
         'db_host': db_config.get('db_host', os.getenv('MYSQL_DB_HOST')),
         'db_sslmode': db_config.get('db_sslmode', os.getenv('MYSQL_DB_SSLMODE','require')),
-        'db_port': int(db_config.get('db_port', int(os.getenv('MYSQL_DB_PORT', 3306)))),
+        'db_port': int(db_config.get('db_port') or os.getenv('MYSQL_DB_PORT', 3306)),
     }
     
 
