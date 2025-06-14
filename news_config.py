@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=".news.env")
 DB_DSN = os.getenv("DB_DSN")
-API_TOKEN = os.getenv("API_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 AES_KEY = os.getenv("AES_KEY", "")
 
 BOT_MODE = os.getenv("BOT_MODE", "polling").lower()

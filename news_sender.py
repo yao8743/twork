@@ -5,15 +5,15 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from news_db import NewsDatabase
-from news_config import API_TOKEN, DB_DSN
+from news_config import BOT_TOKEN, DB_DSN
 
 from news_main import parse_button_str 
 
 # 校验 token 是否加载成功
-if not API_TOKEN or "YOUR_BOT_TOKEN" in API_TOKEN:
-    raise ValueError("❌ 请在 .news.env 中正确设置 API_TOKEN。")
+if not BOT_TOKEN or "YOUR_BOT_TOKEN" in BOT_TOKEN:
+    raise ValueError("❌ 请在 .news.env 中正确设置 BOT_TOKEN")
 
-bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 db = NewsDatabase(DB_DSN)
 
 RATE_LIMIT = 20

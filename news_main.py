@@ -14,7 +14,7 @@ from aiojobs.aiohttp import setup as setup_aiojobs, spawn
 from aiojobs.aiohttp import get_scheduler_from_app
 from news_db import NewsDatabase
 
-from news_config import API_TOKEN, DB_DSN, AES_KEY, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
+from news_config import BOT_TOKEN, DB_DSN, AES_KEY, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
 
 import time
 
@@ -22,7 +22,7 @@ from utils.aes_crypto import AESCrypto
 from utils.base62_converter import Base62Converter
 
 bot = Bot(
-    token=API_TOKEN,
+    token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 

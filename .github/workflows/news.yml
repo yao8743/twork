@@ -80,7 +80,7 @@ jobs:
     - name: Run Telethon script
       if: steps.check-running.outputs.hasOtherRuns == 'false'
       env:
-        API_TOKEN: ${{ secrets.API_TOKEN }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         DB_DSN: ${{ secrets.DB_DSN }}
         CONFIGURATION: ${{ secrets.CONFIGURATION }}
         AES_KEY: ${{ secrets.AES_KEY }}
