@@ -111,6 +111,7 @@ class HandlerBJIClass:
             # 判断是否是30秒内的消息
             if datetime.now(timezone.utc) - self.message.date < timedelta(seconds=30):
                 print("✅ 这是一条 30 秒内的红包消息")
+                pass
 
 
                 # 正则模式：匹配 "/hongbao 数字 数字"
