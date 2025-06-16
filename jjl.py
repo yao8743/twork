@@ -9,6 +9,7 @@ from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
 import logging
 import os
+import random
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters
 
@@ -89,19 +90,25 @@ if module_enable['man_bot'] == True:
 
 
 # 使用连接池并启用自动重连
+# if module_enable['db'] == True:
+#     db = PooledPostgresqlDatabase(
+#         config['db_name'],
+#         user=config['db_user'],
+#         password=config['db_password'],
+#         host=config['db_host'],
+#         port=config['db_port'],
+#         sslmode=config['db_sslmode'],
+#         max_connections=32,  # 最大连接数
+#         stale_timeout=300  # 5 分钟内未使用的连接将被关闭
+#     )
+# else:
+#     db = None
+
 if module_enable['db'] == True:
-    db = PooledPostgresqlDatabase(
-        config['db_name'],
-        user=config['db_user'],
-        password=config['db_password'],
-        host=config['db_host'],
-        port=config['db_port'],
-        sslmode=config['db_sslmode'],
-        max_connections=32,  # 最大连接数
-        stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-    )
+    from database import db
 else:
     db = None
+
 
 
 # 初始化 Bot 和 Application
@@ -124,11 +131,6 @@ if module_enable['dyer_bot'] == True:
     # 添加命令处理程序
     dyer_application.add_handler(MessageHandler(filters.ALL, dyerbot.handle_bot_message))
     # 添加消息处理程序
-
-
-
-
-
 
 # 主运行函数
 async def main():
@@ -169,20 +171,27 @@ async def main():
 
     
 
+
+
+
+
     
     start_time = time.time()
 
     if module_enable['man_bot'] == True:
         while True:
             await tgbot.man_bot_loop(client)
-            print(f"ok")
+            print(f"---Cycle End \r\n")
             elapsed_time = time.time() - start_time
 
-            if elapsed_time > tgbot.MAX_PROCESS_TIME:
-                break
+            # if elapsed_time > tgbot.MAX_PROCESS_TIME:
+            #     break
 
-
-            await asyncio.sleep(60)
+            # 乱数决定休息 60 ~180 秒
+            # await asyncio.sleep(random.randint(55, 180))
+            # await asyncio.sleep(random.randint(15, 20))
+            await asyncio.sleep(random.randint(4, 6))
+     
 
             if module_enable['db'] == True:
                 if not db.is_closed():
