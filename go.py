@@ -5,6 +5,7 @@ from telethon import TelegramClient, sync
 import os
 from vendor.class_bot import LYClass  # 导入 LYClass
 from vendor.wpbot import wp_bot  # 导入 wp_bot
+from telethon.sessions import StringSession
 import asyncio
 import time
 import re
@@ -15,16 +16,26 @@ from telethon.tl.types import InputMessagesFilterEmpty, Message, User, Chat, Cha
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path='.24066130.decode.env')
 
 # 从环境变量中获取值
 api_id = os.getenv('API_ID')
 api_hash = os.getenv('API_HASH')
 phone_number = os.getenv('PHONE_NUMBER')
 session_name = api_id + 'session_name'  # 确保与上传的会话文件名匹配
+SESSION_STRING  = os.getenv("USER_SESSION_STRING")
+
 
 # 创建客户端
-client = TelegramClient(session_name, api_id, api_hash)
+
+
+if SESSION_STRING:
+    client = TelegramClient(StringSession(SESSION_STRING), api_id, api_hash)
+    print("【Telethon】使用 StringSession 登录。",flush=True)
+else:
+    client = TelegramClient(session_name, api_id, api_hash)
+
+
 
 try:
     config = {
