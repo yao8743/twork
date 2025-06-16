@@ -28,6 +28,7 @@ class HandlerBJIClass:
     FILEDEPOT_FORWARD_CHAT_ID = 2132486952
     PROTECT_FILEDEPOT_FORWARD_CHAT_ID = 2094471421
     SHELLBOT_FORWARD_CHAT_ID = 2008008502
+
     BOT_TITLE_MAP = {
         7294369541: "She11PostBot",
         7717423153: "bujidaobot"
@@ -136,7 +137,6 @@ class HandlerBJIClass:
                         "谢~",
                         "感恩不尽",
                         "谢谢老板",
-                        
                         "感谢老板",
                         "蟹蟹 😎"
                         # 新增

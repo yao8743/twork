@@ -8,7 +8,7 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.25254811.env')
+    load_dotenv(dotenv_path='.25254811.bjd.env')
 
 
 import random
