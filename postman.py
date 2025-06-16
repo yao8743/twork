@@ -387,7 +387,7 @@ async def process_group_message(entity, message):
     class_map = {
         2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
         # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
-        2134630453: HandlerRelayClass,
+        2021604352: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        
     }
