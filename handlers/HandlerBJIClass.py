@@ -84,8 +84,8 @@ class HandlerBJIClass:
                     progress.save()
 
                     
-                    # 等待指定时间（3分钟）
-                    asyncio.create_task(self.delayed_delete(sent_message.id, 30))
+                    # # 等待指定时间（3分钟）
+                    # asyncio.create_task(self.delayed_delete(sent_message.id, 30))
                     
                    
 
