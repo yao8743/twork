@@ -84,8 +84,8 @@ class HandlerBJIClass:
                     progress.save()
 
                     
-                    # 等待指定时间（3分钟）
-                    asyncio.create_task(self.delayed_delete(sent_message.id, 30))
+                    # # 等待指定时间（3分钟）
+                    # asyncio.create_task(self.delayed_delete(sent_message.id, 30))
                     
                    
 
@@ -107,7 +107,9 @@ class HandlerBJIClass:
                 )
 
         checkText = self.message.text
+        
         if not self.message.is_reply and (checkText or "").startswith("/hongbao"):
+            return
             pass
             # 判断是否是30秒内的消息
             if datetime.now(timezone.utc) - self.message.date < timedelta(seconds=30):

@@ -3,17 +3,33 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError, AuthKeyDuplicatedError, RPCError
 import os
+import json
 
 # Check if running in a local development environment
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.24066130.decode.env')
+    load_dotenv(dotenv_path='.20100034.sungfong.env')
 
 
+config = {
+    'api_id': os.getenv('API_ID',''),
+    'api_hash': os.getenv('API_HASH',''),
+    'phone_number': os.getenv('PHONE_NUMBER',''),
+    'setting_chat_id': int(os.getenv('SETTING_CHAT_ID') or 0),
+    'setting_thread_id': int(os.getenv('SETTING_THREAD_ID') or 0),
+    'setting' : os.getenv('CONFIGURATION', '')
+}
 
-api_id = os.getenv('API_ID')
-api_hash = os.getenv('API_HASH')
-phone_number = os.getenv('PHONE_NUMBER')
+try:
+    setting_json = json.loads(config['setting'])
+    if isinstance(setting_json, dict):
+        config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
+except Exception as e:
+    print(f"⚠️ 無法解析 CONFIGURATION：{e}")
+
+api_id = config['api_id']
+api_hash = config['api_hash']
+phone_number = config['phone_number']
 
 assert api_id is not None, "❌ 环境变量 API_ID 没有设置！"
 assert api_hash is not None, "❌ 环境变量 API_HASH 没有设置！"
@@ -21,12 +37,13 @@ assert phone_number is not None, "❌ 环境变量 PHONE_NUMBER 没有设置！"
 
 
 # Get values from environment variables
-api_id = os.getenv('API_ID')
-api_hash = os.getenv('API_HASH')
-phone_number = os.getenv('PHONE_NUMBER')
+# api_id = os.getenv('API_ID')
+# api_hash = os.getenv('API_HASH')
+# phone_number = os.getenv('PHONE_NUMBER')
 pw2fa = os.getenv('PW2FA')
 session_password = os.getenv('SESSION_PASSWORD')
-session_name = api_id + 'session_name'  # Ensure it matches the uploaded session file name
+
+session_name = str(api_id) + 'session_name'  # Ensure it matches the uploaded session file name
 
 session_file = session_name + '.session'
 

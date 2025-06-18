@@ -2,6 +2,7 @@ import asyncio
 import os
 import json
 from aiohttp import web
+import aiohttp  # ✅ 这行是关键，解决你的错误
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.types import Message

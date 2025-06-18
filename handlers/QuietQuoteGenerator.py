@@ -362,7 +362,7 @@ class QuietQuoteGenerator:
 
         self.time_greetings = {
             "morning": [
-                "早", "早啊", "早上好", "早安",  "早"
+                "早", "早啊", "早上好", "早安",  "早","古德猫宁"
                 
             ],
             "noon": [
