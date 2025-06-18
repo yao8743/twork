@@ -447,6 +447,8 @@ async def man_bot_loop():
 
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
+                if max_message_id is None:
+                    continue
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
                     entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
@@ -469,6 +471,8 @@ async def man_bot_loop():
                 
                 current_message = None
                 max_message_id = await get_max_source_message_id(entity.id)
+                if max_message_id is None:
+                    continue
                 min_id = max_message_id if max_message_id else 1
 
                 try:
@@ -602,7 +606,7 @@ async def main():
 
     while (time.time() - start_time) < MAX_PROCESS_TIME:
         try:
-            last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=300)  # 5分钟超时
+            last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
         except asyncio.TimeoutError:
             print("⚠️ 任务超时，跳过本轮", flush=True)
         # await asyncio.sleep(random.randint(5, 10))
