@@ -30,8 +30,9 @@ SESSION_STRING  = os.getenv("USER_SESSION_STRING")
 
 
 if SESSION_STRING:
-    client = TelegramClient(StringSession(SESSION_STRING), api_id, api_hash)
     print("【Telethon】使用 StringSession 登录。",flush=True)
+    client = TelegramClient(StringSession(SESSION_STRING), api_id, api_hash)
+    
 else:
     client = TelegramClient(session_name, api_id, api_hash)
 
