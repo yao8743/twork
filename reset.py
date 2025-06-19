@@ -8,9 +8,9 @@ import json
 # Check if running in a local development environment
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    # load_dotenv(dotenv_path='.24066130.decode.env')
+    load_dotenv(dotenv_path='.24066130.decode.env')
     # load_dotenv(dotenv_path='.25506053.jjl.env')
-    load_dotenv(dotenv_path='.25254811.bjd.env')
+    # load_dotenv(dotenv_path='.25254811.bjd.env')
     
 
 config = {
