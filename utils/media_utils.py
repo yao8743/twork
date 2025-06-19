@@ -30,7 +30,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
         if isinstance(material, list):
             print(f"---📤 发送 Album，共 {len(material)} 个媒体")
         else:
-            print("---📤 发送单个媒体")
+            print("---📤 发送单个媒体(33)")
 
         
         

@@ -7,6 +7,7 @@ import time
 from peewee import PostgresqlDatabase
 from playhouse.pool import PooledPostgresqlDatabase
 from vendor.class_tgbot import lybot  # 导入自定义的 LYClass
+from telethon.sessions import StringSession
 import logging
 import os
 import random
@@ -35,7 +36,7 @@ logger.addHandler(flush_handler)
 # 检查是否在本地开发环境中运行
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv()
+    load_dotenv(dotenv_path='.25506053.jjl.env')
 
 
 db_port = os.getenv('DB_PORT')
@@ -81,12 +82,19 @@ if 'bot_token' in config and config['bot_token']:
 if 'db_name' in config and config['db_name']:
     module_enable['db'] = True        
 
-
+SESSION_STRING  = os.getenv("USER_SESSION_STRING")
 
 # MBot
 #如果 config 存在 seesion_name, 则使用
 if module_enable['man_bot'] == True:
-    client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+    if SESSION_STRING:
+        print("【Telethon】使用 StringSession 登录。",flush=True)
+        client = TelegramClient(StringSession(SESSION_STRING), config['api_id'], config['api_hash'])
+        
+    else:
+        client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
+        
+   
 
 
 # 使用连接池并启用自动重连

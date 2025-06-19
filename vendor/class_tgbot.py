@@ -11,14 +11,14 @@ import random
 from time import sleep
 from peewee import DoesNotExist
 from telethon.errors import ChatForwardsRestrictedError,FloodWaitError
-
 import imagehash
+
 
 from telethon.errors import BotResponseTimeoutError
 from datetime import datetime
 from telethon import events, types, errors
 
-import imagehash
+
 from PIL import Image as PILImage
 
 
@@ -1357,7 +1357,7 @@ class lybot:
             if isinstance(material, list):  # 如果是列表（album）
                 print(f"📤 发送 Album，共 {len(material)} 个媒体")
             else:  # 如果是单个媒体
-                print("📤 发送单个媒体")
+                print("📤 发送单个媒体(1360)")
 
 
             # 直接尝试转发消息
