@@ -10,7 +10,7 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     # load_dotenv(dotenv_path='.20100034.sungfong.env')
     load_dotenv(dotenv_path='.28817994.luzai.env')
-    
+
 
 
 import random
@@ -35,15 +35,16 @@ from handlers.HandlerNoDelete import HandlernNoDeleteClass
 from handlers.HandlerRelayClass import HandlerRelayClass
 
 from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
-from telethon.errors import ChannelPrivateError
 
-
+from telethon import functions, types
+from telethon.errors import RPCError, ChannelPrivateError
 from telethon.tl.functions.photos import DeletePhotosRequest
 from telethon.tl.types import InputPhoto
+from telethon.tl.types import ChannelForbidden
 from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.account import UpdateUsernameRequest
-from telethon.tl.functions.channels import InviteToChannelRequest, TogglePreHistoryHiddenRequest,LeaveChannelRequest
-from telethon.errors import ChannelPrivateError
+from telethon.tl.functions.channels import InviteToChannelRequest, TogglePreHistoryHiddenRequest
+
 
 # 配置参数
 config = {
@@ -109,12 +110,26 @@ async def join(invite_hash):
         else:
             print(f"失败-加入群组: {invite_hash} {e}")
 
-async def leave_group(entity):
+async def safe_remove_forbidden(entity):
+    # 用一个“假”的 InputPeerChannel，只要有 channel_id 就够了
+    fake_peer = types.InputPeerChannel(entity.id, 0)
     try:
-        await client(LeaveChannelRequest(channel=entity))
-        print(f'✅ 已退出群组/频道: {getattr(entity, "title", entity.id)}')
+        # 直接调用底层的 messages.DeleteDialogRequest，
+        # 它只会把对话从列表里删掉，不会退群。
+        await client(functions.messages.DeleteDialogRequest(peer=fake_peer))
+        print(f"✅ 本地删除对话（不会退群）：{entity.id}")
+    except RPCError as e:
+        print(f"⚠️ DeleteDialogRequest 失败：{e}")
+
+async def leave_group(entity):
+    from telethon.tl.types import InputPeerChannel
+
+    try:
+        fake_peer = InputPeerChannel(channel_id=entity.id, access_hash=0)
+        await client.delete_dialog(fake_peer, revoke=True)
+        print(f'✅ 已安全退出/删除频道: {getattr(entity, "title", entity.id)}')
     except Exception as e:
-        print(f'❌ 退出失败: {e}')
+        print(f'❌ 删除失败: {e}')
 
 async def open_chat_history(entity):
     try:
@@ -420,6 +435,12 @@ async def man_bot_loop():
         # if entity.id != 2210941198:
         #     continue
 
+        # —— 新增：如果是私密／被封禁的频道，直接跳过并加入黑名单
+        if isinstance(entity, ChannelForbidden):
+            print(f"⚠️ 检测到私密或被封禁频道({entity.id})，跳过处理")
+            blacklist_entity_ids.add(entity.id)
+            continue
+
         # ✅ 跳过黑名单
         if await is_blacklisted(entity.id):
             # print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
@@ -451,7 +472,7 @@ async def man_bot_loop():
                     continue
                 min_id = max_message_id if max_message_id else 1
                 async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=100, reverse=True, filter=InputMessagesFilterEmpty()
+                    entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
                 ):
                     current_message = message
                     if current_entiry_title != entity_title:
@@ -491,8 +512,8 @@ async def man_bot_loop():
                         # print(f"当前消息ID(G): {current_message.id}")
                         await process_group_message(entity, message)
                 except ChannelPrivateError as e:
-                    print(f"目标 entity: {entity} 类型：{type(entity)}")
                     print(f"❌ 无法访问频道：{e}")
+                    await safe_remove_forbidden(entity)
                 except Exception as e:
                     print(f"{e}", flush=True)
                     # print(f"{message}", flush=True)

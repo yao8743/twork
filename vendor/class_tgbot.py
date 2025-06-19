@@ -1357,7 +1357,7 @@ class lybot:
             if isinstance(material, list):  # 如果是列表（album）
                 print(f"📤 发送 Album，共 {len(material)} 个媒体")
             else:  # 如果是单个媒体
-                print("📤 发送单个媒体")
+                print("📤 发送单个媒体(1360)")
 
 
             # 直接尝试转发消息
