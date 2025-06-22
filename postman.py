@@ -8,8 +8,9 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    # load_dotenv(dotenv_path='.20100034.sungfong.env')
-    load_dotenv(dotenv_path='.28817994.luzai.env')
+    load_dotenv(dotenv_path='.20100034.sungfong.env')
+    # load_dotenv(dotenv_path='.28817994.luzai.env')
+    # load_dotenv(dotenv_path='.25254811.bjd.env')
 
 
 
@@ -404,7 +405,7 @@ async def process_group_message(entity, message):
     class_map = {
         2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
         # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
-        2021604352: HandlerRelayClass,
+        2132925450: HandlerRelayClass,
         # 2030683460: HandlerNoAction,        #Configuration
        
     }
