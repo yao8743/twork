@@ -563,7 +563,7 @@ async def main():
     # exit()
     # await delete_my_profile_photos(client)
     # await update_my_name(client,'Luzai', 'Man')
-    # await update_username(client,"luzai02man")
+    # await update_username(client,"luzai05man")
     # exit()
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
     # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2134630453  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action

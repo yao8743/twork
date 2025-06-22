@@ -25,6 +25,51 @@ class MySQLManager:
             await self.pool.wait_closed()
             print("✅ MySQL 连接池已关闭")
 
+
+    async def insert_pure_users_bulk(self, user_ids: list[int]):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                values = [(user_id,) for user_id in user_ids]
+                await cur.executemany(
+                    """
+                    INSERT INTO pure (user_id, done)
+                    VALUES (%s, 0)
+                    ON DUPLICATE KEY UPDATE done = VALUES(done)
+                    """,
+                    values
+                )
+
+    async def insert_pure_users_bulk(self, user_ids: list[int], batch_size: int = 50):
+        if not user_ids:
+            print("⚠️ 无成员需要插入")
+            return
+
+        total = len(user_ids)
+        batches = [user_ids[i:i + batch_size] for i in range(0, total, batch_size)]
+
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                for idx, batch in enumerate(batches, 1):
+                    values = [(uid,) for uid in batch]
+                    await cur.executemany(
+                        """
+                        INSERT INTO pure (user_id, done)
+                        VALUES (%s, 0)
+                        ON DUPLICATE KEY UPDATE done = VALUES(done)
+                        """,
+                        values
+                    )
+                    await conn.commit()
+                    percent = int((idx / len(batches)) * 100)
+                    print(f"✅ 批次 {idx}/{len(batches)} 插入完成 ({percent}%)", flush=True)
+
+
+
+    async def execute_sql(self, sql: str):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(sql)
+
     async def fetch_bots_by_course_name(self, course_name):
         if not self.pool:
             raise Exception("MySQL pool 未初始化，请先调用 init_pool()")
