@@ -11,7 +11,7 @@ class NewsDatabase:
             self.pool = await asyncpg.create_pool(dsn=self.dsn)
 
     async def insert_news(self, title, text, content_id=None, file_id=None, file_type=None, button_str=None, bot_name=None, business_type=None):
-        print(f"{content_id}")
+        print(f"insert_news-{content_id}",flush=True)
         async with self.pool.acquire() as conn:
             return await conn.fetchval("""
                 INSERT INTO news_content (title, text, content_id, file_id, file_type, button_str, bot_name, business_type)

@@ -17,7 +17,7 @@ async def publish():
     # 指定要发给哪类 business_type 的用户（如 'news'）
     await db.create_send_tasks(news_id, business_type='news')
 
-    print(f"✅ 新闻 ID={{news_id}} 已发布并建立任务")
+    print(f"✅ 新闻 ID={{news_id}} 已发布并建立任务",flush=True)
 
 if __name__ == "__main__":
     asyncio.run(publish())

@@ -301,9 +301,9 @@ async def keep_alive_ping():
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as resp:
-                    print(f"🌐 Keep-alive ping {url} status {resp.status}")
+                    print(f"🌐 Keep-alive ping {url} status {resp.status}",flush=True)
         except Exception as e:
-            print(f"⚠️ Keep-alive ping failed: {e}")
+            print(f"⚠️ Keep-alive ping failed: {e}",flush=True)
         await asyncio.sleep(300)  # 每 5 分鐘 ping 一次
 
 async def main():

@@ -57,9 +57,10 @@ async def send_news_batch():
 async def main_loop(interval_seconds=10):
     while True:
         try:
+            print("🔄 正在发送新闻批次...", flush=True)
             await send_news_batch()
         except Exception as e:
-            print(f"❌ 执行错误: {e}")
+            print(f"❌ 执行错误: {e}", flush=True)
         await asyncio.sleep(interval_seconds)
 
 if __name__ == "__main__":
