@@ -99,14 +99,17 @@ class HandlerRelayClass(BaseHandlerClass):
                 )
 
             else:
+                print("🔍 正在处理单个消息转发")
                 caption = self.message.text or ""
 
                 if caption != "":
+                    print(f"🔍 正在处理消息转发，caption={caption}")
                     json_result = self.parse_caption_json(caption)
 
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
+                            print(f"🔍 正在处理转发标记，caption={caption}")
                             if caption.endswith("|force"):
                                 self.is_duplicate_allowed = True
                             target_raw = match.group(1)
@@ -116,6 +119,7 @@ class HandlerRelayClass(BaseHandlerClass):
                                 target_chat_id = target_raw.strip('@')  # 可留可不留 @
                             print(f"📌 指定转发 x chat_id={target_chat_id}")
                         else:
+                            print("🔍 未找到转发标记，尝试获取备用 chat_id")
                             fallback_chat_ids = await self.get_fallback_chat_ids()
                             if fallback_chat_ids:
                                 target_chat_id = random.choice(fallback_chat_ids)
@@ -124,10 +128,13 @@ class HandlerRelayClass(BaseHandlerClass):
                                 print("⚠️ 無 x chat_id 可用，跳过消息", flush=True)
                                 return
                     else:
+                       
                         target_raw = json_result.get('target_chat_id')
                         if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
+                            print(f"🔍 解析 JSON 成功1，target_chat_id={target_raw}")
                             target_chat_id = int(target_raw)
                         elif isinstance(target_raw, str):
+                            print(f"🔍 解析 JSON 成功2，target_chat_id={target_raw}")
                             target_chat_id = target_raw.strip('@')  # 去掉 @
                         else:
                             print("⚠️ JSON 中未提供有效的 target_chat_id")
