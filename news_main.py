@@ -15,6 +15,7 @@ from aiojobs.aiohttp import setup as setup_aiojobs, spawn
 from aiojobs.aiohttp import get_scheduler_from_app
 from news_db import NewsDatabase
 
+from utils.safe_reply import safe_reply
 from news_config import BOT_TOKEN, DB_DSN, AES_KEY, BOT_MODE, WEBHOOK_PATH, WEBHOOK_HOST
 
 import time
@@ -150,7 +151,7 @@ async def show_news_handler(message: Message, command: CommandObject):
     try:
         news_id = int(command.args.strip())
     except (ValueError, AttributeError):
-        await message.reply("⚠️ 请输入正确的新闻 ID，例如 /show 1")
+        await safe_reply("⚠️ 请输入正确的新闻 ID，例如 /show 1")
         return
 
     await db.init()
@@ -161,7 +162,7 @@ async def show_news_handler(message: Message, command: CommandObject):
     """, news_id)
 
     if not record:
-        await message.reply("⚠️ 未找到指定 ID 的新闻")
+        await safe_reply("⚠️ 未找到指定 ID 的新闻")
         return
 
     keyboard = parse_button_str(record["button_str"])
@@ -175,14 +176,14 @@ async def show_news_handler(message: Message, command: CommandObject):
             reply_markup=keyboard
         )
     else:
-        await message.reply("⚠️ 该新闻没有有效的照片或不支持的媒体类型")
+        await safe_reply("⚠️ 该新闻没有有效的照片或不支持的媒体类型")
 
 @dp.message(Command("push"))
 async def push_news_handler(message: Message, command: CommandObject):
     try:
         news_id = int(command.args.strip())
     except (ValueError, AttributeError):
-        await message.reply("⚠️ 请输入正确的新闻 ID，例如 /push 1")
+        await safe_reply("⚠️ 请输入正确的新闻 ID，例如 /push 1")
         return
 
     await db.init()
@@ -191,13 +192,13 @@ async def push_news_handler(message: Message, command: CommandObject):
     """, news_id)
 
     if not record:
-        await message.reply("⚠️ 未找到指定 ID 的新闻")
+        await safe_reply("⚠️ 未找到指定 ID 的新闻")
         return
 
     business_type = record["business_type"] or "news"
 
     await db.create_send_tasks(news_id, business_type)
-    await message.reply(f"✅ 已将新闻 ID = {news_id} 加入 {business_type} 业务类型的推送任务队列")
+    await safe_reply(f"✅ 已将新闻 ID = {news_id} 加入 {business_type} 业务类型的推送任务队列")
 
 
 
@@ -208,11 +209,11 @@ async def receive_media(message: Message):
     try:
         result = json.loads(caption)
     except Exception:
-        # await message.reply("⚠️ Caption 不是合法的 JSON。")
+        # await safe_reply("⚠️ Caption 不是合法的 JSON。")
         return
 
     if not isinstance(result, dict) or "caption" not in result:
-        # await message.reply("⚠️ JSON 缺少必要字段 caption。")
+        # await safe_reply("⚠️ JSON 缺少必要字段 caption。")
         return
 
     if message.photo:
@@ -233,7 +234,7 @@ async def receive_media(message: Message):
     try:
         content_id = int(content_id_raw) if content_id_raw is not None else None
     except (ValueError, TypeError):
-        await message.reply("⚠️ content_id 不是合法的数字或缺失")
+        await safe_reply("⚠️ content_id 不是合法的数字或缺失")
         return
 
     # 统一写入 news_buffer
@@ -263,11 +264,11 @@ async def receive_media(message: Message):
 
     if existing_news_id:
         await db.update_news_by_id(news_id=existing_news_id, **payload)
-        await message.reply(f"🔁 已更新新闻 ID = {existing_news_id}")
+        await safe_reply(f"🔁 已更新新闻 ID = {existing_news_id}")
         await db.create_send_tasks(existing_news_id, business_type)
     else:
         news_id = await db.insert_news(title=news_buffer["title"] or "Untitled", **payload)
-        await message.reply(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
+        await safe_reply(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
         await db.create_send_tasks(news_id, business_type)
 
 async def periodic_sender():
@@ -277,7 +278,8 @@ async def periodic_sender():
         await asyncio.sleep(10)
 
 async def on_startup(bot: Bot):
-    lz_var_cold_start_flag = False  # 启动完成
+    global lz_var_cold_start_flag
+    lz_var_cold_start_flag = False
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(f"{WEBHOOK_HOST}{WEBHOOK_PATH}")
     
