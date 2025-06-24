@@ -22,7 +22,7 @@ async def get_image_hash(image_path: str) -> str:
     img = PILImage.open(image_path)
     return str(imagehash.phash(img))
 
-async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, material, caption_json: str, to_protect_chat_id=None):
+async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, material, caption_json: str, to_protect_chat_id=None, require_ack=False):
     try:
         if to_protect_chat_id is None:
             to_protect_chat_id = to_chat_id
@@ -35,33 +35,60 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
         
         
         # caption_json = json.dumps(caption_json, ensure_ascii=False, indent=4)
+        if require_ack:
+            async with client.conversation(to_chat_id) as conv:
+                forwarded_message = await conv.send_file(
+                    to_chat_id,
+                    material,
+                    disable_notification=False,
+                    parse_mode='html',
+                    caption=caption_json
+                )
 
-        try:
-            await client.send_file(
-                to_chat_id,
-                material,
-                disable_notification=False,
-                parse_mode='html',
-                caption=caption_json
-            )
-        except FloodWaitError as e:
-            print(f"⚠️ FloodWait: 暂停 {e.seconds} 秒")
-            await asyncio.sleep(e.seconds + 1)
-            await client.send_file(
-                to_chat_id,
-                material,
-                disable_notification=False,
-                parse_mode='html',
-                caption=caption_json
-            )
+                try:
+                    # 获取机器人的响应，等待30秒
+                    response = await asyncio.wait_for(conv.get_response(forwarded_message.id), timeout=30)
+                    if response.text:
+                        print(f"✅ 成功转发消息！响应: {response.text}")
+                        return True
+                except asyncio.TimeoutError:
+                    # 如果超时，发送超时消息
+                    await client.send_message(to_chat_id, "the bot was timeout", reply_to=forwarded_message.id)
+                    print("Response timeout.")
+                    return False
+
+
+        else:
+
+
+            try:
+                await client.send_file(
+                    to_chat_id,
+                    material,
+                    disable_notification=False,
+                    parse_mode='html',
+                    caption=caption_json
+                )
+            except FloodWaitError as e:
+                print(f"⚠️ FloodWait: 暂停 {e.seconds} 秒")
+                await asyncio.sleep(e.seconds + 1)
+                await client.send_file(
+                    to_chat_id,
+                    material,
+                    disable_notification=False,
+                    parse_mode='html',
+                    caption=caption_json
+                )
+            
+            # 暂停1秒
+            await asyncio.sleep(1)
+            # print("✅ 成功转发消息！")
+            return True
 
 
         
        
-        # 暂停1秒
-        await asyncio.sleep(1)
-        # print("✅ 成功转发消息！")
-        return True
+       
     except ChatForwardsRestrictedError:
         print(f"⚠️ 该消息禁止转发，尝试重新发送...{message_id}")
         await fetch_and_send(client, from_chat_id, message_id, to_protect_chat_id, material, caption_json)

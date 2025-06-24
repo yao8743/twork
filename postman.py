@@ -34,7 +34,6 @@ from handlers.HandlerNoAction import HandlerNoAction
 from handlers.HandlerNoDelete import HandlernNoDeleteClass
 
 from handlers.HandlerRelayClass import HandlerRelayClass
-
 from handlers.HandlerPrivateMessageClass import HandlerPrivateMessageClass
 
 from telethon import functions, types
@@ -79,7 +78,7 @@ config['session_name'] = str(config['api_id']) + 'session_name'  # 确保 sessio
 # 在模块顶部初始化全局缓存
 local_scrap_progress = {}  # key = (chat_id, api_id), value = message_id
 
-last_message_id = 0
+
 
 # 黑名单缓存
 blacklist_entity_ids = set()
@@ -98,6 +97,26 @@ else:
 # 常量
 MAX_PROCESS_TIME = 20 * 60  # 最大运行时间 20 分钟
 
+# Class Map
+raw_class_map = config.get("class_map", {})
+class_map = {}
+for chat_id_str, entry in raw_class_map.items():
+    try:
+        chat_id = int(chat_id_str)
+        handler_class_name = entry.get("handler")
+
+        # ✅ 使用 globals() 自动取出提前 import 的类
+        handler_class = globals().get(handler_class_name)
+
+        if handler_class:
+            class_map[chat_id] = {
+                "handler_class": handler_class,
+                "save_progress": entry.get("save_progress", True)
+            }
+        else:
+            print(f"⚠️ 未识别的 handler 类名: {handler_class_name}")
+    except Exception as e:
+        print(f"⚠️ 解析 class_map[{chat_id_str}] 失败: {e}")
 
 
 async def join(invite_hash):
@@ -363,23 +382,22 @@ async def process_user_message(entity, message):
         # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
         return
 
-    # 实现：根据 entity.id 映射到不同处理类
-    class_map = {
-        777000: HandlerNoAction,   # 替换为真实 entity.id 和处理类
-        7521097665 : HandlernNoDeleteClass,   # 撸仔四号
-    }
 
-    handler_class = class_map.get(entity.id)
-    if handler_class:
+    entry = class_map.get(entity.id)
+    if entry:
+        handler_class = entry["handler_class"]
         handler = handler_class(client, entity, message, extra_data)
         handler.is_duplicate_allowed = True
         await handler.handle()
     else:
-        
         handler = HandlerPrivateMessageClass(client, entity, message, extra_data)
         # handler = HandlerNoAction(client, entity, message, extra_data)
         handler.delete_after_process = True
         await handler.handle()
+
+
+        
+
        
 async def process_group_message(entity, message):
     
@@ -401,130 +419,123 @@ async def process_group_message(entity, message):
 
         return
             
-    # 实现：根据 entity.id 映射到不同处理类
-    class_map = {
-        2210941198: HandlerBJIClass,   # 替换为真实 entity.id 和处理类
-        # 2210941198: HandlerBJILiteClass,   # 替换为真实 entity.id 和处理类
-        2132925450: HandlerRelayClass,
-        # 2030683460: HandlerNoAction,        #Configuration
-       
-    }
 
-   
-    # entity_title = getattr(entity, 'title', f"Unknown entity {entity.id}")
-    # print(f"[Group-X] Message from {entity_title} ({entity.id}): {message.text}")
-    
-
-    handler_class = class_map.get(entity.id)
-    if handler_class:
-
-       
-
+    entry = class_map.get(entity.id)
+    if entry:
+        handler_class = entry["handler_class"]
         handler = handler_class(client, entity, message, extra_data)
         handler.is_duplicate_allowed = True
         await handler.handle()
-
-
     else:
         pass
+       
+
+
+   
+
 
 async def man_bot_loop():
     last_message_id = 0  # 提前定义，避免 UnboundLocalError
     async for dialog in client.iter_dialogs():
-        entity = dialog.entity
+        try:
+            entity = dialog.entity
 
-        # if entity.id != 2210941198:
-        #     continue
+            # if entity.id != 2210941198:
+            #     continue
 
-        # —— 新增：如果是私密／被封禁的频道，直接跳过并加入黑名单
-        if isinstance(entity, ChannelForbidden):
-            print(f"⚠️ 检测到私密或被封禁频道({entity.id})，跳过处理")
-            blacklist_entity_ids.add(entity.id)
-            continue
+            # —— 新增：如果是私密／被封禁的频道，直接跳过并加入黑名单
+            if isinstance(entity, ChannelForbidden):
+                print(f"⚠️ 检测到私密或被封禁频道({entity.id})，跳过处理")
+                blacklist_entity_ids.add(entity.id)
+                continue
 
-        # ✅ 跳过黑名单
-        if await is_blacklisted(entity.id):
-            # print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
-            continue
+            # ✅ 跳过黑名单
+            if await is_blacklisted(entity.id):
+                # print(f"🚫 已屏蔽 entity: {entity.id}，跳过处理")
+                continue
 
-        current_entiry_title = None
-        entity_title = getattr(entity, 'title', None)
-        if not entity_title:
-            first_name = getattr(entity, 'first_name', '') or ''
-            last_name = getattr(entity, 'last_name', '') or ''
-            entity_title = f"{first_name} {last_name}".strip() or getattr(entity, 'title', f"Unknown entity {entity.id}")
-
-
-
-        print(f"当前对话: {entity_title} ({entity.id})", flush=True)
-
-        if dialog.unread_count >= 0:
-            if dialog.is_user:
-                
-                 # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
-                if config.get('bypass_private_check') == 1:
-                    # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
-                    return
+            current_entity_title = None
+            entity_title = getattr(entity, 'title', None)
+            if not entity_title:
+                first_name = getattr(entity, 'first_name', '') or ''
+                last_name = getattr(entity, 'last_name', '') or ''
+                entity_title = f"{first_name} {last_name}".strip() or getattr(entity, 'title', f"Unknown entity {entity.id}")
 
 
-                current_message = None
-                max_message_id = await get_max_source_message_id(entity.id)
-                if max_message_id is None:
-                    continue
-                min_id = max_message_id if max_message_id else 1
-                async for message in client.iter_messages(
-                    entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
-                ):
-                    current_message = message
-                    if current_entiry_title != entity_title:
-                        print(f"User: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
-                        current_entiry_title = entity_title
 
-                    await process_user_message(entity, message)
+            print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
-                if current_message:
-                    await save_scrap_progress(entity.id, current_message.id)
+            if dialog.unread_count >= 0:
+                if dialog.is_user:
+                    
+                    # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
+                    if str(config.get('bypass_private_check')) == '1':
+                        # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+                        continue
 
-                
-                last_message_id = current_message.id if current_message else 0
-                
-                
-            else:
-                
-                current_message = None
-                max_message_id = await get_max_source_message_id(entity.id)
-                if max_message_id is None:
-                    continue
-                min_id = max_message_id if max_message_id else 1
 
-                try:
+                    current_message = None
+                    max_message_id = await get_max_source_message_id(entity.id)
+                    if max_message_id is None:
+                        continue
+                    min_id = max_message_id if max_message_id else 1
                     async for message in client.iter_messages(
-                        entity, min_id=min_id, limit=500, reverse=True, filter=InputMessagesFilterEmpty()
+                        entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
                     ):
-                        
-                        if message.sticker:
-                            continue
                         current_message = message
-                        if current_entiry_title != entity_title:
-                            print(f"[Group]: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
-                            current_entiry_title = entity_title
+                        if current_entity_title != entity_title:
+                            print(f"User: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                            current_entity_title = entity_title
+
+                        await process_user_message(entity, message)
+
+                    if current_message:
+                        await save_scrap_progress(entity.id, current_message.id)
+
+                    
+                    last_message_id = current_message.id if current_message else 0
+                    
+                    
+                else:
+                    
+                    current_message = None
+                    max_message_id = await get_max_source_message_id(entity.id)
+                    if max_message_id is None:
+                        continue
+                    min_id = max_message_id if max_message_id else 1
+
+                    try:
+                        async for message in client.iter_messages(
+                            entity, min_id=min_id, limit=500, reverse=True, filter=InputMessagesFilterEmpty()
+                        ):
+                            
+                            if message.sticker:
+                                continue
+                            current_message = message
+                            if current_entity_title != entity_title:
+                                print(f"[Group]: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                                current_entity_title = entity_title
 
 
-                        # print(f"当前消息ID(G): {current_message.id}")
-                        await process_group_message(entity, message)
-                except ChannelPrivateError as e:
-                    print(f"❌ 无法访问频道：{e}")
-                    await safe_remove_forbidden(entity)
-                except Exception as e:
-                    print(f"{e}", flush=True)
-                    # print(f"{message}", flush=True)
+                            # print(f"当前消息ID(G): {current_message.id}")
+                            await process_group_message(entity, message)
+                    except ChannelPrivateError as e:
+                        print(f"❌ 无法访问频道：{e}")
+                        await safe_remove_forbidden(entity)
+                    except Exception as e:
+                        print(f"{e}", flush=True)
+                        # print(f"{message}", flush=True)
 
+                    if_save_progress = True
+                    entry = class_map.get(entity.id)
+                    if entry:                    
+                        if_save_progress = entry.get("save_progress", True)
 
-
-              
-                if current_message:
-                    await save_scrap_progress(entity.id, current_message.id)
-                    return last_message_id
+                    if current_message and if_save_progress:
+                        await save_scrap_progress(entity.id, current_message.id)
+        except Exception as e:
+            print(f"❌ 处理对话 {entity.id} 时出错: {e}", flush=True)
+            continue                    
     return last_message_id
 
 async def main():
@@ -631,7 +642,7 @@ async def main():
             last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
         except asyncio.TimeoutError:
             print("⚠️ 任务超时，跳过本轮", flush=True)
-        # await asyncio.sleep(random.randint(5, 10))
+        await asyncio.sleep(random.randint(5, 10))
        
 
     await send_completion_message(last_message_id)

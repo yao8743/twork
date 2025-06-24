@@ -33,6 +33,7 @@ class HandlerRelayClass(BaseHandlerClass):
         
         forwared_success = True
         target_chat_id = None
+        require_ack = False
 
         entity_title = getattr(self.entity, 'title', f"Unknown entity {self.entity.id}")
         print(f"[Group] Message from {entity_title} ({self.entity.id}): {self.message.text}")
@@ -133,9 +134,11 @@ class HandlerRelayClass(BaseHandlerClass):
                         if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
                             print(f"🔍 解析 JSON 成功1，target_chat_id={target_raw}")
                             target_chat_id = int(target_raw)
+                            require_ack = True
                         elif isinstance(target_raw, str):
                             print(f"🔍 解析 JSON 成功2，target_chat_id={target_raw}")
                             target_chat_id = target_raw.strip('@')  # 去掉 @
+                            require_ack = True
                         else:
                             print("⚠️ JSON 中未提供有效的 target_chat_id")
                             return
@@ -167,15 +170,15 @@ class HandlerRelayClass(BaseHandlerClass):
                                 media_id=media_id,
                                 access_hash=access_hash
                             )
-
                        
                         forwared_success = await safe_forward_or_send(
-                            self.client,
-                            self.message.id,
-                            self.message.chat_id,
-                            target_chat_id,
-                            media,
-                            caption
+                            client = self.client,
+                            message_id = self.message.id,
+                            from_chat_id = self.message.chat_id,
+                            to_chat_id = target_chat_id,
+                            material = media,
+                            caption_json = caption,
+                            require_ack = require_ack
                         )
                        
                         if forwared_success:
