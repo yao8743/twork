@@ -151,7 +151,7 @@ async def show_news_handler(message: Message, command: CommandObject):
     try:
         news_id = int(command.args.strip())
     except (ValueError, AttributeError):
-        await safe_reply("⚠️ 请输入正确的新闻 ID，例如 /show 1")
+        await safe_reply(message,"⚠️ 请输入正确的新闻 ID，例如 /show 1")
         return
 
     await db.init()
@@ -162,7 +162,7 @@ async def show_news_handler(message: Message, command: CommandObject):
     """, news_id)
 
     if not record:
-        await safe_reply("⚠️ 未找到指定 ID 的新闻")
+        await safe_reply(message,"⚠️ 未找到指定 ID 的新闻")
         return
 
     keyboard = parse_button_str(record["button_str"])
@@ -176,14 +176,14 @@ async def show_news_handler(message: Message, command: CommandObject):
             reply_markup=keyboard
         )
     else:
-        await safe_reply("⚠️ 该新闻没有有效的照片或不支持的媒体类型")
+        await safe_reply(message,"⚠️ 该新闻没有有效的照片或不支持的媒体类型")
 
 @dp.message(Command("push"))
 async def push_news_handler(message: Message, command: CommandObject):
     try:
         news_id = int(command.args.strip())
     except (ValueError, AttributeError):
-        await safe_reply("⚠️ 请输入正确的新闻 ID，例如 /push 1")
+        await safe_reply(message,"⚠️ 请输入正确的新闻 ID，例如 /push 1")
         return
 
     await db.init()
@@ -192,28 +192,29 @@ async def push_news_handler(message: Message, command: CommandObject):
     """, news_id)
 
     if not record:
-        await safe_reply("⚠️ 未找到指定 ID 的新闻")
+        await safe_reply(message,"⚠️ 未找到指定 ID 的新闻")
         return
 
     business_type = record["business_type"] or "news"
 
     await db.create_send_tasks(news_id, business_type)
-    await safe_reply(f"✅ 已将新闻 ID = {news_id} 加入 {business_type} 业务类型的推送任务队列")
+    await safe_reply(message,f"✅ 已将新闻 ID = {news_id} 加入 {business_type} 业务类型的推送任务队列")
 
 
 
 @dp.message(lambda msg: msg.photo or msg.video or msg.document)
 async def receive_media(message: Message):
+    print(f"📥 收到消息：{message.text or '无文本'}",flush=True)
     caption = message.caption or ""
 
     try:
         result = json.loads(caption)
     except Exception:
-        # await safe_reply("⚠️ Caption 不是合法的 JSON。")
+        # await safe_reply(message,"⚠️ Caption 不是合法的 JSON。")
         return
 
     if not isinstance(result, dict) or "caption" not in result:
-        # await safe_reply("⚠️ JSON 缺少必要字段 caption。")
+        # await safe_reply(message,"⚠️ JSON 缺少必要字段 caption。")
         return
 
     if message.photo:
@@ -234,7 +235,7 @@ async def receive_media(message: Message):
     try:
         content_id = int(content_id_raw) if content_id_raw is not None else None
     except (ValueError, TypeError):
-        await safe_reply("⚠️ content_id 不是合法的数字或缺失")
+        await safe_reply(message,"⚠️ content_id 不是合法的数字或缺失")
         return
 
     # 统一写入 news_buffer
@@ -264,11 +265,13 @@ async def receive_media(message: Message):
 
     if existing_news_id:
         await db.update_news_by_id(news_id=existing_news_id, **payload)
-        await safe_reply(f"🔁 已更新新闻 ID = {existing_news_id}")
+        await safe_reply(message,f"🔁 已更新新闻 ID = {existing_news_id}")
+        print(f"🔁 已更新新闻 ID = {existing_news_id}",flush=True)
         await db.create_send_tasks(existing_news_id, business_type)
     else:
         news_id = await db.insert_news(title=news_buffer["title"] or "Untitled", **payload)
-        await safe_reply(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
+        await safe_reply(message,f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}")
+        print(f"✅ 已新增新闻并建立任务，新闻 ID = {news_id}",flush=True)
         await db.create_send_tasks(news_id, business_type)
 
 async def periodic_sender():

@@ -26,6 +26,7 @@ async def send_news_batch():
     tasks = await db.get_pending_tasks(limit=RATE_LIMIT)
 
     for task in tasks:
+        print(f"📤 发送任务: {task['task_id']} 给用户: {task['user_id']}", flush=True)
         await asyncio.sleep(1 / RATE_LIMIT)
         user_id = task["user_id"]
         try:
