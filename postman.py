@@ -8,9 +8,9 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.20100034.sungfong.env')
+    # load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.28817994.luzai.env')
-    # load_dotenv(dotenv_path='.25254811.bjd.env')
+    load_dotenv(dotenv_path='.25254811.bjd.env')
 
 
 
@@ -551,12 +551,15 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
 
-    intbotname = '@Qing001bot'
-    await client.send_message(intbotname, "/start")
-    await client.send_message(intbotname, "[~bot~]")
+    # intbotname = '@Qing001bot'
+    # await client.send_message(intbotname, "/start")
+    # await client.send_message(intbotname, "[~bot~]")
 
-    # await client.send_message('@nezhamowan1', "/start")
+
     
+    # async with client.conversation(-1002210941198) as conv:
+    #     await conv.send_message('早上好各位大佬')
+    # await join("Z3JZs33NOOVkZmI5")  #BJGTOPIC
     # exit()
 
     # await
@@ -574,13 +577,14 @@ async def main():
 
     # exit()
     # await delete_my_profile_photos(client)
-    # await update_my_name(client,'Luzai', 'Man')
-    # await update_username(client,"luzai05man")
+    # await update_my_name(client,'Hiwar🍭🎈', '')
+    # await update_username(client,"hahatai77732")
     # exit()
+    # await join("6-1VMbcX_BgwNDlh")  #BJD
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
     # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2134630453  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
 
-    
+    # exit()
 
     #01 DIE 6874    2017145941  await join("") 22329346  / 20100034 ( Die )
     #02 OK  7258    2091886937  
@@ -629,7 +633,7 @@ async def main():
     # exit()
   
   
-    # await join("xbY8S-04jnEzYWE0")   
+     
     
     
     start_time = time.time()
