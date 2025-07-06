@@ -38,7 +38,7 @@ async def safe_forward_or_send(client, message_id, from_chat_id, to_chat_id, mat
         if require_ack:
             async with client.conversation(to_chat_id) as conv:
                 forwarded_message = await conv.send_file(
-                    to_chat_id,
+                    # to_chat_id,
                     material,
                     disable_notification=False,
                     parse_mode='html',
