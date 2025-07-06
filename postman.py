@@ -10,7 +10,9 @@ if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     # load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.28817994.luzai.env')
-    load_dotenv(dotenv_path='.25254811.bjd.env')
+    # load_dotenv(dotenv_path='.25254811.bjd.env')
+    load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
+    
 
 
 
@@ -22,6 +24,10 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.types import MessageMediaWebPage
 from telethon.tl.types import InputMessagesFilterEmpty
+
+import pymysql
+pymysql.install_as_MySQLdb()  # 让 peewee 等库以为它就是 MySQLdb
+
 from peewee import DoesNotExist
 
 from model.scrap_progress import ScrapProgress
@@ -551,14 +557,14 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
 
-    # intbotname = '@Qing001bot'
-    # await client.send_message(intbotname, "/start")
-    # await client.send_message(intbotname, "[~bot~]")
+    intbotname = '@Qing001bot'
+    await client.send_message(intbotname, "/start")
+    await client.send_message(intbotname, "[~bot~]")
 
 
     
     # async with client.conversation(-1002210941198) as conv:
-    #     await conv.send_message('早上好各位大佬')
+        # await conv.send_message('大佬我要')
     # await join("Z3JZs33NOOVkZmI5")  #BJGTOPIC
     # exit()
 
@@ -577,8 +583,10 @@ async def main():
 
     # exit()
     # await delete_my_profile_photos(client)
-    # await update_my_name(client,'Hiwar🍭🎈', '')
-    # await update_username(client,"hahatai77732")
+    # await update_my_name(client,'Wormhole', '')
+    # await update_username(client,"wormholeztd")
+    
+    # await join("oQL1ro8qe0QxODA0")  #黑洞
     # exit()
     # await join("6-1VMbcX_BgwNDlh")  #BJD
     # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb

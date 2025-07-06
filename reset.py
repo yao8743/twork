@@ -11,7 +11,9 @@ if not os.getenv('GITHUB_ACTIONS'):
     # load_dotenv(dotenv_path='.24066130.decode.env')
     # load_dotenv(dotenv_path='.25506053.jjl.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env')
-    load_dotenv(dotenv_path='.28817994.luzai.env')
+    load_dotenv(dotenv_path='.25299903.warehouse.env')
+    # 
+    # load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.24690454.queue.env')
     # 
     
@@ -31,6 +33,8 @@ try:
         config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
 except Exception as e:
     print(f"⚠️ 無法解析 CONFIGURATION：{e}")
+
+print(config, flush=True)
 
 api_id = config['api_id']
 api_hash = config['api_hash']
