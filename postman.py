@@ -101,7 +101,7 @@ else:
 
 
 # 常量
-MAX_PROCESS_TIME = 20 * 60  # 最大运行时间 20 分钟
+MAX_PROCESS_TIME = 40 * 60  # 最大运行时间 20 分钟
 
 # Class Map
 raw_class_map = config.get("class_map", {})
