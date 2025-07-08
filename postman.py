@@ -8,9 +8,9 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.20100034.sungfong.env')
+    # load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.28817994.luzai.env')
-    # load_dotenv(dotenv_path='.25254811.bjd.env')
+    load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
     
 
@@ -72,6 +72,7 @@ SESSION_STRING  = os.getenv("USER_SESSION_STRING")
 # 嘗試載入 JSON 並合併參數
 try:
     setting_json = json.loads(config['setting'])
+   
     if isinstance(setting_json, dict):
         config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
 except Exception as e:
@@ -557,14 +558,16 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
 
-    intbotname = '@Qing001bot'
-    await client.send_message(intbotname, "/start")
-    await client.send_message(intbotname, "[~bot~]")
+    # intbotname = '@Qing001bot'
+    # await client.send_message(intbotname, "/start")
+    # await client.send_message(intbotname, "[~bot~]")
 
 
     
     # async with client.conversation(-1002210941198) as conv:
-        # await conv.send_message('大佬我要')
+        # await conv.send_message('还要')
+        
+        # await join("HLAXdOwNW7UyNTFk")  #BJGTOPIC
     # await join("Z3JZs33NOOVkZmI5")  #BJGTOPIC
     # exit()
 
