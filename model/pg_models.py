@@ -18,7 +18,7 @@ def init_postgres():
     except Exception as e:
         print(f"⚠️ database - 無法解析 CONFIGURATION：{e}")
 
-    dsn = db_config.get('postgres_dsn', os.getenv('POSTGRES_DSN')),
+    dsn = db_config.get('postgres_dsn', os.getenv('POSTGRES_DSN'))
    
     
     if dsn:
