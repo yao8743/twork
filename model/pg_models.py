@@ -4,13 +4,22 @@ from urllib.parse import urlparse, unquote
 # from playhouse.postgres_ext import PostgresqlExtDatabase, TSVectorField
 # import datetime
 # 判断是否启用 PostgreSQL 同步
-
+import json
 
 # 延迟初始化 Postgres 数据库
 DB_PG = PostgresqlDatabase(None)
 
 def init_postgres():
-    dsn = os.getenv('POSTGRES_DSN')
+    db_config = {}
+    try:
+        setting_json = json.loads(os.getenv('CONFIGURATION', ''))
+        if isinstance(setting_json, dict):
+            db_config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
+    except Exception as e:
+        print(f"⚠️ database - 無法解析 CONFIGURATION：{e}")
+
+    dsn = db_config.get('postgres_dsn', os.getenv('POSTGRES_DSN')),
+   
     
     if dsn:
 # 手动拆解 DSN
