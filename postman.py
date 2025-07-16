@@ -557,7 +557,7 @@ async def main():
         print(f'你的ID: {me.id}')
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
-
+ 
     # intbotname = '@Qing001bot'
     # await client.send_message(intbotname, "/start")
     # await client.send_message(intbotname, "[~bot~]")
