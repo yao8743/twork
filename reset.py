@@ -2,8 +2,10 @@ import asyncio
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError, AuthKeyDuplicatedError, RPCError
+from telethon.tl.functions.account import UpdateUsernameRequest
 import os
 import json
+import pymysql
 
 # Check if running in a local development environment
 if not os.getenv('GITHUB_ACTIONS'):
@@ -13,7 +15,8 @@ if not os.getenv('GITHUB_ACTIONS'):
     # load_dotenv(dotenv_path='.25254811.bjd.env')
     # load_dotenv(dotenv_path='.25299903.warehouse.env')
     # 
-    load_dotenv(dotenv_path='.28817994.luzai.env')
+    # load_dotenv(dotenv_path='.28817994.luzai.env')
+    load_dotenv(dotenv_path='.env')
     # load_dotenv(dotenv_path='.24690454.queue.env')
     # 
     
@@ -24,11 +27,13 @@ config = {
     'phone_number': os.getenv('PHONE_NUMBER',''),
     'setting_chat_id': int(os.getenv('SETTING_CHAT_ID') or 0),
     'setting_thread_id': int(os.getenv('SETTING_THREAD_ID') or 0),
-    'setting' : os.getenv('CONFIGURATION', '')
+    'setting' : os.getenv('CONFIGURATION', ''),
+    'user_session_string' : os.getenv('USER_SESSION_STRING', ''),
 }
 
 try:
     setting_json = json.loads(config['setting'])
+   
     if isinstance(setting_json, dict):
         config.update(setting_json)  # 將 JSON 鍵值對合併到 config 中
 except Exception as e:
@@ -43,6 +48,27 @@ phone_number = config['phone_number']
 assert api_id is not None, "❌ 环境变量 API_ID 没有设置！"
 assert api_hash is not None, "❌ 环境变量 API_HASH 没有设置！"
 assert phone_number is not None, "❌ 环境变量 PHONE_NUMBER 没有设置！"
+
+
+MYSQL_HOST      = config.get('db_host', os.getenv('MYSQL_DB_HOST', 'localhost'))
+MYSQL_USER      = config.get('db_user', os.getenv('MYSQL_DB_USER', ''))
+MYSQL_PASSWORD  = config.get('db_password', os.getenv('MYSQL_DB_PASSWORD', ''))
+MYSQL_DB        = config.get('db_name', os.getenv('MYSQL_DB_NAME', ''))
+MYSQL_DB_PORT   = int(config.get('db_port', os.getenv('MYSQL_DB_PORT', 3306)))
+
+
+# ================= 2. 初始化 MySQL 连接 =================
+mysql_config = {
+    'host'      : MYSQL_HOST,
+    'user'      : MYSQL_USER,
+    'password'  : MYSQL_PASSWORD,
+    'database'  : MYSQL_DB,
+    "port"      : MYSQL_DB_PORT,
+    'charset'   : 'utf8mb4',
+    'autocommit': True
+}
+db = pymysql.connect(**mysql_config)
+cursor = db.cursor()
 
 
 # Get values from environment variables
@@ -147,11 +173,54 @@ async def main():
         print("USER_SESSION_STRING=" + stringsession)
 
     else:
+        stringsession = config.get('user_session_string', '')
         print("User is already authorized, no need to log in again", flush=True)
 
-    print(f"\n\nopenssl aes-256-cbc -pbkdf2 -salt -in {session_file} -out {session_file}.enc -pass pass:{session_password}\n\n")
-    await encrypt_session_file(session_file, session_file+".enc", session_password)
 
+    try:
+        phone_number2 = phone_number.replace('+', 'p_').replace(' ', '')  # 确保电话号码格式正确
+        await client(UpdateUsernameRequest(phone_number2))  # 设置空字符串即为移除
+        print("用户名已成功变更。")
+    except Exception as e:
+        print(f"变更失败：{e}")
+
+    me = await client.get_me()
+
+       
+    
+    print(f'你的用户名: {me.username}',flush=True)
+    print(f'你的ID: {me.id}')
+    print(f'你的名字: {me.first_name} {me.last_name or ""}')
+    print(f'是否是Bot: {me.bot}',flush=True)
+
+    # print(f"\n\nopenssl aes-256-cbc -pbkdf2 -salt -in {session_file} -out {session_file}.enc -pass pass:{session_password}\n\n")
+    # await encrypt_session_file(session_file, session_file+".enc", session_password)
+
+    # ========== 更新 bot 表 ==========
+    bot_id = me.id
+    bot_token = stringsession
+    bot_name = phone_number2
+    user_id = me.id
+    bot_root = phone_number2
+    bot_title = f"{me.first_name or ''}{me.last_name or ''}"
+    work_status = "free"
+
+    try:
+        cursor.execute("""
+            INSERT INTO bot (
+                bot_id, bot_token, bot_name, user_id, bot_root, bot_title, work_status
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                bot_token = VALUES(bot_token),
+                bot_name = VALUES(bot_name),
+                user_id = VALUES(user_id),
+                bot_root = VALUES(bot_root),
+                bot_title = VALUES(bot_title),
+                work_status = VALUES(work_status)
+        """, (bot_id, bot_token, bot_name, user_id, bot_root, bot_title, work_status))
+        print("✅ bot 信息已写入或更新数据库")
+    except Exception as e:
+        print(f"❌ 写入数据库失败: {e}", flush=True)
 
 
 

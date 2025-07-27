@@ -8,7 +8,8 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    load_dotenv(dotenv_path='.20100034.sungfong.env')
+    # load_dotenv(dotenv_path='.20100034.sungfong.env')
+    load_dotenv(dotenv_path='.x.env')
     # load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
@@ -24,6 +25,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl.types import MessageMediaWebPage
 from telethon.tl.types import InputMessagesFilterEmpty
+from telethon.tl.types import PeerChannel
 
 import pymysql
 pymysql.install_as_MySQLdb()  # 让 peewee 等库以为它就是 MySQLdb
@@ -50,6 +52,7 @@ from telethon.tl.types import ChannelForbidden
 from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.account import UpdateUsernameRequest
 from telethon.tl.functions.channels import InviteToChannelRequest, TogglePreHistoryHiddenRequest
+from telethon.tl.types import PeerUser
 
 
 # 配置参数
@@ -558,9 +561,9 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
  
-    # intbotname = '@Qing001bot'
-    # await client.send_message(intbotname, "/start")
-    # await client.send_message(intbotname, "[~bot~]")
+    intbotname = '@Qing001bot'
+    await client.send_message(intbotname, "/start")
+    await client.send_message(intbotname, "[~bot~]")
 
 
     
@@ -569,22 +572,32 @@ async def main():
         
         # await join("HLAXdOwNW7UyNTFk")  #BJGTOPIC
     # await join("Z3JZs33NOOVkZmI5")  #BJGTOPIC
+    # await join("F0MTTcs184JmODZk")  #PARK
     # exit()
 
     # await
 
-    # group_identifier = -1002592636499
-    # participants = await client.get_participants(group_identifier)
+    group_identifier = -1001998587879
+    participants = await client.get_participants(group_identifier)
+    # print(f"群组 {group_identifier} 的成员数量: {len(participants)}")
 
     # # 遍历输出用户名和 ID
-    # for user in participants:
-    #     sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
-    #     print(sql)
+    for usera in participants:
+        user = await client.get_entity(PeerUser(usera.id))
+
+        print("\r\n用戶名稱:", user.first_name, user.last_name)
+        print("用戶帳號:", user.username)
+        print("用戶ID:", user.id)
+        print("是否機器人:", user.bot)
+        # sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
+        # print(sql)
     #     db.execute_sql(sql)
     #     # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
 
-
-    # exit()
+    
+    # entity = await client.get_entity(group_identifier)  # ✅ 正确方式，不要用 PeerChannel
+    # await open_chat_history(entity)
+    exit()
     # await delete_my_profile_photos(client)
     # await update_my_name(client,'Wormhole', '')
     # await update_username(client,"wormholeztd")
