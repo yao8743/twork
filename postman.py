@@ -561,9 +561,9 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
  
-    intbotname = '@Qing001bot'
-    await client.send_message(intbotname, "/start")
-    await client.send_message(intbotname, "[~bot~]")
+    # intbotname = '@Qing001bot'
+    # await client.send_message(intbotname, "/start")
+    # await client.send_message(intbotname, "[~bot~]")
 
 
     
@@ -577,28 +577,28 @@ async def main():
 
     # await
 
-    group_identifier = -1001998587879
-    participants = await client.get_participants(group_identifier)
-    # print(f"群组 {group_identifier} 的成员数量: {len(participants)}")
+    # group_identifier = -1001998587879
+    # participants = await client.get_participants(group_identifier)
+    # # print(f"群组 {group_identifier} 的成员数量: {len(participants)}")
 
-    # # 遍历输出用户名和 ID
-    for usera in participants:
-        user = await client.get_entity(PeerUser(usera.id))
+    # # # 遍历输出用户名和 ID
+    # for usera in participants:
+    #     user = await client.get_entity(PeerUser(usera.id))
 
-        print("\r\n用戶名稱:", user.first_name, user.last_name)
-        print("用戶帳號:", user.username)
-        print("用戶ID:", user.id)
-        print("是否機器人:", user.bot)
-        # sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
-        # print(sql)
-    #     db.execute_sql(sql)
-    #     # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
+    #     print("\r\n用戶名稱:", user.first_name, user.last_name)
+    #     print("用戶帳號:", user.username)
+    #     print("用戶ID:", user.id)
+    #     print("是否機器人:", user.bot)
+    #     # sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
+    #     # print(sql)
+    # #     db.execute_sql(sql)
+    # #     # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
 
     
-    # entity = await client.get_entity(group_identifier)  # ✅ 正确方式，不要用 PeerChannel
-    # await open_chat_history(entity)
-    exit()
-    # await delete_my_profile_photos(client)
+    # # entity = await client.get_entity(group_identifier)  # ✅ 正确方式，不要用 PeerChannel
+    # # await open_chat_history(entity)
+    # exit()
+    # # await delete_my_profile_photos(client)
     # await update_my_name(client,'Wormhole', '')
     # await update_username(client,"wormholeztd")
     
