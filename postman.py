@@ -82,6 +82,8 @@ try:
 except Exception as e:
     print(f"⚠️ 無法解析 CONFIGURATION：{e}")
 
+print(f"⚠️ 配置參數：{config}", flush=True)
+
 config['session_name'] = str(config['api_id']) + 'session_name'  # 确保 session_name 正确
 
 # print(f"⚠️ 配置參數：{config}")
