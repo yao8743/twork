@@ -9,7 +9,8 @@ import os
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
     # load_dotenv(dotenv_path='.20100034.sungfong.env')
-    load_dotenv(dotenv_path='.x.env')
+    # load_dotenv(dotenv_path='.x.env')
+    # load_dotenv(dotenv_path='.29614663.gunnar.env')
     # load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
@@ -101,7 +102,7 @@ if SESSION_STRING:
     print("【Telethon】使用 StringSession 登录。",flush=True)
 else:
     client = TelegramClient(config['session_name'], config['api_id'], config['api_hash'])
-
+    print("【Telethon】使用普通会话登录。",flush=True)
 
 
 # 常量
@@ -127,6 +128,7 @@ for chat_id_str, entry in raw_class_map.items():
             print(f"⚠️ 未识别的 handler 类名: {handler_class_name}")
     except Exception as e:
         print(f"⚠️ 解析 class_map[{chat_id_str}] 失败: {e}")
+
 
 
 async def join(invite_hash):
@@ -334,7 +336,7 @@ async def save_scrap_progress(entity_id, message_id):
 async def process_user_message(entity, message):
 
     botname = None
-
+    print(f"{entity.id} {message.text}")
     if message.text:
         try:
             match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
@@ -549,6 +551,8 @@ async def man_bot_loop():
     return last_message_id
 
 async def main():
+    print(f"⚠️ 启动 Postman Bot...{config['phone_number']}", flush=True)
+   
     await client.start(config['phone_number'])
     await keep_db_alive()
 
@@ -676,7 +680,9 @@ async def main():
     await send_completion_message(last_message_id)
 
 if __name__ == "__main__":
+    
     with client:
+        
         client.loop.run_until_complete(main())
 
 

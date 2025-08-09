@@ -153,3 +153,48 @@ class Tag(BaseModel):
     class Meta:
         primary_key = False
         table_name = 'tag'
+
+class Product(BaseModel):
+    id = BigAutoField(primary_key=True, help_text='商品唯一 ID')
+
+    name = CharField(max_length=255, null=True, help_text='商品标题，可为空')
+    content = TextField(null=True, help_text='商品描述')
+    guild_id = IntegerField(null=True, constraints=[SQL('UNSIGNED')], help_text='师门分类')
+
+    price = IntegerField(constraints=[SQL('UNSIGNED')], help_text='商品价格（非负）')
+
+    # 去掉外键，直接用 bigint
+    content_id = BigIntegerField(help_text='关联 sora_content.id（无外键约束）')
+
+    file_type = CharField(max_length=20, null=True, help_text='video/image/document/collection')
+    owner_user_id = CharField(max_length=14, null=True, help_text='投稿者的 Telegram ID')
+
+    view_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='浏览次数')
+    purchase_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='购买次数')
+    like_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='点赞次数')
+    dislike_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='点踩次数')
+
+    hot_score = IntegerField(default=0, help_text='热度得分（可正可负）')
+    bid_status = IntegerField(default=0, help_text='投稿状态（0=未投稿,1=待审…）')
+    review_status = SmallIntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='审核状态（0=未审，1=通过，2=拒绝…）')
+
+    purchase_condition = TextField(null=True, help_text='购买条件（可存 JSON 字符串）')
+
+    created_at = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')], help_text='创建时间')
+    updated_at = DateTimeField(
+        constraints=[SQL('DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')],
+        help_text='最后更新时间'
+    )
+    stage = CharField(max_length=20, null=True)  # 可选改用 ENUM 实现
+
+    class Meta:
+        table_name = 'product'
+        indexes = (
+            (('content_id',), False),  # 保留普通索引
+        )
+        table_settings = [
+            'ENGINE=InnoDB',
+            'DEFAULT CHARSET=utf8mb4',
+            'COLLATE=utf8mb4_general_ci',
+            "COMMENT='商品主表：用于售卖资源（视频、图片、合集等）'"
+        ]

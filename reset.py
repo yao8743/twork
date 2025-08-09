@@ -13,10 +13,10 @@ if not os.getenv('GITHUB_ACTIONS'):
     # load_dotenv(dotenv_path='.24066130.decode.env')
     # load_dotenv(dotenv_path='.25506053.jjl.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env')
-    # load_dotenv(dotenv_path='.25299903.warehouse.env')
+    load_dotenv(dotenv_path='.25299903.warehouse.env')
     # 
     # load_dotenv(dotenv_path='.28817994.luzai.env')
-    load_dotenv(dotenv_path='.env')
+    # load_dotenv(dotenv_path='.env')
     # load_dotenv(dotenv_path='.24690454.queue.env')
     # 
     
@@ -81,6 +81,14 @@ session_password = os.getenv('SESSION_PASSWORD')
 session_name = str(api_id) + 'session_name'  # Ensure it matches the uploaded session file name
 
 session_file = session_name + '.session'
+
+#删除旧的会话文件
+if os.path.exists(session_file):
+    try:
+        os.remove(session_file)
+        print(f"已删除旧的会话文件: {session_file}", flush=True)
+    except FileNotFoundError:
+        print("删除旧的会话文件时未找到文件。", flush=True)
 
 # Create the client
 client = TelegramClient(session_name, api_id, api_hash)

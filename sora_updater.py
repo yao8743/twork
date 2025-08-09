@@ -1,3 +1,6 @@
+# import pymysql
+# pymysql.install_as_MySQLdb()  # 让 peewee 以为有 MySQLdb/mysqlclient
+
 import os
 import re
 import json
@@ -8,7 +11,7 @@ if not os.getenv('GITHUB_ACTIONS'):
     load_dotenv(dotenv_path='.sora.env')
 from peewee import *
 from model.mysql_models import (
-    DB_MYSQL, Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
+    DB_MYSQL, Product,Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
 )
 from database import ensure_connection
 from model.scrap import Scrap
@@ -20,7 +23,7 @@ init_mysql()
 
 # 如需 PostgreSQL，再导入并初始化
 if SYNC_TO_POSTGRES:
-    from model.pg_models import DB_PG, SoraContentPg, SoraMediaPg, init_postgres
+    from model.pg_models import DB_PG, SoraContentPg, SoraMediaPg, ProductPg, init_postgres
     from playhouse.shortcuts import model_to_dict
     init_postgres()
     # try:
@@ -175,8 +178,6 @@ def process_documents():
     # DB_MYSQL.connect()
     ensure_connection()  # ✅ 推荐写法
     if SYNC_TO_POSTGRES:
-
-
 
         DB_PG.connect()
 
@@ -555,9 +556,52 @@ def sync_pending_sora_to_postgres():
     DB_MYSQL.close()
     DB_PG.close()
 
+def sync_pending_product_to_postgres():
+    if not SYNC_TO_POSTGRES:
+        print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步",flush=True)
+        return
+
+    print("🚀 开始同步 stage = 'pending' 的 product 到 PostgreSQL...",flush=True)
+    from playhouse.shortcuts import model_to_dict
+
+    # DB_MYSQL.connect()
+    ensure_connection()  # ✅ 推荐写法
+    DB_PG.connect()
+
+    rows = Product.select().where(Product.stage == "pending").limit(BATCH_LIMIT)
+
+    for row in rows:
+        # print(f"🔄 同步中：source_id = {row.source_id}")
+
+        model_data = model_to_dict(row, recurse=False)
+        # 去除不必要字段
+        for ignored in ('stage'):
+            model_data.pop(ignored, None)
+        model_data["id"] = row.id  # 强制使用相同主键
+
+        try:
+            existing = ProductPg.get(ProductPg.id == row.id)
+            for k, v in model_data.items():
+                setattr(existing, k, v)
+            existing.save()
+            # print(f"✅ 已更新 PostgreSQL product.content_id = {row.content_id}")
+        except ProductPg.DoesNotExist:
+            ProductPg.create(**model_data)
+            # print(f"✅ 已新增 PostgreSQL product.content_id = {row.content_id}")
+
+        # ✅ 回写 MySQL：stage = "updated"
+        row.stage = "updated"
+        row.save()
+        print(f"📝 已更新：content_id{row.content_id} =>MySQL Product.stage = 'updated'",flush=True)
+
+
+    DB_MYSQL.close()
+    DB_PG.close()
+
 
 if __name__ == "__main__":
     process_documents()
     process_videos()
     process_scrap()
     sync_pending_sora_to_postgres()  # ✅ 新增的同步逻辑
+    sync_pending_product_to_postgres()
