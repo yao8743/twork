@@ -195,6 +195,7 @@ def process_documents():
         # 标签分词追加
         tag_cn_list = fetch_tag_cn_for_file(doc.file_unique_id)
         if tag_cn_list:
+            tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
         print(f"Processing {doc.file_unique_id}")
@@ -203,6 +204,7 @@ def process_documents():
         record_data = {
             'source_id': doc.file_unique_id,
             'file_type': 'd',
+            'tag': tag_seg,
             'content': content,
             'content_seg': content_seg,
             'file_size': doc.file_size
@@ -248,6 +250,7 @@ def process_videos():
         content_seg = segment_text(content)
         tag_cn_list = fetch_tag_cn_for_file(doc.file_unique_id)
         if tag_cn_list:
+            tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
         print(f"Processing {doc.file_unique_id}: {content_seg}")
@@ -256,6 +259,7 @@ def process_videos():
             'source_id': doc.file_unique_id,
             'file_type': 'v',
             'content': content,
+            'tag': tag_seg,
             'content_seg': content_seg,
             'file_size': doc.file_size,
             'duration': doc.duration
