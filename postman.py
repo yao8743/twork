@@ -11,7 +11,7 @@ if not os.getenv('GITHUB_ACTIONS'):
     # load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.x.env')
     # load_dotenv(dotenv_path='.29614663.gunnar.env')
-    # load_dotenv(dotenv_path='.28817994.luzai.env')
+    load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
     

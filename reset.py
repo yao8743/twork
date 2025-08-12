@@ -13,9 +13,9 @@ if not os.getenv('GITHUB_ACTIONS'):
     # load_dotenv(dotenv_path='.24066130.decode.env')
     # load_dotenv(dotenv_path='.25506053.jjl.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env')
-    load_dotenv(dotenv_path='.25299903.warehouse.env')
+    # load_dotenv(dotenv_path='.25299903.warehouse.env')
     # 
-    # load_dotenv(dotenv_path='.28817994.luzai.env')
+    load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.env')
     # load_dotenv(dotenv_path='.24690454.queue.env')
     # 

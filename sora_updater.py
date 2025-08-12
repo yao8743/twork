@@ -193,6 +193,7 @@ def process_documents():
         content_seg = segment_text(content)
 
         # 标签分词追加
+        tag_seg = ''
         tag_cn_list = fetch_tag_cn_for_file(doc.file_unique_id)
         if tag_cn_list:
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
@@ -246,6 +247,7 @@ def process_videos():
             doc.save()
             continue
 
+        tag_seg = ''
         content = clean_text(f"{doc.file_name or ''}\n{doc.caption or ''}")
         content_seg = segment_text(content)
         tag_cn_list = fetch_tag_cn_for_file(doc.file_unique_id)
