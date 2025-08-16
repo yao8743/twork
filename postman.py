@@ -553,6 +553,7 @@ async def man_bot_loop():
     return last_message_id
 
 async def main():
+    last_message_id = 0
     print(f"⚠️ 启动 Postman Bot...", flush=True)
    
     await client.start(config['phone_number'])
