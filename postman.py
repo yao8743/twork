@@ -82,7 +82,7 @@ try:
 except Exception as e:
     print(f"⚠️ 無法解析 CONFIGURATION：{e}")
 
-print(f"⚠️ 配置參數：{config}", flush=True)
+# print(f"⚠️ 配置參數：{config}", flush=True)
 
 config['session_name'] = str(config['api_id']) + 'session_name'  # 确保 session_name 正确
 
@@ -553,7 +553,7 @@ async def man_bot_loop():
     return last_message_id
 
 async def main():
-    print(f"⚠️ 启动 Postman Bot...{config['phone_number']}", flush=True)
+    print(f"⚠️ 启动 Postman Bot...", flush=True)
    
     await client.start(config['phone_number'])
     await keep_db_alive()
