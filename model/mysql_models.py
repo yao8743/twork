@@ -167,7 +167,11 @@ class Product(BaseModel):
     content_id = BigIntegerField(help_text='关联 sora_content.id（无外键约束）')
 
     file_type = CharField(max_length=20, null=True, help_text='video/image/document/collection')
-    owner_user_id = CharField(max_length=14, null=True, help_text='投稿者的 Telegram ID')
+    # ✅ 改为 BIGINT UNSIGNED（允许为空）
+    owner_user_id = BigIntegerField(null=True, constraints=[SQL('UNSIGNED')], help_text='投稿者的 Telegram ID')
+
+    # ✅ 新增：匿名模式（不限枚举，默认 1）
+    anonymous_mode = IntegerField(default=1, constraints=[SQL('UNSIGNED')], help_text='匿名模式：默认 1，可扩展')
 
     view_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='浏览次数')
     purchase_times = IntegerField(default=0, constraints=[SQL('UNSIGNED')], help_text='购买次数')

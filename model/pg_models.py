@@ -142,7 +142,11 @@ class ProductPg(PgBaseModel):
     content_id = BigIntegerField(help_text='关联 sora_content.id')
 
     file_type = CharField(max_length=20, null=True, help_text='video/image/document/collection')
-    owner_user_id = CharField(max_length=14, null=True, help_text='投稿者 Telegram ID')
+    # 改为 BIGINT（允许为空，若需非负可加 CHECK）
+    owner_user_id = BigIntegerField(null=True, help_text='投稿者 Telegram ID',
+                                    constraints=[Check('owner_user_id >= 0')])
+    # 新增：匿名模式（可扩展整数，默认 1）
+    anonymous_mode = IntegerField(default=1, help_text='匿名模式：默认 1，可扩展为任意整数')
 
     view_times = IntegerField(default=0, constraints=[Check('view_times >= 0')])
     purchase_times = IntegerField(default=0, constraints=[Check('purchase_times >= 0')])

@@ -11,7 +11,7 @@ if not os.getenv('GITHUB_ACTIONS'):
     load_dotenv(dotenv_path='.sora.env')
 from peewee import *
 from model.mysql_models import (
-    DB_MYSQL, Product,Video, Document, SoraContent, Sora, SoraMedia, FileTag, Tag, init_mysql
+    DB_MYSQL, Product,Video, Document, SoraContent,  SoraMedia, FileTag, Tag, init_mysql
 )
 from database import ensure_connection
 from model.scrap import Scrap
@@ -181,7 +181,7 @@ def process_documents():
 
         DB_PG.connect()
 
-    print("🚀 开始同步 stage != 'updated' 的 document 到 PostgreSQL...",flush=True)
+    print("\n🚀 开始同步 stage != 'updated' 的 document 到 PostgreSQL...",flush=True)
     for doc in Document.select().where((Document.kc_status.is_null(True)) | (Document.kc_status != 'updated')).limit(BATCH_LIMIT):
         if not doc.file_name and not doc.caption:
             doc.kc_status = 'updated'
@@ -199,7 +199,7 @@ def process_documents():
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {doc.file_unique_id}")
+        print(f"Processing {doc.file_unique_id}",flush=True)
 
         # 统一记录数据
         record_data = {
@@ -240,7 +240,7 @@ def process_videos():
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
-    print("🚀 开始同步 stage != 'updated' 的 video 到 PostgreSQL...")
+    print("\n🚀 开始同步 stage != 'updated' 的 video 到 PostgreSQL...")
     for doc in Video.select().where((Video.kc_status.is_null(True)) | (Video.kc_status != 'updated')).limit(BATCH_LIMIT):
         if not doc.file_name and not doc.caption:
             doc.kc_status = 'updated'
@@ -255,7 +255,7 @@ def process_videos():
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {doc.file_unique_id}: {content_seg}")
+        print(f"Processing {doc.file_unique_id}: {content_seg}",flush=True)
 
         record_data = {
             'source_id': doc.file_unique_id,
@@ -274,7 +274,7 @@ def process_videos():
                 setattr(kw, key, value)
             kw.save()
 
-        print(f"  🔄 更新 MySQL sora_content [{kw}]")
+        print(f"  🔄 更新 MySQL sora_content [{kw}]",flush=True)
 
         print(kw.__data__)
 
@@ -365,7 +365,7 @@ def process_scrap():
     if SYNC_TO_POSTGRES:
         DB_PG.connect()
 
-    print("🚀 开始同步 stage != 'updated' 的 scrap 到 PostgreSQL...")
+    print("\n🚀 开始同步 stage != 'updated' 的 scrap 到 PostgreSQL...")
     for scrap in Scrap.select().where(((Scrap.kc_status.is_null(True)) | (Scrap.kc_status != 'updated')) & (Scrap.thumb_file_unique_id != '')).limit(BATCH_LIMIT):
         if not scrap.content:
             scrap.kc_status = 'updated'
@@ -525,7 +525,7 @@ def sync_pending_sora_to_postgres():
         print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步",flush=True)
         return
 
-    print("🚀 开始同步 stage = 'pending' 的 sora_content 到 PostgreSQL...",flush=True)
+    print("\n🚀 开始同步 stage = 'pending' 的 sora_content 到 PostgreSQL...",flush=True)
     from playhouse.shortcuts import model_to_dict
 
     # DB_MYSQL.connect()
@@ -567,7 +567,7 @@ def sync_pending_product_to_postgres():
         print("🔒 SYNC_TO_POSTGRES 为 False，跳过 PostgreSQL 同步",flush=True)
         return
 
-    print("🚀 开始同步 stage = 'pending' 的 product 到 PostgreSQL...",flush=True)
+    print("\n🚀 开始同步 stage = 'pending' 的 product 到 PostgreSQL...",flush=True)
     from playhouse.shortcuts import model_to_dict
 
     # DB_MYSQL.connect()
