@@ -104,13 +104,13 @@ class HandlerRelayClass(BaseHandlerClass):
                 caption = self.message.text or ""
 
                 if caption != "":
-                    print(f"🔍 正在处理消息转发，caption={caption}")
+                    print(f"🔍 正在处理消息转发")
                     json_result = self.parse_caption_json(caption)
 
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
-                            print(f"🔍 正在处理转发标记，caption={caption}")
+                            print(f"🔍 正在处理转发标记")
                             if caption.endswith("|force"):
                                 self.is_duplicate_allowed = True
                             target_raw = match.group(1)
