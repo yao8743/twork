@@ -486,18 +486,22 @@ async def man_bot_loop():
 
             if dialog.unread_count >= 0:
                 if dialog.is_user:
+                    print(f"当前对话P1: {str(config.get('bypass_private_check'))} ({entity.id})", flush=True)
                     
                     # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
                     if str(config.get('bypass_private_check')) == '1':
+                        print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                         # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                         continue
 
-                    print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+                    print(f"当前对话P2: {entity_title} ({entity.id})", flush=True)
 
                     current_message = None
-                    max_message_id = await get_max_source_message_id(entity.id)
-                    if max_message_id is None:
-                        continue
+                    if str(config.get('bypass_private_check')) != '2':
+                        max_message_id = await get_max_source_message_id(entity.id)
+                        if max_message_id is None:
+                            print(f"❌ P无法获取最大消息 ID，跳过处理 {entity.id}")
+                            continue
                     min_id = max_message_id if max_message_id else 1
                     async for message in client.iter_messages(
                         entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
@@ -517,11 +521,12 @@ async def man_bot_loop():
                     
                     
                 else:
-                    print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+                    print(f"当前对话G: {entity_title} ({entity.id})", flush=True)
 
                     current_message = None
                     max_message_id = await get_max_source_message_id(entity.id)
                     if max_message_id is None:
+                        print(f"❌ 无法获取最大消息 ID，跳过处理 {entity.id}")
                         continue
                     min_id = max_message_id if max_message_id else 1
 
