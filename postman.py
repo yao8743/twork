@@ -338,7 +338,7 @@ async def save_scrap_progress(entity_id, message_id):
 async def process_user_message(entity, message):
 
     botname = None
-    print(f"{entity.id} {message.text}")
+    # print(f"{entity.id} {message.text}")
     if message.text:
         try:
             match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
@@ -404,6 +404,11 @@ async def process_user_message(entity, message):
         handler.is_duplicate_allowed = True
         await handler.handle()
     else:
+        if config.get('bypass_private_check') == 2:
+            # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+            return
+
+
         handler = HandlerPrivateMessageClass(client, entity, message, extra_data)
         # handler = HandlerNoAction(client, entity, message, extra_data)
         handler.delete_after_process = True
@@ -477,7 +482,7 @@ async def man_bot_loop():
 
 
 
-            print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+            
 
             if dialog.unread_count >= 0:
                 if dialog.is_user:
@@ -487,6 +492,7 @@ async def man_bot_loop():
                         # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                         continue
 
+                    print(f"当前对话: {entity_title} ({entity.id})", flush=True)
 
                     current_message = None
                     max_message_id = await get_max_source_message_id(entity.id)
@@ -511,7 +517,8 @@ async def man_bot_loop():
                     
                     
                 else:
-                    
+                    print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+
                     current_message = None
                     max_message_id = await get_max_source_message_id(entity.id)
                     if max_message_id is None:
