@@ -36,7 +36,9 @@ class HandlerRelayClass(BaseHandlerClass):
         require_ack = False
 
         entity_title = getattr(self.entity, 'title', f"Unknown entity {self.entity.id}")
-        print(f"[Group] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+        print(f"[Relay] Message from {self.entity.id}")
+
+
 
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
@@ -100,17 +102,17 @@ class HandlerRelayClass(BaseHandlerClass):
                 )
 
             else:
-                print("🔍 正在处理单个消息转发")
+                # print("🔍 正在处理单个消息转发")
                 caption = self.message.text or ""
 
                 if caption != "":
-                    print(f"🔍 正在处理消息转发")
+                    # print(f"🔍 正在处理消息转发")
                     json_result = self.parse_caption_json(caption)
 
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
-                            print(f"🔍 正在处理转发标记")
+                            # print(f"🔍 正在处理转发标记")
                             if caption.endswith("|force"):
                                 self.is_duplicate_allowed = True
                             target_raw = match.group(1)
@@ -120,7 +122,7 @@ class HandlerRelayClass(BaseHandlerClass):
                                 target_chat_id = target_raw.strip('@')  # 可留可不留 @
                             print(f"📌 指定转发 x chat_id={target_chat_id}")
                         else:
-                            print("🔍 未找到转发标记，尝试获取备用 chat_id")
+                            # print("🔍 未找到转发标记，尝试获取备用 chat_id")
                             fallback_chat_ids = await self.get_fallback_chat_ids()
                             if fallback_chat_ids:
                                 target_chat_id = random.choice(fallback_chat_ids)
@@ -143,6 +145,13 @@ class HandlerRelayClass(BaseHandlerClass):
                             print("⚠️ JSON 中未提供有效的 target_chat_id")
                             return
                
+                if self.message.chat_id == target_chat_id or (target_chat_id == "yanzai2015bot" and self.message.chat_id == 8158392656) or (target_chat_id == "salai001bot" and self.message.chat_id == 7419440827):
+                    # await self.safe_delete_message()
+                    await self.safe_delete_message()
+                    print("⚠️ 目标和源聊天相同，跳过转发")
+                    return
+
+
                 media = self.message.media.document if isinstance(self.message.media, MessageMediaDocument) else self.message.media.photo
                 
                 media_key = generate_media_key(self.message)

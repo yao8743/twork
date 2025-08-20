@@ -8,10 +8,10 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    # load_dotenv(dotenv_path='.20100034.sungfong.env')
+    load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.x.env')
     # load_dotenv(dotenv_path='.29614663.gunnar.env')
-    load_dotenv(dotenv_path='.28817994.luzai.env')
+    # load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
     
@@ -131,7 +131,8 @@ for chat_id_str, entry in raw_class_map.items():
     except Exception as e:
         print(f"⚠️ 解析 class_map[{chat_id_str}] 失败: {e}")
 
-
+current_user_name = ''
+max_message_id = 0
 
 async def join(invite_hash):
     from telethon.tl.functions.messages import ImportChatInviteRequest
@@ -336,9 +337,9 @@ async def save_scrap_progress(entity_id, message_id):
     local_scrap_progress[key] = message_id  # ✅ 同步更新缓存
 
 async def process_user_message(entity, message):
-
+    global current_user_name
     botname = None
-    print(f"{entity.id} {message.text}")
+    # print(f"{entity.id} {message.text}")
     if message.text:
         try:
             match = re.search(r'\|_kick_\|\s*(.*?)\s*(bot)', message.text, re.IGNORECASE)
@@ -383,9 +384,9 @@ async def process_user_message(entity, message):
    
 
     # # 打印来源
-    # first_name = getattr(entity, "first_name", "") or ""
-    # last_name = getattr(entity, "last_name", "") or ""
-    # entity_title = f"{first_name} {last_name}".strip()
+    first_name = getattr(entity, "first_name", "") or ""
+    last_name = getattr(entity, "last_name", "") or ""
+    entity_title = f"{first_name} {last_name}".strip()
     # # print(f"[User] Message from {entity_title} ({self.entity.id}): {self.message.text}")
     # print(f"\r\n[User] Message from {entity_title} ({entity.id}): {message.id}")
 
@@ -399,11 +400,22 @@ async def process_user_message(entity, message):
 
     entry = class_map.get(entity.id)
     if entry:
+        if current_user_name != entity_title:            
+            print(f"👉 处理用户消息 {message.id} 来自: {entity_title} ({entity.id})", flush=True)
+            current_user_name = entity_title
         handler_class = entry["handler_class"]
         handler = handler_class(client, entity, message, extra_data)
         handler.is_duplicate_allowed = True
         await handler.handle()
     else:
+        
+        if config.get('bypass_private_check') == 2:
+            
+            # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
+            return
+        print(f"{config.get('bypass_private_check')}", flush=True)
+        # print(f"⚠️ 处理用户消息 {message.id} 来自: {entity.title} ({entity.id})", flush=True)
+
         handler = HandlerPrivateMessageClass(client, entity, message, extra_data)
         # handler = HandlerNoAction(client, entity, message, extra_data)
         handler.delete_after_process = True
@@ -477,28 +489,33 @@ async def man_bot_loop():
 
 
 
-            print(f"当前对话: {entity_title} ({entity.id})", flush=True)
+            
 
             if dialog.unread_count >= 0:
                 if dialog.is_user:
                     
+                    
                     # 如果 config 中 is_debug_enabled 有值, 且為 1, 則 pass
                     if str(config.get('bypass_private_check')) == '1':
+                        print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                         # print(f"⚠️ bypass_private_check: {config.get('bypass_private_check')}")
                         continue
 
+                    
 
                     current_message = None
-                    max_message_id = await get_max_source_message_id(entity.id)
-                    if max_message_id is None:
-                        continue
+                    if str(config.get('bypass_private_check')) != '2':
+                        max_message_id = await get_max_source_message_id(entity.id)
+                        if max_message_id is None:
+                            print(f"❌ P无法获取最大消息 ID，跳过处理 {entity.id}")
+                            continue
                     min_id = max_message_id if max_message_id else 1
                     async for message in client.iter_messages(
-                        entity, min_id=min_id, limit=30, reverse=True, filter=InputMessagesFilterEmpty()
+                        entity, min_id=min_id, limit=50, reverse=True, filter=InputMessagesFilterEmpty()
                     ):
                         current_message = message
                         if current_entity_title != entity_title:
-                            print(f"User: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                            
                             current_entity_title = entity_title
 
                         await process_user_message(entity, message)
@@ -511,10 +528,12 @@ async def man_bot_loop():
                     
                     
                 else:
-                    
+                    print(f"👉 当前对话G: {entity_title} ({entity.id})", flush=True)
+
                     current_message = None
                     max_message_id = await get_max_source_message_id(entity.id)
                     if max_message_id is None:
+                        print(f"❌ 无法获取最大消息 ID，跳过处理 {entity.id}")
                         continue
                     min_id = max_message_id if max_message_id else 1
 
@@ -527,7 +546,7 @@ async def man_bot_loop():
                                 continue
                             current_message = message
                             if current_entity_title != entity_title:
-                                print(f"[Group]: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
+                                # print(f"[Group]: {current_message.id} 来自: {entity_title} ({entity.id})", flush=True)
                                 current_entity_title = entity_title
 
 
@@ -554,7 +573,7 @@ async def man_bot_loop():
 
 async def main():
     last_message_id = 0
-    print(f"⚠️ 启动 Postman Bot...", flush=True)
+    print(f"⭐️ 启动 Postman Bot...", flush=True)
    
     await client.start(config['phone_number'])
     await keep_db_alive()
