@@ -108,7 +108,7 @@ else:
 
 
 # 常量
-MAX_PROCESS_TIME = 20 * 60  # 最大运行时间 20 分钟
+MAX_PROCESS_TIME = 5 * 60  # 最大运行时间 5 分钟
 
 # Class Map
 raw_class_map = config.get("class_map", {})
@@ -462,6 +462,7 @@ async def process_group_message(entity, message):
 
 async def man_bot_loop():
     last_message_id = 0  # 提前定义，避免 UnboundLocalError
+    max_message_id = 1
     async for dialog in client.iter_dialogs():
         try:
             entity = dialog.entity
@@ -492,6 +493,7 @@ async def man_bot_loop():
             
 
             if dialog.unread_count >= 0:
+                
                 if dialog.is_user:
                     
                     

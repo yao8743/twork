@@ -2,7 +2,7 @@ name: Deploy Postman
 
 on: 
   schedule:
-    - cron: '10,40 * * * *'  # 每小时的第10和40分钟触发
+    - cron: '31 */1 * * *'  # 每1分钟触发一次
   push: 
     branches: 
       - master  # 当推送到 master 分支时触发
