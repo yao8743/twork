@@ -400,8 +400,9 @@ async def process_user_message(entity, message):
 
     entry = class_map.get(entity.id)
     if entry:
-        if current_user_name != entity_title:            
-            print(f"👉 处理用户消息 {message.id} 来自: {entity_title} ({entity.id})", flush=True)
+        if current_user_name != entity_title:   
+            if config.get('is_debug_enabled') == 1:         
+                print(f"👉 处理用户消息 {message.id} 来自: {entity_title} ({entity.id})", flush=True)
             current_user_name = entity_title
         handler_class = entry["handler_class"]
         handler = handler_class(client, entity, message, extra_data)
@@ -472,7 +473,8 @@ async def man_bot_loop():
 
             # —— 新增：如果是私密／被封禁的频道，直接跳过并加入黑名单
             if isinstance(entity, ChannelForbidden):
-                print(f"⚠️ 检测到私密或被封禁频道({entity.id})，跳过处理")
+                if config.get('is_debug_enabled') == 1:
+                    print(f"⚠️ 检测到私密或被封禁频道({entity.id})，跳过处理")
                 blacklist_entity_ids.add(entity.id)
                 continue
 
@@ -530,12 +532,14 @@ async def man_bot_loop():
                     
                     
                 else:
-                    print(f"👉 当前对话G: {entity_title} ({entity.id})", flush=True)
+                    if config.get('is_debug_enabled') == 1:
+                        print(f"👉 当前对话G: {entity_title} ({entity.id})", flush=True)
 
                     current_message = None
                     max_message_id = await get_max_source_message_id(entity.id)
                     if max_message_id is None:
-                        print(f"❌ 无法获取最大消息 ID，跳过处理 {entity.id}")
+                        if config.get('is_debug_enabled') == 1:
+                            print(f"❌ 无法获取最大消息 ID，跳过处理 {entity.id}")
                         continue
                     min_id = max_message_id if max_message_id else 1
 
@@ -589,116 +593,18 @@ async def main():
         print(f'你的名字: {me.first_name} {me.last_name or ""}')
         print(f'是否是Bot: {me.bot}',flush=True)
  
-    # intbotname = '@Qing001bot'
-    # await client.send_message(intbotname, "/start")
-    # await client.send_message(intbotname, "[~bot~]")
 
-
-    
-    # async with client.conversation(-1002210941198) as conv:
-        # await conv.send_message('还要')
-        
-        # await join("HLAXdOwNW7UyNTFk")  #BJGTOPIC
-    # await join("Z3JZs33NOOVkZmI5")  #BJGTOPIC
-    # await join("F0MTTcs184JmODZk")  #PARK
-    # exit()
-
-    # await
-
-    # group_identifier = -1001998587879
-    # participants = await client.get_participants(group_identifier)
-    # # print(f"群组 {group_identifier} 的成员数量: {len(participants)}")
-
-    # # # 遍历输出用户名和 ID
-    # for usera in participants:
-    #     user = await client.get_entity(PeerUser(usera.id))
-
-    #     print("\r\n用戶名稱:", user.first_name, user.last_name)
-    #     print("用戶帳號:", user.username)
-    #     print("用戶ID:", user.id)
-    #     print("是否機器人:", user.bot)
-    #     # sql = f"INSERT INTO pure (user_id, done) VALUES ({user.id}, 0);"
-    #     # print(sql)
-    # #     db.execute_sql(sql)
-    # #     # 插入数据库 INSERT INTO `pure` (`user_id`, `done`) VALUES ('user.id', '0');
-
-    
-    # # entity = await client.get_entity(group_identifier)  # ✅ 正确方式，不要用 PeerChannel
-    # # await open_chat_history(entity)
-    # exit()
-    # # await delete_my_profile_photos(client)
-    # await update_my_name(client,'Wormhole', '')
-    # await update_username(client,"wormholeztd")
-    
-    # await join("oQL1ro8qe0QxODA0")  #黑洞
-    # exit()
-    # await join("6-1VMbcX_BgwNDlh")  #BJD
-    # await join("fRCAnbinkG1hYjU0")  #封面备份群   2086579883  #setting: thumb, func: handle_bid(update_thumb_info_by_send_photo), get_thumb
-    # await join("6gAolpGeQq8wYmM0")  #封面图中转站 2134630453  Relay #setting: photo_relay , func: process_update_sora_thumb_info,push_notification_action
-
-    # exit()
-
-    #01 DIE 6874    2017145941  await join("") 22329346  / 20100034 ( Die )
-    #02 OK  7258    2091886937  
-    # await join("fTMvarjGSckxZmI8") 
-
-    #03 DIE 7275    2063167161  await join("")                 22329346   / 20100034 ( Die ? )
-    #04 DIE 7287    2108982395  await join("cr_hRjB_dRtkODdk") 20100034 (Die)
-    #05 DIE 6376    1997235289  await join("")                 20100034 ( Die ? )
-    #06 OK  6659    2000730581  
-    # await join("li2wwjC6vEc5Mzdk") #22329346   / 20100034
-
-    #07 DIE 7350    2145325974  await join("")                 20100034
-    #08 DIE 5891    2062860209  await join("")                 20100034 (?)
-    #09 DIE 7338    2015918658  await join("")                 20100034
-    
-    #10 OK  06315   2047726819  
-    # await join("QQCyh1N2sMU5ZGQ0") #shunfeng807
-    
-    #11 OK  06393   2003243227  
-    # await join("3eDZvSPvkVgyNmY0") #@shunfeng807
-    
-    #12 OK  #6463   1843229948  
-    # await join("MyiRfuLls-U0Zjk0") 
-
-    #13 DIE 7246    2021739085  
-    # await join("XkHrmdZd-u80M2I0")
-    
-    #14 DIE 6234                await join("")
-    
-    #15 OK  6553    2061165152  
-    # await join("xCcAV1mgMCs1ZDE8")
-
-
-    # 2091886937,2000730581,2047726819,2003243227,1843229948,2061165152
-    # |_join_|fTMvarjGSckxZmI8
-    # |_join_|li2wwjC6vEc5Mzdk
-    # |_join_|QQCyh1N2sMU5ZGQ0
-    # |_join_|3eDZvSPvkVgyNmY0
-    # |_join_|MyiRfuLls-U0Zjk0
-    # |_join_|xCcAV1mgMCs1ZDE8
-
-
-   
-   
-    # await join("y6blcEsK-P01MmJl")  # FILEDEPOT_FORWARD_CHAT_ID ,2132486952
-    # exit()
-  
-  
-     
-    
-    
     start_time = time.time()
     # 显示现在时间
     now = datetime.now()
     print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
 
-    while (time.time() - start_time) < MAX_PROCESS_TIME:
-        try:
-            last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
-        except asyncio.TimeoutError:
-            print("⚠️ 任务超时，跳过本轮", flush=True)
-        await asyncio.sleep(random.randint(5, 10))
+    # while (time.time() - start_time) < MAX_PROCESS_TIME:
+    try:
+        last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
+    except asyncio.TimeoutError:
+        print("⚠️ 任务超时，跳过本轮", flush=True)
+    await asyncio.sleep(random.randint(5, 10))
        
 
     await send_completion_message(last_message_id)
