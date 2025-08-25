@@ -8,10 +8,10 @@ import os
 # 加载环境变量
 if not os.getenv('GITHUB_ACTIONS'):
     from dotenv import load_dotenv
-    # load_dotenv(dotenv_path='.20100034.sungfong.env')
+    load_dotenv(dotenv_path='.20100034.sungfong.env')
     # load_dotenv(dotenv_path='.x.env')
     # load_dotenv(dotenv_path='.29614663.gunnar.env')
-    load_dotenv(dotenv_path='.28817994.luzai.env')
+    # load_dotenv(dotenv_path='.28817994.luzai.env')
     # load_dotenv(dotenv_path='.25254811.bjd.env', override=True)
     # load_dotenv(dotenv_path='.25299903.warehouse.env', override=True)
     
@@ -515,7 +515,7 @@ async def man_bot_loop():
                             continue
                     min_id = max_message_id if max_message_id else 1
                     async for message in client.iter_messages(
-                        entity, min_id=min_id, limit=50, reverse=True, filter=InputMessagesFilterEmpty()
+                        entity, min_id=min_id, limit=99, reverse=True, filter=InputMessagesFilterEmpty()
                     ):
                         current_message = message
                         if current_entity_title != entity_title:
@@ -599,12 +599,12 @@ async def main():
     now = datetime.now()
     print(f"Current: {now.strftime('%Y-%m-%d %H:%M:%S')}",flush=True)
 
-    # while (time.time() - start_time) < MAX_PROCESS_TIME:
-    try:
-        last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
-    except asyncio.TimeoutError:
-        print("⚠️ 任务超时，跳过本轮", flush=True)
-    await asyncio.sleep(random.randint(5, 10))
+    while (time.time() - start_time) < MAX_PROCESS_TIME:
+        try:
+            last_message_id = await asyncio.wait_for(man_bot_loop(), timeout=600)  # 5分钟超时
+        except asyncio.TimeoutError:
+            print("⚠️ 任务超时，跳过本轮", flush=True)
+        await asyncio.sleep(random.randint(5, 10))
        
 
     await send_completion_message(last_message_id)
