@@ -294,3 +294,19 @@ class NewsDatabase:
                 """,
                 task_id, reason,
             )
+
+    
+    async def remove_news_user_by_ref_id(self, user_ref_id: int) -> None:
+        """通过 user_ref_id 删除 news_user 记录"""
+        async with self.pool.acquire() as conn:
+            await conn.execute(
+                "DELETE FROM news_user WHERE id = $1; ",
+                user_ref_id
+            )
+            print(f"🗑️ 已删除 user_ref_id={user_ref_id} 的 news_user 记录", flush=True)
+
+            await conn.execute(
+                "DELETE FROM news_send_queue WHERE user_ref_id = $1 and state = 'pending';",
+                user_ref_id
+            )
+            print(f"🗑️ 已删除 user_ref_id={user_ref_id} 的 news_send_queue 记录", flush=True)

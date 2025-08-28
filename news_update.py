@@ -26,7 +26,7 @@ BUSINESS_TYPE = os.getenv("BUSINESS_TYPE", "salai")
 
 # news_content 迁移相关
 START_ID = int(os.getenv("START_ID", "0"))                # 仅迁移 id > START_ID 的数据
-DELETE_AFTER_SYNC = int(os.getenv("DELETE_AFTER_SYNC", "0"))  # 1=PG成功后删除MySQL；0=不删（演练）
+DELETE_AFTER_SYNC = int(os.getenv("DELETE_AFTER_SYNC", "1"))  # 1=PG成功后删除MySQL；0=不删（演练）
 
 # ------------------ PG 索引保证 ------------------
 PG_ENSURE_INDEXES = """
@@ -184,7 +184,7 @@ async def sync_membership_to_news_user(mysql_pool, pg_pool):
 MYSQL_COUNT_NEWS = "SELECT COUNT(*) FROM news_content WHERE id > %s;"
 MYSQL_FETCH_NEWS = """
 SELECT
-    id, title, text, file_id, file_type, button_str,
+    id, title, text, file_id, button_str,
     created_at, bot_name, business_type, content_id, thumb_file_unique_id
 FROM news_content
 WHERE id > %s
@@ -197,13 +197,12 @@ INSERT INTO news_content
     (id, title, text, file_id, file_type, button_str,
      created_at, bot_name, business_type, content_id, thumb_file_unique_id)
 VALUES
-    ($1,$2,$3,$4,$5,$6,
-     $7,$8,$9,$10,$11)
+    ($1,$2,$3,$4,'photo',$5,
+     $6,$7,$8,$9,$10)
 ON CONFLICT (id) DO UPDATE SET
     title = EXCLUDED.title,
     text  = EXCLUDED.text,
     file_id = EXCLUDED.file_id,
-    file_type = EXCLUDED.file_type,
     button_str = EXCLUDED.button_str,
     created_at = EXCLUDED.created_at,
     bot_name = EXCLUDED.bot_name,

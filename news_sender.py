@@ -98,3 +98,7 @@ async def send_news_batch(db: NewsDatabase, bot: Bot,
             if len(reason) > 500:
                 reason = reason[:500]
             await db.mark_failed(task["task_id"], reason)
+            if reason == "Telegram server says - Bad Request: chat not found":
+                print(f"⚠️ 移除用户user_ref_id {task['user_ref_id']}", flush=True)
+                await db.remove_news_user_by_ref_id(int(task["user_ref_id"]))
+
