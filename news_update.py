@@ -214,15 +214,7 @@ async def sync_membership_to_news_user(mysql_pool, pg_pool):
 
 # ------------------ news_content 迁移（MySQL → PG → 删 MySQL） ------------------
 MYSQL_COUNT_NEWS = "SELECT COUNT(*) FROM news_content WHERE id > %s;"
-MYSQL_FETCH_NEWS = """
-SELECT
-    id, title, text, file_id, button_str,
-    created_at, bot_name, business_type, content_id, thumb_file_unique_id
-FROM news_content
-WHERE id > %s
-ORDER BY id
-LIMIT %s;
-"""
+
 
 
 async def fetch_mysql_total_news(conn: aiomysql.Connection, start_id: int) -> int:
@@ -232,16 +224,27 @@ async def fetch_mysql_total_news(conn: aiomysql.Connection, start_id: int) -> in
         return int(cnt or 0)
 
 async def fetch_mysql_batch_news(conn: aiomysql.Connection, last_id: int, limit: int) -> List[Tuple]:
+    MYSQL_FETCH_NEWS = """
+    SELECT
+        id, title, text, file_id, button_str,
+        created_at, business_type, content_id, thumb_file_unique_id
+    FROM news_content
+    WHERE id > %s
+    ORDER BY id
+    LIMIT %s;
+    """
+
+
     async with conn.cursor() as cur:
         await cur.execute(MYSQL_FETCH_NEWS, (last_id, limit))
         return await cur.fetchall()
 
 async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> None:
     """
-    rows: [(id, title, text, file_id, button_str, created_at, bot_name, business_type, content_id, thumb_file_unique_id)]
+    rows: [(id, title, text, file_id, button_str, created_at, business_type, content_id, thumb_file_unique_id)]
     三步法（更新时不更新 file_id）：
       1) UPDATE ... WHERE thumb_file_unique_id = $8
-      2) UPDATE ... WHERE bot_name = $5 AND content_id = $7
+      2) UPDATE ... WHERE content_id = $7
       3) INSERT ... ON CONFLICT (id) DO UPDATE ...（不更新 file_id）
     """
     # ① 仅更新除 file_id 以外字段（不改 file_id）
@@ -253,11 +256,10 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
         file_type = 'photo',
         button_str = COALESCE($3, t.button_str),
         created_at = COALESCE($4, t.created_at),
-        bot_name = COALESCE($5, t.bot_name),
-        business_type = COALESCE($6, t.business_type),
-        content_id = COALESCE($7, t.content_id),
-        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
-    WHERE t.thumb_file_unique_id = $8
+        business_type = COALESCE($5, t.business_type),
+        content_id = COALESCE($6, t.content_id),
+        thumb_file_unique_id = COALESCE($7, t.thumb_file_unique_id)
+    WHERE t.thumb_file_unique_id = $7
     RETURNING 1;
     """
 
@@ -270,11 +272,10 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
         file_type = 'photo',
         button_str = COALESCE($3, t.button_str),
         created_at = COALESCE($4, t.created_at),
-        bot_name = COALESCE($5, t.bot_name),
-        business_type = COALESCE($6, t.business_type),
-        content_id = COALESCE($7, t.content_id),
-        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
-    WHERE t.bot_name = $5 AND t.content_id = $7
+        business_type = COALESCE($5, t.business_type),
+        content_id = COALESCE($6, t.content_id),
+        thumb_file_unique_id = COALESCE($7, t.thumb_file_unique_id)
+    WHERE t.content_id = $6
     RETURNING 1;
     """
 
@@ -282,17 +283,16 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
     INSERT_SQL = """
     INSERT INTO news_content
         (id, title, text, file_id, file_type, button_str,
-         created_at, bot_name, business_type, content_id, thumb_file_unique_id)
+         created_at, business_type, content_id, thumb_file_unique_id)
     VALUES
         ($1, $2, $3, $4, 'photo', $5,
-         $6, $7, $8, $9, $10)
+         $6, $7, $8, $9)
     ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         text  = EXCLUDED.text,
         -- file_id 不更新
         button_str = EXCLUDED.button_str,
         created_at = EXCLUDED.created_at,
-        bot_name = EXCLUDED.bot_name,
         business_type = EXCLUDED.business_type,
         content_id = EXCLUDED.content_id,
         thumb_file_unique_id = EXCLUDED.thumb_file_unique_id;
@@ -301,7 +301,7 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
     async with pg.transaction():
         for r in rows:
             (rid, title, text, file_id, button_str,
-             created_at, bot_name, business_type, content_id, thumb_uid) = r
+             created_at, business_type, content_id, thumb_uid) = r
 
             # 1) 先按 thumb 更新（不改 file_id）
             updated = await pg.fetchval(
@@ -310,7 +310,6 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
                 text,             # $2
                 button_str,       # $3
                 created_at,       # $4
-                bot_name,         # $5
                 business_type,    # $6
                 content_id,       # $7
                 thumb_uid         # $8
@@ -325,7 +324,6 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
                 text,             # $2
                 button_str,       # $3
                 created_at,       # $4
-                bot_name,         # $5
                 business_type,    # $6
                 content_id,       # $7
                 thumb_uid         # $8
@@ -337,7 +335,7 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
             await pg.execute(
                 INSERT_SQL,
                 rid, title, text, file_id, button_str,
-                created_at, bot_name, business_type, content_id, thumb_uid
+                created_at, business_type, content_id, thumb_uid
             )
 
 

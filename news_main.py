@@ -184,8 +184,8 @@ async def receive_media(message: Message):
         "business_type": result.get("business_type"),
     }
 
-    existing_news_id = await db.get_news_id_by_content_bot(
-        payload["content_id"], payload["bot_name"]
+    existing_news_id = await db.get_news_id_by_content_business(
+        payload["content_id"], payload["business_type"]
     )
 
     if existing_news_id:
@@ -219,7 +219,7 @@ async def receive_file_material(message: Message):
 
     # ① 打印被回复的“原消息”的文字（caption 优先，其次 text）
     orig_text = replied.caption or replied.text or "(无文本)"
-    print(f"🧵 被回复的原消息文本：{orig_text}", flush=True)
+    print(f"1. 🧵 被回复的原消息文本：{orig_text}", flush=True)
 
     # （可选）如果原消息也带媒体，这里简单标注一下类型与 file_id
     o_type, o_fid = None, None
@@ -230,7 +230,7 @@ async def receive_file_material(message: Message):
     elif replied.document:
         o_type, o_fid = "document", replied.document.file_id
     if o_type:
-        print(f"🧵 原消息媒体：type={o_type}, file_id={o_fid}", flush=True)
+        print(f"2. 🧵 原消息媒体：type={o_type}, file_id={o_fid}", flush=True)
 
 
     # ② 打印“这条回复消息”的内容（类型、file_id、caption/text）
@@ -242,13 +242,10 @@ async def receive_file_material(message: Message):
     elif message.document:
         m_type, m_fid, m_fuid = "document", message.document.file_id, message.document.file_unique_id
     m_text = message.caption or message.text or "(无文本)"
-    print(f"📥 回复内容：type={m_type}, file_id={m_fid}, text='{m_text}'", flush=True)
+    print(f"3. 📥 回复内容：type={m_type}, file_id={m_fid}, m_fuid='{m_fuid}' , bot_username='{bot_username}'", flush=True)
 
     await db.set_news_file_id(m_fuid, m_fid, bot_username)
-
-    existing_news = await db.get_news_id_by_thumb_file_unique_id_bot(
-        m_fuid, bot_username
-    )
+    existing_news = await db.get_news_id_by_thumb_file_unique_id(m_fuid)
 
     if (existing_news and existing_news.get("id")):
         await db.create_send_tasks(int(existing_news['id']), existing_news['business_type'])

@@ -108,10 +108,15 @@ class NewsDatabase:
     async def set_news_file_id(self, thumb_file_unique_id: str, file_id: str, bot_username: str) -> None:
         """仅更新 file_id，避免误改其它字段"""
         async with self.pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE news_content SET file_id = $1, bot_name = $2 WHERE thumb_file_unique_id = $3",
-                file_id, bot_username, thumb_file_unique_id
-            )
+            sql = """
+            UPDATE news_content
+            SET file_id = $1
+            WHERE bot_name = $2 AND thumb_file_unique_id ILIKE $3;
+            """
+            # print("EXEC:", sql, "PARAMS:", (file_id, bot_username, thumb_file_unique_id))
+
+            r = await conn.execute(sql, file_id, bot_username, thumb_file_unique_id)
+            # print(r)
 
     async def get_news_media_by_id(self, news_id: int) -> Optional[asyncpg.Record]:
         """show 用：取回媒体字段"""
@@ -133,25 +138,26 @@ class NewsDatabase:
                 news_id
             )
 
-    async def get_news_id_by_content_bot(
-        self, content_id: Optional[int], bot_name: Optional[str]
+    async def get_news_id_by_content_business(
+        self, content_id: Optional[int], business_type: Optional[str]
     ) -> Optional[int]:
-        """receive_media 用：按 content_id+bot_name 查是否已有"""
+        """receive_media 用：按 content_id + business_type 查是否已有"""
         async with self.pool.acquire() as conn:
             return await conn.fetchval(
                 """
                 SELECT id
                 FROM news_content
                 WHERE content_id = CAST($1 AS BIGINT)
-                  AND bot_name = $2
+                AND business_type = $2
                 LIMIT 1
                 """,
-                content_id, bot_name
+                content_id, business_type
             )
 
 
-    async def get_news_id_by_thumb_file_unique_id_bot(
-        self, thumb_file_unique_id: Optional[str], bot_name: Optional[str]
+
+    async def get_news_id_by_thumb_file_unique_id(
+        self, thumb_file_unique_id: Optional[str]
     ) -> Optional[int]:
         """receive_media 用：按 thumb_file_unique_id+bot_name 查是否已有"""
         async with self.pool.acquire() as conn:
@@ -159,11 +165,10 @@ class NewsDatabase:
                 """
                 SELECT id,business_type 
                 FROM news_content
-                WHERE thumb_file_unique_id = $1
-                  AND bot_name = $2
+                WHERE thumb_file_unique_id = $1 
                 LIMIT 1
                 """,
-                thumb_file_unique_id, bot_name
+                thumb_file_unique_id
             )
 
                
@@ -241,7 +246,7 @@ class NewsDatabase:
 
     async def create_send_tasks(self, news_id: int, business_type: str) -> None:
         """批量把该 business_type 的有效用户塞到发送队列"""
-        print(f"🆕 为新闻 ID={news_id} 创建发送任务，业务类型={business_type}", flush=True)
+        print(f"🆕 为新闻 NewsID={news_id} 创建发送任务，业务类型={business_type}", flush=True)
         async with self.pool.acquire() as conn:
             await conn.execute(
                 """
