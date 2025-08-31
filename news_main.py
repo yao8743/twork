@@ -250,7 +250,9 @@ async def receive_file_material(message: Message):
         m_fuid, bot_username
     )
 
-    await db.create_send_tasks(int(existing_news['id']), existing_news['business_type'])
+    if (existing_news and existing_news.get("id")):
+        await db.create_send_tasks(int(existing_news['id']), existing_news['business_type'])
+
 
 
 
@@ -270,21 +272,29 @@ async def periodic_sender(db: NewsDatabase):
         try:
             print("🔍 检查需要补档的新闻...", flush=True)
             await db.init()
-            rows = await db.find_missing_media_records(limit=5)  # 用 news_db.py 封装好的方法
+            rows = await db.find_missing_media_records(limit=5)  # 需返回: id, business_type, thumb_file_unique_id
             for row in rows:
                 news_id = row["id"]
                 fuid = row["thumb_file_unique_id"]
+                bt = row.get("business_type") or "news"
                 try:
-                    print(f"➡️ 请求老板补档新闻 ID = {news_id}，thumb_file_unique_id = {fuid}", flush=True)
-                    await bot.send_message(
-                        x_man_bot_id,fuid
-                    )
+                    # 记挂起映射：FUID -> {news_id, business_type, ts}
+                    pending_fuid_requests[fuid] = {
+                        "news_id": news_id,
+                        "business_type": bt,
+                        "ts": time.time(),
+                    }
+                    print(f"➡️ 请求老板补档 news_id={news_id}, fuid={fuid}", flush=True)
+                    await bot.send_message(x_man_bot_id, fuid)
                     await asyncio.sleep(10)
                 except Exception as e:
                     print(f"⚠️ 发送请求给 {x_man_bot_id} 失败: {e}", flush=True)
+                    # 失败也清掉挂起，避免僵尸条目
+                    pending_fuid_requests.pop(fuid, None)
                     continue
         except Exception as e:
             print(f"❌ periodic_sender 补档流程异常: {e}", flush=True)
+
 
         # === 间隔 60 秒再跑下一轮 ===
         await asyncio.sleep(60)

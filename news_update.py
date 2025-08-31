@@ -27,6 +27,9 @@ BUSINESS_TYPE = os.getenv("BUSINESS_TYPE", "salai")
 # news_content 迁移相关
 START_ID = int(os.getenv("START_ID", "0"))                # 仅迁移 id > START_ID 的数据
 DELETE_AFTER_SYNC = int(os.getenv("DELETE_AFTER_SYNC", "1"))  # 1=PG成功后删除MySQL；0=不删（演练）
+ALLOW_CREATE_MEMBERSHIP = int(os.getenv("ALLOW_CREATE_MEMBERSHIP", "0"))
+# 0 = 只更新已存在的 news_user（不插入）
+# 1 = 允许 UPSERT（不存在则插入）
 
 # ------------------ PG 索引保证 ------------------
 PG_ENSURE_INDEXES = """
@@ -94,6 +97,18 @@ DO UPDATE SET
 WHERE news_user.expire_at IS DISTINCT FROM EXCLUDED.expire_at;
 """
 
+PG_UPDATE_NEWS_USER = """
+UPDATE news_user AS t
+SET expire_at = to_timestamp($3)
+WHERE t.user_id = $1
+  AND t.business_type = $2
+  AND (
+        t.expire_at IS NULL
+        OR to_timestamp($3) > t.expire_at
+      );
+"""
+
+
 async def fetch_mysql_total_membership(conn: aiomysql.Connection, now_s: int) -> int:
     async with conn.cursor() as cur:
         await cur.execute(MYSQL_COUNT_MEMBERSHIP, (now_s,))
@@ -116,11 +131,15 @@ async def upsert_news_user_pg(
     business_type: str,
     numeric_user_id: bool
 ) -> tuple[int, int]:
-    """返回 (UPSERT 成功条数, 跳过(非数字 user_id) 条数)"""
+    """
+    返回 (成功写入/更新条数, 跳过(非数字 user_id) 条数)
+    - 当 ALLOW_CREATE_MEMBERSHIP = 1 时：UPSERT（可能新增）
+    - 当 ALLOW_CREATE_MEMBERSHIP = 0 时：只 UPDATE 已存在的行（不存在则跳过）
+    """
     args = []
     skipped = 0
     for _, user_id_str, expire_ts in rows:
-        sec = int(expire_ts)  # 已按秒
+        sec = int(expire_ts)  # 秒
         if numeric_user_id:
             try:
                 uid = int(str(user_id_str).strip())
@@ -134,10 +153,23 @@ async def upsert_news_user_pg(
     if not args:
         return 0, skipped
 
-    async with pg.transaction():
-        await pg.executemany(PG_UPSERT_NEWS_USER, args)
+    if ALLOW_CREATE_MEMBERSHIP:
+        # === 模式A：允许创建（UPSERT）===
+        async with pg.transaction():
+            await pg.executemany(PG_UPSERT_NEWS_USER, args)
+        # executemany 无法返回逐条影响行数，这里以提交数作为“成功写入条数”的估计
+        return len(args), skipped
+    else:
+        # === 模式B：只更新已存在 ===
+        updated = 0
+        async with pg.transaction():
+            for a in args:
+                status = await pg.execute(PG_UPDATE_NEWS_USER, *a)
+                # status like "UPDATE 0"/"UPDATE 1"
+                if status.endswith("1"):
+                    updated += 1
+        return updated, skipped
 
-    return len(args), skipped
 
 async def sync_membership_to_news_user(mysql_pool, pg_pool):
     now_s = int(time.time())  # 秒
@@ -192,24 +224,6 @@ ORDER BY id
 LIMIT %s;
 """
 
-PG_UPSERT_NEWS_CONTENT = """
-INSERT INTO news_content
-    (id, title, text, file_id, file_type, button_str,
-     created_at, bot_name, business_type, content_id, thumb_file_unique_id)
-VALUES
-    ($1,$2,$3,$4,'photo',$5,
-     $6,$7,$8,$9,$10)
-ON CONFLICT (id) DO UPDATE SET
-    title = EXCLUDED.title,
-    text  = EXCLUDED.text,
-    file_id = EXCLUDED.file_id,
-    button_str = EXCLUDED.button_str,
-    created_at = EXCLUDED.created_at,
-    bot_name = EXCLUDED.bot_name,
-    business_type = EXCLUDED.business_type,
-    content_id = EXCLUDED.content_id,
-    thumb_file_unique_id = EXCLUDED.thumb_file_unique_id;
-"""
 
 async def fetch_mysql_total_news(conn: aiomysql.Connection, start_id: int) -> int:
     async with conn.cursor() as cur:
@@ -222,9 +236,111 @@ async def fetch_mysql_batch_news(conn: aiomysql.Connection, last_id: int, limit:
         await cur.execute(MYSQL_FETCH_NEWS, (last_id, limit))
         return await cur.fetchall()
 
-async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[Tuple]) -> None:
+async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> None:
+    """
+    rows: [(id, title, text, file_id, button_str, created_at, bot_name, business_type, content_id, thumb_file_unique_id)]
+    三步法（更新时不更新 file_id）：
+      1) UPDATE ... WHERE thumb_file_unique_id = $8
+      2) UPDATE ... WHERE bot_name = $5 AND content_id = $7
+      3) INSERT ... ON CONFLICT (id) DO UPDATE ...（不更新 file_id）
+    """
+    # ① 仅更新除 file_id 以外字段（不改 file_id）
+    UPDATE_BY_THUMB = """
+    UPDATE news_content AS t SET
+        title = COALESCE($1, t.title),
+        text = COALESCE($2, t.text),
+        -- file_id 不更新
+        file_type = 'photo',
+        button_str = COALESCE($3, t.button_str),
+        created_at = COALESCE($4, t.created_at),
+        bot_name = COALESCE($5, t.bot_name),
+        business_type = COALESCE($6, t.business_type),
+        content_id = COALESCE($7, t.content_id),
+        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
+    WHERE t.thumb_file_unique_id = $8
+    RETURNING 1;
+    """
+
+    # ② 仅更新除 file_id 以外字段（不改 file_id）
+    UPDATE_BY_BOT_CONTENTID = """
+    UPDATE news_content AS t SET
+        title = COALESCE($1, t.title),
+        text = COALESCE($2, t.text),
+        -- file_id 不更新
+        file_type = 'photo',
+        button_str = COALESCE($3, t.button_str),
+        created_at = COALESCE($4, t.created_at),
+        bot_name = COALESCE($5, t.bot_name),
+        business_type = COALESCE($6, t.business_type),
+        content_id = COALESCE($7, t.content_id),
+        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
+    WHERE t.bot_name = $5 AND t.content_id = $7
+    RETURNING 1;
+    """
+
+    # ③ 插入时写入 file_id；若 id 冲突，则更新其它字段但不更新 file_id
+    INSERT_SQL = """
+    INSERT INTO news_content
+        (id, title, text, file_id, file_type, button_str,
+         created_at, bot_name, business_type, content_id, thumb_file_unique_id)
+    VALUES
+        ($1, $2, $3, $4, 'photo', $5,
+         $6, $7, $8, $9, $10)
+    ON CONFLICT (id) DO UPDATE SET
+        title = EXCLUDED.title,
+        text  = EXCLUDED.text,
+        -- file_id 不更新
+        button_str = EXCLUDED.button_str,
+        created_at = EXCLUDED.created_at,
+        bot_name = EXCLUDED.bot_name,
+        business_type = EXCLUDED.business_type,
+        content_id = EXCLUDED.content_id,
+        thumb_file_unique_id = EXCLUDED.thumb_file_unique_id;
+    """
+
     async with pg.transaction():
-        await pg.executemany(PG_UPSERT_NEWS_CONTENT, rows)
+        for r in rows:
+            (rid, title, text, file_id, button_str,
+             created_at, bot_name, business_type, content_id, thumb_uid) = r
+
+            # 1) 先按 thumb 更新（不改 file_id）
+            updated = await pg.fetchval(
+                UPDATE_BY_THUMB,
+                title,            # $1
+                text,             # $2
+                button_str,       # $3
+                created_at,       # $4
+                bot_name,         # $5
+                business_type,    # $6
+                content_id,       # $7
+                thumb_uid         # $8
+            )
+            if updated:
+                continue
+
+            # 2) 再按 (bot_name, content_id) 更新（不改 file_id）
+            updated2 = await pg.fetchval(
+                UPDATE_BY_BOT_CONTENTID,
+                title,            # $1
+                text,             # $2
+                button_str,       # $3
+                created_at,       # $4
+                bot_name,         # $5
+                business_type,    # $6
+                content_id,       # $7
+                thumb_uid         # $8
+            )
+            if updated2:
+                continue
+
+            # 3) 插入（可写入 file_id）；若 id 冲突则不更新 file_id
+            await pg.execute(
+                INSERT_SQL,
+                rid, title, text, file_id, button_str,
+                created_at, bot_name, business_type, content_id, thumb_uid
+            )
+
+
 
 async def delete_mysql_news_rows(conn: aiomysql.Connection, ids: List[int]) -> int:
     if not ids:

@@ -160,10 +160,10 @@ def sync_media_to_postgres(content_id, media_rows):
                 "file_id": media["file_id"],
                 "thumb_file_id": media["thumb_file_id"]
             }
-            print(f"Syncing media to PostgreSQL: {insert_data}")
+            # print(f"Syncing media to PostgreSQL: {insert_data}")
 
             try:
-                print(f"🛰️ Syncing media to PostgreSQL: {insert_data}")
+                # print(f"🛰️ Syncing media to PostgreSQL: {insert_data}")
 
                 SoraMediaPg.insert(**insert_data).on_conflict(
                     conflict_target=[SoraMediaPg.content_id, SoraMediaPg.source_bot_name],
@@ -172,7 +172,7 @@ def sync_media_to_postgres(content_id, media_rows):
 
             except Exception as e:
                 print(f"❌ 插入 PostgreSQL sora_media 失败: {e}")
-                print(f"   ➤ 失败内容: {insert_data}")
+                # print(f"   ➤ 失败内容: {insert_data}")
 
 def process_documents():
     # DB_MYSQL.connect()
@@ -199,7 +199,7 @@ def process_documents():
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {doc.file_unique_id}",flush=True)
+        # print(f"Processing {doc.file_unique_id}",flush=True)
 
         # 统一记录数据
         record_data = {
@@ -255,7 +255,7 @@ def process_videos():
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {doc.file_unique_id}: {content_seg}",flush=True)
+        # print(f"Processing {doc.file_unique_id}",flush=True)
 
         record_data = {
             'source_id': doc.file_unique_id,
@@ -274,9 +274,9 @@ def process_videos():
                 setattr(kw, key, value)
             kw.save()
 
-        print(f"  🔄 更新 MySQL sora_content [{kw}]",flush=True)
+        # print(f"  🔄 更新 MySQL sora_content [{kw}]",flush=True)
 
-        print(kw.__data__)
+        # print(kw.__data__)
 
         doc.kc_id = kw.id
         doc.kc_status = 'updated'
@@ -382,7 +382,7 @@ def process_scrap():
             tag_seg = ' '.join(f'#{tag}' for tag in tag_cn_list)
             content_seg += " " + " ".join(tag_cn_list)
 
-        print(f"Processing {scrap.id}: {content_seg}")
+        # print(f"Processing {scrap.id}: {content_seg}")
 
         record_data = {
             'source_id': scrap.id,
@@ -445,7 +445,7 @@ def process_sora_update():
         DB_PG.connect()
 
     sora_content_rows = SoraContent.select().where(SoraContent.stage=="pending").limit(BATCH_LIMIT)
-    print(f"📦 正在处理 {len(sora_content_rows)} 笔 sora 数据...\n")
+    # print(f"📦 正在处理 {len(sora_content_rows)} 笔 sora 数据...\n")
 
     for row in sora_content_rows:
         source_id = row.source_id
@@ -474,7 +474,7 @@ def process_sora_update():
             for k, v in content.items():
                 setattr(sora_content, k, v)
             sora_content.save()
-            print("🔄 更新 MySQL sora_content")
+            # print("🔄 更新 MySQL sora_content")
 
         # 建立 SoraMedia（两个机器人来源）
         media_data = [
@@ -556,7 +556,7 @@ def sync_pending_sora_to_postgres():
         # ✅ 回写 MySQL：stage = "updated"
         row.stage = "updated"
         row.save()
-        print(f"📝 已更新：source_id{row.source_id} =>MySQL sora_content.stage = 'updated'",flush=True)
+        # print(f"📝 已更新：source_id{row.source_id} =>MySQL sora_content.stage = 'updated'",flush=True)
 
 
     DB_MYSQL.close()
@@ -598,7 +598,7 @@ def sync_pending_product_to_postgres():
         # ✅ 回写 MySQL：stage = "updated"
         row.stage = "updated"
         row.save()
-        print(f"📝 已更新：content_id{row.content_id} =>MySQL Product.stage = 'updated'",flush=True)
+        # print(f"📝 已更新：content_id{row.content_id} =>MySQL Product.stage = 'updated'",flush=True)
 
 
     DB_MYSQL.close()
