@@ -49,13 +49,13 @@ async def _send_one(bot: Bot, task: dict, rate_limit: int, max_retries: int):
     }
 
     last_err = None
-    delay = 0.5
+    delay = 1
     for attempt in range(max_retries + 1):
         try:
             if task["file_id"]:
-                if task["file_type"] == "photo":
+                if task["file_type"] == "photo" or task["file_type"] == "p":
                     await bot.send_photo(photo=task["file_id"], **send_kwargs)
-                elif task["file_type"] == "video":
+                elif task["file_type"] == "video" or task["file_type"] == "v":
                     await bot.send_video(video=task["file_id"], **send_kwargs)
                 else:
                     await bot.send_document(document=task["file_id"], **send_kwargs)

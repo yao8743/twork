@@ -226,7 +226,7 @@ async def fetch_mysql_total_news(conn: aiomysql.Connection, start_id: int) -> in
 async def fetch_mysql_batch_news(conn: aiomysql.Connection, last_id: int, limit: int) -> List[Tuple]:
     MYSQL_FETCH_NEWS = """
     SELECT
-        id, title, text, file_id, button_str,
+        id, title, text, file_id, button_str, bot_name,
         created_at, business_type, content_id, thumb_file_unique_id
     FROM news_content
     WHERE id > %s
@@ -238,55 +238,59 @@ async def fetch_mysql_batch_news(conn: aiomysql.Connection, last_id: int, limit:
     async with conn.cursor() as cur:
         await cur.execute(MYSQL_FETCH_NEWS, (last_id, limit))
         return await cur.fetchall()
-
 async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> None:
     """
-    rows: [(id, title, text, file_id, button_str, created_at, business_type, content_id, thumb_file_unique_id)]
+    rows: [(id, title, text, file_id, button_str, bot_name,
+            created_at, business_type, content_id, thumb_file_unique_id)]
     三步法（更新时不更新 file_id）：
       1) UPDATE ... WHERE thumb_file_unique_id = $8
-      2) UPDATE ... WHERE content_id = $7
+      2) UPDATE ... WHERE (bot_name = $4 AND content_id = $7)
       3) INSERT ... ON CONFLICT (id) DO UPDATE ...（不更新 file_id）
+    统一把 created_at 视为“秒级时间戳”，进入 PG 用 to_timestamp()。
     """
+
     # ① 仅更新除 file_id 以外字段（不改 file_id）
     UPDATE_BY_THUMB = """
     UPDATE news_content AS t SET
         title = COALESCE($1, t.title),
-        text = COALESCE($2, t.text),
+        text  = COALESCE($2, t.text),
         -- file_id 不更新
         file_type = 'photo',
         button_str = COALESCE($3, t.button_str),
-        created_at = COALESCE($4, t.created_at),
-        business_type = COALESCE($5, t.business_type),
-        content_id = COALESCE($6, t.content_id),
-        thumb_file_unique_id = COALESCE($7, t.thumb_file_unique_id)
-    WHERE t.thumb_file_unique_id = $7
+        bot_name   = COALESCE($4, t.bot_name),
+        created_at = COALESCE(to_timestamp($5), t.created_at),
+        business_type = COALESCE($6, t.business_type),
+        content_id    = COALESCE($7, t.content_id),
+        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
+    WHERE t.thumb_file_unique_id = $8
     RETURNING 1;
     """
 
-    # ② 仅更新除 file_id 以外字段（不改 file_id）
+    # ② 仅更新除 file_id 以外字段（不改 file_id），并且严格用 (bot_name, content_id) 联合匹配
     UPDATE_BY_BOT_CONTENTID = """
     UPDATE news_content AS t SET
         title = COALESCE($1, t.title),
-        text = COALESCE($2, t.text),
+        text  = COALESCE($2, t.text),
         -- file_id 不更新
         file_type = 'photo',
         button_str = COALESCE($3, t.button_str),
-        created_at = COALESCE($4, t.created_at),
-        business_type = COALESCE($5, t.business_type),
-        content_id = COALESCE($6, t.content_id),
-        thumb_file_unique_id = COALESCE($7, t.thumb_file_unique_id)
-    WHERE t.content_id = $6
+        bot_name   = COALESCE($4, t.bot_name),
+        created_at = COALESCE(to_timestamp($5), t.created_at),
+        business_type = COALESCE($6, t.business_type),
+        content_id    = COALESCE($7, t.content_id),
+        thumb_file_unique_id = COALESCE($8, t.thumb_file_unique_id)
+    WHERE t.bot_name = $4 AND t.content_id = $7
     RETURNING 1;
     """
 
-    # ③ 插入时写入 file_id；若 id 冲突，则更新其它字段但不更新 file_id
+    # ③ 插入时：显式把 file_type 设为 'photo'；created_at 用 to_timestamp()
+    #    注意：这里 11 列对应 10 个参数 + 1 个常量 'photo'
     INSERT_SQL = """
     INSERT INTO news_content
-        (id, title, text, file_id, file_type, button_str,
+        (id, title, text, file_id, file_type, button_str, bot_name,
          created_at, business_type, content_id, thumb_file_unique_id)
     VALUES
-        ($1, $2, $3, $4, 'photo', $5,
-         $6, $7, $8, $9)
+        ($1, $2, $3, $4, 'photo', $5, $6, to_timestamp($7), $8, $9, $10)
     ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         text  = EXCLUDED.text,
@@ -300,8 +304,17 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
 
     async with pg.transaction():
         for r in rows:
-            (rid, title, text, file_id, button_str,
+            (rid, title, text, file_id, button_str, bot_name,
              created_at, business_type, content_id, thumb_uid) = r
+
+            # 尝试把 created_at 统一转成“秒级整数”
+            # （如果已经是 datetime/日期字符串，你也可以在这里转成秒）
+            try:
+                created_at_sec = int(created_at)
+            except Exception:
+                # 兜底：无法直接转 int 时，改成当前时间
+                # 你也可以在此扩展 datetime -> int 的转换
+                created_at_sec = int(time.time())
 
             # 1) 先按 thumb 更新（不改 file_id）
             updated = await pg.fetchval(
@@ -309,7 +322,8 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
                 title,            # $1
                 text,             # $2
                 button_str,       # $3
-                created_at,       # $4
+                bot_name,         # $4
+                created_at_sec,   # $5
                 business_type,    # $6
                 content_id,       # $7
                 thumb_uid         # $8
@@ -323,7 +337,8 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
                 title,            # $1
                 text,             # $2
                 button_str,       # $3
-                created_at,       # $4
+                bot_name,         # $4
+                created_at_sec,   # $5
                 business_type,    # $6
                 content_id,       # $7
                 thumb_uid         # $8
@@ -331,11 +346,19 @@ async def upsert_news_content_pg(pg: asyncpg.Connection, rows: List[tuple]) -> N
             if updated2:
                 continue
 
-            # 3) 插入（可写入 file_id）；若 id 冲突则不更新 file_id
+            # 3) 插入（file_type = 'photo'；created_at = to_timestamp($7)）
             await pg.execute(
                 INSERT_SQL,
-                rid, title, text, file_id, button_str,
-                created_at, business_type, content_id, thumb_uid
+                rid,             # $1
+                title,           # $2
+                text,            # $3
+                file_id,         # $4
+                button_str,      # $5
+                bot_name,        # $6
+                created_at_sec,  # $7  -> to_timestamp()
+                business_type,   # $8
+                content_id,      # $9
+                thumb_uid        # $10
             )
 
 
