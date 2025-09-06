@@ -14,7 +14,7 @@ MYSQL_DB_PORT= 58736
 SOURCE_TABLE = "file_extension"
 TARGET_TABLE = "file_extension2"
 PRIMARY_KEY  = "id"
-BATCH_SIZE   = 3000   # 你要的 50000
+BATCH_SIZE   = 100   # 你要的 50000
 
 # === SQL 模板 ===
 SQL_GET_MAX_ID = f"SELECT COALESCE(MAX({PRIMARY_KEY}), 0) FROM {TARGET_TABLE}"
