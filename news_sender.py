@@ -8,7 +8,7 @@ from aiogram.exceptions import TelegramRetryAfter
 
 from news_db import NewsDatabase
 
-RATE_LIMIT_DEFAULT = 20
+RATE_LIMIT_DEFAULT = 15
 MAX_RETRIES_DEFAULT = 3
 
 
@@ -49,7 +49,7 @@ async def _send_one(bot: Bot, task: dict, rate_limit: int, max_retries: int):
     }
 
     last_err = None
-    delay = 1
+    delay = 2
     for attempt in range(max_retries + 1):
         try:
             if task["file_id"]:
