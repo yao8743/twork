@@ -14,7 +14,7 @@ MYSQL_DB_PORT = 58736
 SOURCE_TABLE = "video"
 TARGET_TABLE = "video2"
 PK = "file_unique_id"
-BATCH_SIZE = 1000    # 需要更大吞吐可改这里
+BATCH_SIZE = 100    # 需要更大吞吐可改这里
 
 # 显式列出列名（与 video2 DDL 一致；必须与源表列完全匹配）
 COLUMNS = (
