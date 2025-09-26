@@ -111,7 +111,7 @@ class NewsDatabase:
             sql = """
             UPDATE news_content
             SET file_id = $1
-            WHERE bot_name = $2 AND thumb_file_unique_id ILIKE $3;
+            WHERE bot_name = $2 AND thumb_file_unique_id LIKE $3;
             """
             # print("EXEC:", sql, "PARAMS:", (file_id, bot_username, thumb_file_unique_id))
 
