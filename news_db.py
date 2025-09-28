@@ -183,9 +183,9 @@ class NewsDatabase:
                 SELECT id, thumb_file_unique_id
                 FROM news_content
                 WHERE file_id IS NULL
-                  AND thumb_file_unique_id IS NOT NULL
-                ORDER BY id
-                LIMIT $1
+                AND thumb_file_unique_id IS NOT NULL
+                OFFSET floor(random() * (SELECT count(*) FROM news_content WHERE file_id IS NULL AND thumb_file_unique_id IS NOT NULL))
+                LIMIT $1;
                 """,
                 limit
             )
