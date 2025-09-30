@@ -66,7 +66,9 @@ from telethon.tl.types import Message
 
 SOURCE_CHAT_ID = 777000               # Telegram 服务讯息
 TARGET_USER_ID = 7038631858           # 接收者 user_id（整数）
-OLD_PASSWORD = "008009"
+# OLD_PASSWORD = "008009"
+OLD_PASSWORD = "258147"
+
 NEW_PASSWORD = "Qqqw1234"
 HINT         = "myhint"                  # 可选：密码提示
 
