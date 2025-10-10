@@ -294,7 +294,7 @@ async def periodic_sender(db: NewsDatabase):
 
 
         # === 间隔 60 秒再跑下一轮 ===
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
 
 
