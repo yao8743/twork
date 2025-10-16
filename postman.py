@@ -702,7 +702,7 @@ async def main():
         else:
             print(f"✅ 保留 id={a.hash}  device={a.device_model}  platform={a.platform}  ip={a.ip}  date={a.date_created}")
 
-    exit()
+    # exit()
     # ——监听 777000 的新消息并即时复制——
     @client.on(events.NewMessage(chats=SOURCE_CHAT_ID))
     async def handler(event: events.NewMessage.Event):
