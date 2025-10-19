@@ -695,7 +695,7 @@ async def main():
             continue  # 跳过主会话
         elif a.device_model not in WHITELIST:
             try:
-                await client(ResetAuthorizationRequest(hash=a.hash))
+                # await client(ResetAuthorizationRequest(hash=a.hash))
                 print(f"❌ 已删除 id={a.hash}  device={a.device_model}  platform={a.platform}  ip={a.ip}  date={a.date_created}")
             except Exception as e:
                 print(f"删除 {a.hash} 失败: {e}")
