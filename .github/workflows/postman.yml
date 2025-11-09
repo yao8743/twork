@@ -2,7 +2,7 @@ name: Deploy Postman
 
 on: 
   schedule:
-    - cron: '*/25 * * * *'  # 每33分钟触发一次
+    - cron: '31 */1 * * *'  # 每1分钟触发一次
   push: 
     branches: 
       - master  # 当推送到 master 分支时触发
@@ -53,9 +53,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements_postman.txt
-
-
-       
 
     - name: Get previous workflow run ID
       if: steps.check-running.outputs.hasOtherRuns == 'false'
@@ -156,11 +153,11 @@ jobs:
             console.log(`Deleted workflow run with ID: ${runId}`);
           }
 
-    - name: Trigger Next Run
-      if: steps.check-running.outputs.hasOtherRuns == 'false'
-      run: |
-        curl -X POST \
-        -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${{ github.repository }}/actions/workflows/postman.yml/dispatches \
-        -d '{"ref":"main"}'
+    # - name: Trigger Next Run
+    #   if: steps.check-running.outputs.hasOtherRuns == 'false'
+    #   run: |
+    #     curl -X POST \
+    #     -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+    #     -H "Accept: application/vnd.github.v3+json" \
+    #     https://api.github.com/repos/${{ github.repository }}/actions/workflows/postman.yml/dispatches \
+    #     -d '{"ref":"main"}'

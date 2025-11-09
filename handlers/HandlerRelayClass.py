@@ -33,9 +33,12 @@ class HandlerRelayClass(BaseHandlerClass):
         
         forwared_success = True
         target_chat_id = None
+        require_ack = False
 
         entity_title = getattr(self.entity, 'title', f"Unknown entity {self.entity.id}")
-        print(f"[Group] Message from {entity_title} ({self.entity.id}): {self.message.text}")
+        print(f"[Relay] Message from {self.entity.id}")
+
+
 
         if self.message.media and not isinstance(self.message.media, MessageMediaWebPage):
             grouped_id = getattr(self.message, 'grouped_id', None)
@@ -99,14 +102,17 @@ class HandlerRelayClass(BaseHandlerClass):
                 )
 
             else:
+                # print("🔍 正在处理单个消息转发")
                 caption = self.message.text or ""
 
                 if caption != "":
+                    # print(f"🔍 正在处理消息转发")
                     json_result = self.parse_caption_json(caption)
 
                     if json_result is False:
                         match = self.forward_pattern.search(caption)
                         if match:
+                            # print(f"🔍 正在处理转发标记")
                             if caption.endswith("|force"):
                                 self.is_duplicate_allowed = True
                             target_raw = match.group(1)
@@ -116,6 +122,7 @@ class HandlerRelayClass(BaseHandlerClass):
                                 target_chat_id = target_raw.strip('@')  # 可留可不留 @
                             print(f"📌 指定转发 x chat_id={target_chat_id}")
                         else:
+                            # print("🔍 未找到转发标记，尝试获取备用 chat_id")
                             fallback_chat_ids = await self.get_fallback_chat_ids()
                             if fallback_chat_ids:
                                 target_chat_id = random.choice(fallback_chat_ids)
@@ -124,15 +131,27 @@ class HandlerRelayClass(BaseHandlerClass):
                                 print("⚠️ 無 x chat_id 可用，跳过消息", flush=True)
                                 return
                     else:
+                       
                         target_raw = json_result.get('target_chat_id')
                         if isinstance(target_raw, int) or (isinstance(target_raw, str) and target_raw.isdigit()):
+                            print(f"🔍 解析 JSON 成功1，target_chat_id={target_raw}")
                             target_chat_id = int(target_raw)
+                            require_ack = True
                         elif isinstance(target_raw, str):
+                            print(f"🔍 解析 JSON 成功2，target_chat_id={target_raw}")
                             target_chat_id = target_raw.strip('@')  # 去掉 @
+                            require_ack = True
                         else:
                             print("⚠️ JSON 中未提供有效的 target_chat_id")
                             return
                
+                if self.message.chat_id == target_chat_id or (target_chat_id == "yanzai2015bot" and self.message.chat_id == 8158392656) or (target_chat_id == "salai001bot" and self.message.chat_id == 7419440827):
+                    # await self.safe_delete_message()
+                    await self.safe_delete_message()
+                    print("⚠️ 目标和源聊天相同，跳过转发")
+                    return
+
+
                 media = self.message.media.document if isinstance(self.message.media, MessageMediaDocument) else self.message.media.photo
                 
                 media_key = generate_media_key(self.message)
@@ -160,15 +179,15 @@ class HandlerRelayClass(BaseHandlerClass):
                                 media_id=media_id,
                                 access_hash=access_hash
                             )
-
                        
                         forwared_success = await safe_forward_or_send(
-                            self.client,
-                            self.message.id,
-                            self.message.chat_id,
-                            target_chat_id,
-                            media,
-                            caption
+                            client = self.client,
+                            message_id = self.message.id,
+                            from_chat_id = self.message.chat_id,
+                            to_chat_id = target_chat_id,
+                            material = media,
+                            caption_json = caption,
+                            require_ack = require_ack
                         )
                        
                         if forwared_success:

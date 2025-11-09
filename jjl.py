@@ -98,24 +98,24 @@ if module_enable['man_bot'] == True:
 
 
 # 使用连接池并启用自动重连
-# if module_enable['db'] == True:
-#     db = PooledPostgresqlDatabase(
-#         config['db_name'],
-#         user=config['db_user'],
-#         password=config['db_password'],
-#         host=config['db_host'],
-#         port=config['db_port'],
-#         sslmode=config['db_sslmode'],
-#         max_connections=32,  # 最大连接数
-#         stale_timeout=300  # 5 分钟内未使用的连接将被关闭
-#     )
-# else:
-#     db = None
-
 if module_enable['db'] == True:
-    from database import db
+    db = PooledPostgresqlDatabase(
+        config['db_name'],
+        user=config['db_user'],
+        password=config['db_password'],
+        host=config['db_host'],
+        port=config['db_port'],
+        sslmode=config['db_sslmode'],
+        max_connections=32,  # 最大连接数
+        stale_timeout=300  # 5 分钟内未使用的连接将被关闭
+    )
 else:
     db = None
+
+# if module_enable['db'] == True:
+#     from database import db,initialize_db
+# else:
+#     db = None
 
 
 

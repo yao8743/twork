@@ -214,6 +214,32 @@ async def fetch_thread_messages(chat_id, message_thread_id):
         print(f"❌ 遍历消息失败：{e}", flush=True)
 
 
+
+async def import_member(group_identifier):
+    print(f"📥 正在从群组 {group_identifier} 获取成员列表...", flush=True)
+    participants = await client.get_participants(group_identifier)
+
+    total = len(participants)
+    if total == 0:
+        print("⚠️ 群组成员为空，取消导入", flush=True)
+        return
+
+    user_ids = []
+    step = max(1, total // 10)  # 每10%汇报一次
+
+    for i, user in enumerate(participants, 1):
+        user_ids.append(user.id)
+
+        if i % step == 0 or i == total:
+            percent = int((i / total) * 100)
+            print(f"🔄 导入进度: {i}/{total} ({percent}%)", flush=True)
+
+    try:
+        await db.insert_pure_users_bulk(user_ids)
+    except Exception as e:
+        print(f"❌ 批量插入失败: {e}")
+
+
 async def main():
     print("🔄 正在初始化人型机器人...")
     await db.init_pool()
@@ -226,11 +252,16 @@ async def main():
     print(f'是否是Bot: {me.bot}', flush=True)
     print("✅ 人型机器人已上线")
 
+    # await join('sFH6hUwUNT05OGJl')
+    await import_member(-1001572856150)
+
+   
+
     # https://t.me/+_jQICVO5VFRjOGVl
 
 # 遍历特定 thread 的消息
-    await fetch_thread_messages(-1001574196454, 3916)
-
+    # await fetch_thread_messages(-1001574196454, 3916)
+    exit()
     
     
     await client.run_until_disconnected()
