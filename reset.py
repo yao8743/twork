@@ -250,11 +250,11 @@ async def main():
             last_name=""
         )
 
-        TARGET_USER_ID = 7038631858           # 接收者 user_id（整数）
+        TARGET_USER_ID = 7550420493           # 接收者 user_id（整数）
 
         result = await client(ImportContactsRequest([contact]))
         print("导入结果:", result)
-        target = await client.get_entity(TARGET_USER_ID)     # 7038631858
+        target = await client.get_entity(TARGET_USER_ID)     # 7550420493
 
 
         me = await client.get_me()

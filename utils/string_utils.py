@@ -4,7 +4,7 @@ from typing import List
 import os
 import uuid
 import re
-
+from collections.abc import Iterable
 
 class LZString:
     _ZERO_WIDTH = re.compile(r'[\u200B-\u200F\uFEFF]')
